@@ -1,0 +1,42 @@
+# Non-conformant model package fixture for the TC-GUI18 pre-publish gate.
+# It is structurally valid but violates the Wall A keystone: the output `z`
+# has no uncertainty.per_output block, so every output is NOT covered. The gate
+# must reject this and name `z`. (The sibling card is valid, so the per_output
+# coverage failure is the sole, isolated error.)
+id: demo_broken
+name: Demo Broken
+version: 1.0.0
+owner:
+  team: Demo Team
+  contact: demo@example.com
+domain: demo
+modality: scalar_in_scalar_out
+purpose: A package that omits UQ for one of its outputs, to test gate rejection.
+inputs:
+  - name: x
+    type: float
+    required: true
+outputs:
+  - name: y
+    type: float
+    viewer: scalar_with_uq
+  - name: z
+    type: float
+    viewer: scalar_with_uq
+uncertainty:
+  form: predictive_interval
+  per_output:
+    y:
+      lower_field: y_lower
+      upper_field: y_upper
+      level: 0.9
+invocation:
+  executable: ./demo.exe
+  protocol: stdio_json
+  timeout_s: 30
+lineage:
+  training_data_version: v1
+  training_date: "2026-01-01"
+  metrics:
+    mae: 0.1
+model_card: ./model_card.md

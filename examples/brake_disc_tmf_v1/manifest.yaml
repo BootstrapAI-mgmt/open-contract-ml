@@ -1,0 +1,127 @@
+# Brake Disc TMF Life Surrogate — illustrative manifest
+#
+# This is a worked example of the manifest schema. `invocation.executable`
+# points at `fake_model.py`, a deterministic reference STUB that speaks the
+# stdio_json protocol with synthetic (non-ML) outputs (arc TC-601 / TC-GUI07).
+# It is the dispatch/E2E fixture — invoked as `python fake_model.py` — standing
+# in for a real model's compiled .exe. To ship a real model, place a folder
+# structured like this one under ../../models/ with a valid .exe.
+#
+# Conforms to schemas/manifest.schema.json.
+
+id: brake_disc_tmf_v1
+name: "Brake Disc TMF Life Surrogate"
+version: "1.2.0"
+
+owner:
+  team: "Thermal Mech Group"
+  contact: "tmg@example.com"
+
+domain: thermomechanical_fatigue
+modality: scalar_in_scalar_out
+tags: [brake-disc, automotive, TMF, fatigue]
+analysis_type: "fatigue life"
+
+purpose: "Predicts thermomechanical fatigue life of vented brake discs under cyclic braking load."
+
+when_to_use: |
+  Screening disc geometries during early concept work.
+  Material must be one of the supported gray / spheroidal irons.
+  Inputs must lie within the training envelope (see ranges below).
+
+when_not_to_use: |
+  Do NOT use for non-vented discs.
+  Do NOT use for ceramic composite materials.
+  Do NOT use for thermal soak durations exceeding 600 seconds.
+  Do NOT use as a sole basis for safety-critical certification.
+
+inputs:
+  - name: peak_temp
+    type: float
+    units: degC
+    canonical_units: K
+    range: [473.15, 1123.15]   # 200 - 850 degC, expressed in canonical K
+    required: true
+    default: 873.15            # 600 degC
+    description: "Peak rotor temperature during braking cycle."
+
+  - name: cycle_count
+    type: integer
+    units: cycles
+    range: [10, 100000]
+    required: true
+    description: "Number of braking cycles in the loading history."
+
+  - name: material
+    type: categorical
+    choices: ["GG20", "GG25", "GGG70"]
+    required: true
+    description: "Rotor material designation."
+
+  - name: vent_geometry
+    type: file
+    file_kind: stl
+    required: false
+    description: "Optional vent channel geometry. If omitted, the default Family-A vent topology is assumed."
+
+outputs:
+  - name: life
+    type: float
+    units: cycles
+    viewer: scalar_with_uq
+
+  - name: failure_mode
+    type: categorical
+    choices: ["thermal", "mechanical", "interaction"]
+    viewer: categorical_with_confidence
+
+primary_inputs: [peak_temp, material]
+primary_outputs: [life]
+
+uncertainty:
+  form: predictive_interval
+  per_output:
+    life:
+      lower_field: life_lower
+      upper_field: life_upper
+      level: 0.90
+      method: "split conformal"
+    failure_mode:
+      form: class_probabilities
+      field: failure_mode_probs
+  calibration:
+    holdout_size: 240
+    empirical_coverage: 0.89
+    method: "split conformal on 2026Q1 holdout, MAPE pinball loss"
+
+invocation:
+  executable: ./fake_model.py   # reference stub (arc TC-601); run as: python fake_model.py
+  protocol: stdio_json
+  timeout_s: 60
+  expected_runtime_s: 5
+  batch_supported: true
+
+lineage:
+  training_data_version: "tmf-dataset-2026Q1"
+  training_date: "2026-03-14"
+  metrics:
+    mape: 0.12
+    n_test: 240
+  retrain_cadence: quarterly
+
+model_card: ./model_card.md
+
+examples:
+  - label: "Mid-range commuter brake"
+    inputs:
+      peak_temp: 773.15      # 500 degC
+      cycle_count: 5000
+      material: "GG25"
+    expected_hint: "~15,000 cycles"
+
+  - label: "Heavy-duty truck rotor"
+    inputs:
+      peak_temp: 1023.15     # 750 degC
+      cycle_count: 20000
+      material: "GGG70"
+    expected_hint: "~6,000 cycles"

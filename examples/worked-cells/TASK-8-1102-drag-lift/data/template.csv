@@ -1,0 +1,4 @@
+chassis_option,engine_option,transmission_option,clutch_option,cooling_option,intake_option,exhaust_option,fuel_option,brakes_option,cabin_option,electrical_option,oil_option,rops_option,steering_option,suspension_front_option,suspension_rear_option,speed_kmh,yaw_deg,CD,CL,CY,CM,notes
+CHS-A1,ENG-A1,TRN-A1,CLT-A1,COL-A1,INT-A1,EXH-A1,FUL-A1,BRK-A1,CAB-A1,ELE-A1,OIL-A1,ROPS-A1,STR-A1,SFR-A1,SRR-A1,100,0,,,,,
+CHS-A2,ENG-A2,TRN-A2,CLT-A2,COL-A2,INT-A2,EXH-A2,FUL-A2,BRK-A2,CAB-A2,ELE-A2,OIL-A2,ROPS-A2,STR-A2,SFR-A2,SRR-A2,110,5,,,,,
+CHS-A3,ENG-A3,TRN-A3,CLT-A3,COL-A3,INT-A3,EXH-A3,FUL-A3,BRK-A3,NONE,ELE-A3,OIL-A3,NONE,STR-A3,SFR-A3,SRR-A3,90,-3,,,,,

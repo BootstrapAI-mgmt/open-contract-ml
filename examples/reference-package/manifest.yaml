@@ -1,0 +1,141 @@
+# Contract v1 -- reference package manifest.
+#
+# The worked conformant instance of docs/spec/CONTRACT-v1.md. Every hash
+# below is the real sha256 of the file beside it, and every number in
+# validation_report.json was measured, not written. Validate with:
+#
+#     python -m opencontractml.verify check examples/reference-package
+#
+# This is a CONTRACT fixture. The model is a genuine deterministic log-linear
+# fit -- it runs, and its gates really pass -- but it is not a trained surrogate
+# and must not be read as one.
+
+spec_version: "1.0"
+
+id: contract_reference_tmf_v1
+name: "Contract Reference -- Brake Disc TMF Life"
+version: "1.0.0"
+
+owner:
+  team: "CAE-ML-data-pipelines (spec authority)"
+  contact: "open-contract-ml@example.invalid"
+
+domain: thermomechanical_fatigue
+modality: scalar_in_scalar_out
+analysis_type: "fatigue life"
+tags: [reference, contract-v1, contract-fixture]
+
+purpose: "Reference instance of the Contract: predicts brake-disc TMF life so that the contract has something real to be checked against."
+
+when_to_use: |
+  Validating a contract consumer (a registry, a dispatcher, a conformance checker)
+  against a package that is known to be conformant.
+
+when_not_to_use: |
+  Do NOT use for engineering decisions. The fit is a closed-form log-linear
+  regression on a synthetic corpus; it carries no physical validation.
+
+inputs:
+  - name: peak_temp_K
+    type: float
+    units: K
+    canonical_units: K
+    range: [473.15, 1123.15]
+    required: true
+    default: 873.15
+    description: "Peak rotor temperature during the braking cycle."
+  - name: cycle_count
+    type: integer
+    units: cycles
+    range: [10, 100000]
+    required: true
+    description: "Number of braking cycles in the loading history."
+  - name: material
+    type: categorical
+    choices: ["GG20", "GG25", "GGG70"]
+    required: true
+    description: "Rotor material designation."
+
+outputs:
+  - name: life_cycles
+    type: float
+    units: cycles
+    viewer: scalar_with_uq
+
+primary_inputs: [peak_temp_K, material]
+primary_outputs: [life_cycles]
+
+uncertainty:
+  form: predictive_interval
+  per_output:
+    life_cycles:
+      lower_field: life_cycles_lower
+      upper_field: life_cycles_upper
+      level: 0.90
+      method: "split conformal on the absolute log residual"
+  calibration:
+    holdout_size: 108
+    empirical_coverage: 0.9259
+    method: "split conformal, calibration split disjoint from train and test"
+
+invocation:
+  executable: ./predict.py
+  protocol: stdio_json
+  timeout_s: 60
+  expected_runtime_s: 0.154
+  batch_supported: false
+
+lineage:
+  training_data_version: "contract-reference-corpus-1.0"
+  training_date: "2026-09-12"
+  metrics:
+    r2: 0.996077
+    rmse_log: 0.122444
+    n_test: 108
+  retrain_cadence: "not scheduled (contract fixture)"
+
+# --- the contract's two additions to the cae-ml-gui manifest -------------------- #
+
+provenance:
+  artifacts:
+    - path: ./predict.py
+      role: entrypoint
+      sha256: 6842bee2c799ae53e957c101e8e6604154d11338da1126e8194f475e5c5fe3a6
+      bytes: 2429
+    - path: ./model_weights.json
+      role: weights
+      sha256: d2f233407ff908a709cf7abd434d45e3283ad104d4f15070d71a4e590aaac813
+      bytes: 328
+  dataset:
+    sha256: 7bd50c57ac6251e6011f4612ba75da49d4e48d320afbcb923f1aa94b6f140d64
+    n_samples: 600
+    generator_version: "contract-reference-corpus-1.0"
+    solver_version: "none (synthetic closed-form corpus)"
+  code:
+    repo: "BootstrapAI-mgmt/CAE-ML-data-pipelines"
+    commit: 88d9a4f28ad5163857cf611ceb410f04cf0cda7c
+    version: "contract-reference-1.0.0"
+  environment:
+    python: "3.13.3"
+    packages:
+      numpy: "2.4.2"
+
+validation:
+  report: ./validation_report.json
+  overall: PASS
+
+model_card: ./model_card.md
+
+examples:
+  - label: "Mid-range commuter brake"
+    inputs:
+      peak_temp_K: 773.15
+      cycle_count: 5000
+      material: "GG25"
+    expected_hint: "order 1e3 cycles"
+  - label: "Heavy-duty truck rotor"
+    inputs:
+      peak_temp_K: 1023.15
+      cycle_count: 20000
+      material: "GGG70"
+    expected_hint: "order 1e2 cycles"

@@ -1,0 +1,13 @@
+{
+  "fit": "log-linear least squares, closed form (numpy lstsq), no iteration",
+  "intercept": 18.463423,
+  "beta_peak_temp": -0.00936355,
+  "beta_log_cycles": -0.423556,
+  "material_offset": {
+    "GG20": -0.19878,
+    "GG25": 0.0,
+    "GGG70": 0.34138
+  },
+  "conformal_half_width_log": 0.210168,
+  "conformal_nominal": 0.9
+}
