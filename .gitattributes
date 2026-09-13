@@ -14,8 +14,16 @@
 
 * text=auto eol=lf
 
-# The one thing that genuinely wants CRLF. Nothing hashes it.
-*.bat text eol=crlf
+# Batch files conventionally want CRLF, and CAE-ML-data-pipelines' own
+# .gitattributes says `*.bat text eol=crlf` for that reason. That rule is wrong
+# *here*: PROVENANCE.yaml records a content digest per file, and a file whose
+# bytes change on checkout can never match its record -- a fresh clone failed
+# test_recorded_digests_match_what_is_on_disk on exactly this file and nothing
+# else. Byte-exactness is this repository's defining property, so it wins.
+#
+# Checked rather than assumed: the one .bat here is a linear launcher with no
+# labels and no `goto`, which is where LF line endings actually bite cmd.exe.
+*.bat -text
 
 # Belt and braces for the hash-pinned artifacts: `-text` disables newline
 # conversion outright, so these bytes are identical regardless of what any

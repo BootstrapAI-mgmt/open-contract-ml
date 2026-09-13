@@ -103,7 +103,7 @@ source_maps:
 authored:
 - path: .gitattributes
   why: eol=lf, without which a Windows clone breaks the M013 sha256 pins
-  sha256: 82c857e33ee75a6221bda656bab66866ded0fa4e0d6b859c08b7ba9b94183e44
+  sha256: 609f07c3a7510e873281bdab0ef01e451d8ad1f3e3479f5476ddf0ef3cac415f
 - path: .gitignore
   why: build/venv/cache exclusions
   sha256: 38c5a9d7013ee239145bf21a49ac5006eb48f7f5b2f1057a5e6aef6a44fbd44a
