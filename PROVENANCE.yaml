@@ -130,7 +130,7 @@ authored:
   sha256: 4e3a7d365fb83d4ff5b4c9c3cc992b29cddf4e673ae8b81c4b12e5d5775cdad5
 - path: tests/test_provenance.py
   why: the extraction falsifier
-  sha256: 4387e731a22936da21cbd609f693534bd3f52c4ef0c59945af87d899082bc26b
+  sha256: 8c03ba2287d4014a751dcf3a4b3b4fb7e97403268218dd1ad24ae886af4990fe
 extracted:
 - path: src/opencontractml/verify.py
   source_repo: CAE-ML-data-pipelines
@@ -483,8 +483,8 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: examples/TASK-8-1102-drag-lift/data/data-contract.md
   source_sha256: 0ad4bce7cf64ea998aab97b02bd934346e85cecf0643447e6c2e3f8060de8e1f
-  sha256: 0ad4bce7cf64ea998aab97b02bd934346e85cecf0643447e6c2e3f8060de8e1f
-  transformed: false
+  sha256: 958e9e10fdb4cc3a735efb6bfd7edbbe184e67d58252dedb70c81a5fce11944c
+  transformed: true
   map_status: extractable
 - path: examples/worked-cells/TASK-8-1102-drag-lift/data/template.csv
   source_repo: CAE-ML-data-pipelines
@@ -492,8 +492,8 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: examples/TASK-8-1102-drag-lift/data/template.csv
   source_sha256: 744258981cce37b153d258c20d08ec495d44dc492a157a8530d5ada9be3a2a8b
-  sha256: 744258981cce37b153d258c20d08ec495d44dc492a157a8530d5ada9be3a2a8b
-  transformed: false
+  sha256: fd393ddc279f2554fb6b2ae6ce09b62c14787f557c0de2c9da8574354889737e
+  transformed: true
   map_status: extractable
 - path: examples/worked-cells/TASK-8-1102-drag-lift/data/sample-dataset.csv
   source_repo: CAE-ML-data-pipelines
@@ -501,8 +501,8 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: examples/TASK-8-1102-drag-lift/data/sample-dataset.csv
   source_sha256: f6349859ff94ec14042f52c2991a7ab9b1aca2bed4982e2933c2434490940e92
-  sha256: f6349859ff94ec14042f52c2991a7ab9b1aca2bed4982e2933c2434490940e92
-  transformed: false
+  sha256: 2fb64b5b971850c05074f86063f211aad4020f65eb75494cd21bd92732697391
+  transformed: true
   map_status: extractable
 - path: examples/worked-cells/TASK-8-1102-drag-lift/data/synthesize_sample.py
   source_repo: CAE-ML-data-pipelines
@@ -510,8 +510,8 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: examples/TASK-8-1102-drag-lift/data/synthesize_sample.py
   source_sha256: dc3cc4bef5fa83ecdf295dbaee074601e73069a0b2765951cad689a4062099ac
-  sha256: dc3cc4bef5fa83ecdf295dbaee074601e73069a0b2765951cad689a4062099ac
-  transformed: false
+  sha256: d57a7e13acc6192f4c0e808781f99d8f6322ed7f8af065e818a04a7597efbf76
+  transformed: true
   map_status: extractable
 - path: examples/worked-cells/TASK-8-1103-peak-stress/data/data-contract.md
   source_repo: CAE-ML-data-pipelines
@@ -537,8 +537,8 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: examples/TASK-8-1103-peak-stress/data/sample-dataset.csv
   source_sha256: 587e0ffe664fe5a0f5e04c2851a924d4f77363d5a69509763c895dfb765eddaa
-  sha256: 587e0ffe664fe5a0f5e04c2851a924d4f77363d5a69509763c895dfb765eddaa
-  transformed: false
+  sha256: 60b79220acb5ad1959ebc201654cfcbf33e70063aa19e9f77ff94ce4855ef699
+  transformed: true
   map_status: extractable
 - path: examples/worked-cells/TASK-8-1103-peak-stress/data/synthesize_sample.py
   source_repo: CAE-ML-data-pipelines
@@ -573,8 +573,8 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: examples/TASK-8-1104-peak-temperature/data/sample-dataset.csv
   source_sha256: 16835ce8c09f0173e2a94371be0dd773ca52db6282c80ea8cc51f6c00bfaf0c3
-  sha256: 16835ce8c09f0173e2a94371be0dd773ca52db6282c80ea8cc51f6c00bfaf0c3
-  transformed: false
+  sha256: 38c3e02a36c2b85105a97c3b0d486abffcf2159cfc254469ffb337773fd15599
+  transformed: true
   map_status: extractable
 - path: examples/worked-cells/TASK-8-1104-peak-temperature/data/synthesize_sample.py
   source_repo: CAE-ML-data-pipelines
@@ -609,8 +609,8 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: examples/TASK-8-1105-motor-torque-efficiency/data/sample-dataset.csv
   source_sha256: ec2f5fca2cdf3302bb1f3866ff22d1c810866f6428885e1383292de25f6bd78e
-  sha256: ec2f5fca2cdf3302bb1f3866ff22d1c810866f6428885e1383292de25f6bd78e
-  transformed: false
+  sha256: 880db5e0e425d595fa95496130c1e339782c9c5c1eaf21406fdac2df5a790a57
+  transformed: true
   map_status: extractable
 - path: examples/worked-cells/TASK-8-1105-motor-torque-efficiency/data/synthesize_sample.py
   source_repo: CAE-ML-data-pipelines
@@ -807,8 +807,8 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: examples/TASK-8-1102-drag-lift/data/assembly-catalog.md
   source_sha256: c699b6b65ae024d6060f2cefb37e7aa0fba64c88a6e1d91d136191cdfb5a8900
-  sha256: c699b6b65ae024d6060f2cefb37e7aa0fba64c88a6e1d91d136191cdfb5a8900
-  transformed: false
+  sha256: 3a381e33b7c0dc4781df03e1a9930fd344a50013521280695a9926ea58fdaf3b
+  transformed: true
   map_status: extractable
 - path: examples/worked-cells/TASK-9-HT-worked-instance/WALKTHROUGH.md
   source_repo: CAE-ML-data-pipelines
@@ -852,8 +852,8 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: WORKED-INSTANCE-A81-link1-thermal-model-card.md
   source_sha256: 00eaa80c1821260d0f7f002ee3901102fb2d35851ecafe999c7e110797ff4e3c
-  sha256: 00eaa80c1821260d0f7f002ee3901102fb2d35851ecafe999c7e110797ff4e3c
-  transformed: false
+  sha256: bc4b617a2645349db0110a69f3c5e57d6e6d9fc2c90f9a3b80c9768f14e7b362
+  transformed: true
   map_status: extractable
 - path: examples/worked-model-cards/A81-link2-thermo-mech-model-card.md
   source_repo: CAE-ML-data-pipelines
@@ -861,8 +861,8 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: WORKED-INSTANCE-A81-link2-thermo-mech-model-card.md
   source_sha256: 7c348598ec498ac0b922b06102ad634e60755f50b79aa674efb761d0d1b2936a
-  sha256: 7c348598ec498ac0b922b06102ad634e60755f50b79aa674efb761d0d1b2936a
-  transformed: false
+  sha256: 1b2a2d3735b5435ac5d8a77d7f11b6d3496dc05d6073b9ed7ad33a20169bcced
+  transformed: true
   map_status: extractable
 - path: examples/worked-model-cards/A81-link3-fatigue-model-card.md
   source_repo: CAE-ML-data-pipelines
@@ -870,8 +870,8 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: WORKED-INSTANCE-A81-link3-fatigue-model-card.md
   source_sha256: 0332ba302df4b039200fc371cefee1dea65511c6589fe10fc5bba8b902a4735b
-  sha256: 0332ba302df4b039200fc371cefee1dea65511c6589fe10fc5bba8b902a4735b
-  transformed: false
+  sha256: b139b0c21b84bd4e9ae129b1991b7088719cfbc5b331a18ca292f79e145a86d0
+  transformed: true
   map_status: extractable
 - path: tests/test_verify.py
   source_repo: CAE-ML-data-pipelines

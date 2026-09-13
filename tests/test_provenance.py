@@ -167,7 +167,24 @@ def test_authored_allow_list_is_data_not_a_wildcard(provenance):
         assert r.get("why"), f"authored entry {r['path']!r} has no `why`"
 
 
-def test_recorded_digests_match_what_is_on_disk(provenance):
+def _canonical(rel: str) -> bytes | None:
+    """The bytes a consumer gets: the staged blob, falling back to the file.
+
+    These are not always the same. A working tree can drift to CRLF while the
+    blob stays LF -- ``text=auto`` normalises on comparison, so ``git status``
+    reports clean and nothing warns you. Digesting the working tree then
+    produces records that fail for everyone who clones. That happened here to 11
+    files and was only visible because the suite was run inside a fresh clone.
+    """
+    out = subprocess.run(["git", "-C", str(REPO), "cat-file", "blob", f":{rel}"],
+                         capture_output=True)
+    if out.returncode == 0:
+        return out.stdout
+    p = REPO / rel
+    return p.read_bytes() if p.is_file() else None
+
+
+def test_recorded_digests_match_the_committed_content(provenance):
     """Catches a file edited after its record was written."""
     stale = []
     for kind in ("authored", "extracted"):
@@ -175,12 +192,12 @@ def test_recorded_digests_match_what_is_on_disk(provenance):
             declared = r.get("sha256")
             if not declared:
                 continue
-            p = REPO / r["path"]
-            if not p.is_file():
+            content = _canonical(r["path"])
+            if content is None:
                 continue                       # covered by the ghost test
-            actual = hashlib.sha256(p.read_bytes()).hexdigest()
+            actual = hashlib.sha256(content).hexdigest()
             if actual != declared:
-                stale.append(f"{r['path']}: recorded {declared[:16]}..., on disk {actual[:16]}...")
+                stale.append(f"{r['path']}: recorded {declared[:16]}..., committed {actual[:16]}...")
     assert not stale, "PROVENANCE.yaml is stale for:\n  " + "\n  ".join(stale)
 
 
