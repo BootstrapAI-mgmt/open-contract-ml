@@ -329,6 +329,65 @@ def test_internal_shorthand_does_not_leak_into_published_content(tracked):
     )
 
 
+# --------------------------------------------------------------------------- #
+# R5: third-party verbatim text, barred whatever the bucket
+# --------------------------------------------------------------------------- #
+#: Fragments of the third-party excerpts that were found in — and removed from —
+#: the extracted set. Content-based rather than structural, so a copy that was
+#: reflowed, un-indented or pasted inline is still caught.
+THIRD_PARTY_EXCERPTS = {
+    "finite element procedures are at present very widely used":
+        "Bathe, *Finite Element Procedures* (copyrighted textbook), anchor Q-cae-05",
+    "to enable multi-physics analysis and design":
+        "NASA CFD Vision 2030 Study abstract, NASA/CR-2014-218178, anchor Q-cae-03",
+    "when large sample sizes are used":
+        "Jin, Chen & Simpson 2001, anchor Q-surr-15",
+    "has at least one root between":
+        "Kaw 2012 bisection precondition, anchor Q-surr-46",
+    "we quantify the observation that relu":
+        "ReLU asymptotic-linearity paper, anchor Q-surr-34",
+}
+
+_WS = re.compile(r"\s+")
+
+
+def test_no_verbatim_third_party_text(tracked):
+    """Map rule R5, made executable.
+
+    R5: "Third-party content (verbatim quoted text, licensed datasets, vendored
+    snippets) is **never extracted, whatever its bucket**." R5 *overrides*
+    `extract_to`. Five files in the extraction set were correctly bucketed open
+    and correctly marked extractable and were still barred by this rule, because
+    they carry transcribed excerpts from published papers and a textbook.
+
+    That is the failure this whole repository exists to prevent: republishing
+    text the organisation cannot sublicense. It is also the one failure that
+    cannot be undone after the repository goes public.
+    """
+    hits = []
+    for rel in tracked:
+        if rel in SHORTHAND_EXEMPT:
+            continue
+        try:
+            raw = (REPO / rel).read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            continue
+        # collapse whitespace and drop blockquote markers so wrapping and
+        # indentation cannot hide a match
+        flat = _WS.sub(" ", raw.replace(">", " ")).lower()
+        for needle, source in THIRD_PARTY_EXCERPTS.items():
+            if needle in flat:
+                hits.append(f"{rel}: {source}")
+        if "quotes.md" in flat:
+            hits.append(f"{rel}: links or points into QUOTES.md, which is not publishable")
+    assert not hits, (
+        "verbatim third-party text found (map rule R5 -- barred whatever the bucket):\n  "
+        + "\n  ".join(hits)
+        + "\n\nRe-source the quote to its public DOI/arXiv and paraphrase, or remove the "
+          "passage. A correct `extract_to: trust-standard` does not license this content."
+    )
+
+
 def test_no_source_repo_is_wired_in_as_a_git_remote():
     """Seeding fresh is the control that stops encumbered history travelling.
 

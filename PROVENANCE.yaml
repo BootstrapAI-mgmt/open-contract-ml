@@ -121,7 +121,7 @@ authored:
   sha256: c506c9cf3a04aa3bc9198a3466b2b753d885a9a1ba66f1bc24dbde02024d1276
 - path: docs/EXTRACTION.md
   why: what was left behind and why
-  sha256: cbdb6cde3750af74e462ccdaa17f1320005d6cb62b676128d7f968562737875a
+  sha256: 90c48709a439f03db105e9a210a9f7356fdd64de07576dd608206f0a85df116b
 - path: pyproject.toml
   why: packaging metadata for the extracted distribution
   sha256: e8257130d6ac3dc272eac73124b26fe558998f347ccd87928ce65620b43b60af
@@ -130,7 +130,7 @@ authored:
   sha256: 4e3a7d365fb83d4ff5b4c9c3cc992b29cddf4e673ae8b81c4b12e5d5775cdad5
 - path: tests/test_provenance.py
   why: the extraction falsifier
-  sha256: 89617d9eb3266da9bc7817bf6070d85ff507bb7980ed633daa90ac6017ff9d56
+  sha256: 4387e731a22936da21cbd609f693534bd3f52c4ef0c59945af87d899082bc26b
 extracted:
 - path: src/opencontractml/verify.py
   source_repo: CAE-ML-data-pipelines
@@ -432,24 +432,6 @@ extracted:
   sha256: bd987bed51ac5310f905a3ddba990be379593888a152627f8bbff8c7ae4c9499
   transformed: false
   map_status: extractable
-- path: examples/falsifier-benchmark/README.md
-  source_repo: CAE-ML-data-pipelines
-  source_ref: HEAD
-  source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
-  source_path: examples/TASK-9-falsifier-benchmark/README.md
-  source_sha256: 1e949f0b951053264bde0a5aed355237174080410bcbd84d3cf764fbfd8190fa
-  sha256: 1e949f0b951053264bde0a5aed355237174080410bcbd84d3cf764fbfd8190fa
-  transformed: false
-  map_status: extractable
-- path: examples/falsifier-benchmark/WALKTHROUGH.md
-  source_repo: CAE-ML-data-pipelines
-  source_ref: HEAD
-  source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
-  source_path: examples/TASK-9-falsifier-benchmark/WALKTHROUGH.md
-  source_sha256: 9f2ca3f6b0863394dc0cbe518b9661a1ecce16ff877a18e39860ca6d6940d5af
-  sha256: d3b5cdbf38b005a61247d3c489476bc69ab0e2e1115ac1f455584c5571ff4fc4
-  transformed: true
-  map_status: extractable
 - path: examples/falsifier-benchmark/falsifier_benchmark.py
   source_repo: CAE-ML-data-pipelines
   source_ref: HEAD
@@ -495,15 +477,6 @@ extracted:
   sha256: 80d142cfc5feeb0b11d3604a06c39fbe71b3fd2a9abed28ea19b71f1cb2fdbe4
   transformed: false
   map_status: extractable
-- path: examples/worked-cells/TASK-8-1102-drag-lift/WALKTHROUGH.md
-  source_repo: CAE-ML-data-pipelines
-  source_ref: HEAD
-  source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
-  source_path: examples/TASK-8-1102-drag-lift/WALKTHROUGH.md
-  source_sha256: f7456b3f5eb68a2d04dc0faf1b6a37a6dcf1328149223ebcc36aa828e8bdfbb5
-  sha256: f7456b3f5eb68a2d04dc0faf1b6a37a6dcf1328149223ebcc36aa828e8bdfbb5
-  transformed: false
-  map_status: extractable
 - path: examples/worked-cells/TASK-8-1102-drag-lift/data/data-contract.md
   source_repo: CAE-ML-data-pipelines
   source_ref: HEAD
@@ -538,15 +511,6 @@ extracted:
   source_path: examples/TASK-8-1102-drag-lift/data/synthesize_sample.py
   source_sha256: dc3cc4bef5fa83ecdf295dbaee074601e73069a0b2765951cad689a4062099ac
   sha256: dc3cc4bef5fa83ecdf295dbaee074601e73069a0b2765951cad689a4062099ac
-  transformed: false
-  map_status: extractable
-- path: examples/worked-cells/TASK-8-1103-peak-stress/WALKTHROUGH.md
-  source_repo: CAE-ML-data-pipelines
-  source_ref: HEAD
-  source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
-  source_path: examples/TASK-8-1103-peak-stress/WALKTHROUGH.md
-  source_sha256: 75bfb7117991782bc6e995de671965e8f6dc51c4373ada4af5b28e8de119af91
-  sha256: 75bfb7117991782bc6e995de671965e8f6dc51c4373ada4af5b28e8de119af91
   transformed: false
   map_status: extractable
 - path: examples/worked-cells/TASK-8-1103-peak-stress/data/data-contract.md
@@ -585,15 +549,6 @@ extracted:
   sha256: b98afc24ec734deeea5e52c79a814a2d2a3b24fe543bbc2adae918545ae9fd4d
   transformed: false
   map_status: extractable
-- path: examples/worked-cells/TASK-8-1104-peak-temperature/WALKTHROUGH.md
-  source_repo: CAE-ML-data-pipelines
-  source_ref: HEAD
-  source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
-  source_path: examples/TASK-8-1104-peak-temperature/WALKTHROUGH.md
-  source_sha256: ac9f0d845fbfdc04a277e1b59dddf7c9cd94171b4e8f76abc0ff74006a8526af
-  sha256: ac9f0d845fbfdc04a277e1b59dddf7c9cd94171b4e8f76abc0ff74006a8526af
-  transformed: false
-  map_status: extractable
 - path: examples/worked-cells/TASK-8-1104-peak-temperature/data/data-contract.md
   source_repo: CAE-ML-data-pipelines
   source_ref: HEAD
@@ -628,15 +583,6 @@ extracted:
   source_path: examples/TASK-8-1104-peak-temperature/data/synthesize_sample.py
   source_sha256: 4f17b8e1cac7ca7e2286a5ec5a76c7d1bcfa4e7fe338416b75c1335735499525
   sha256: 4f17b8e1cac7ca7e2286a5ec5a76c7d1bcfa4e7fe338416b75c1335735499525
-  transformed: false
-  map_status: extractable
-- path: examples/worked-cells/TASK-8-1105-motor-torque-efficiency/WALKTHROUGH.md
-  source_repo: CAE-ML-data-pipelines
-  source_ref: HEAD
-  source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
-  source_path: examples/TASK-8-1105-motor-torque-efficiency/WALKTHROUGH.md
-  source_sha256: 11c9b6ffa951b58884aee3f5300b953695318736f6a83180336104ebf1c3acb0
-  sha256: 11c9b6ffa951b58884aee3f5300b953695318736f6a83180336104ebf1c3acb0
   transformed: false
   map_status: extractable
 - path: examples/worked-cells/TASK-8-1105-motor-torque-efficiency/data/data-contract.md
@@ -1036,6 +982,41 @@ deferred:
   source_repo: CAE-ML-data-pipelines
   reason: package marker for the three files above; pointless without them.
   remedy: bring across with them.
+- path: examples/TASK-9-falsifier-benchmark/README.md
+  source_repo: CAE-ML-data-pipelines
+  reason: 'R5: carries verbatim excerpts from published third-party papers -- a full sentence attributed
+    to (Jin2001), a definition attributed to Kaw2012 and labelled in-file as ''the legal stand-in anchor
+    for Burden 2.1'', plus two more. Same content class as QUOTES.md, which is the single file the whole
+    extraction exists to avoid republishing.'
+  remedy: re-source each quote to its public DOI/arXiv and paraphrase, or drop the 'Anchors:' passages,
+    then re-extract. The benchmark code, its results and its walkthrough carry no verbatim text and did
+    ship.
+- path: examples/TASK-9-falsifier-benchmark/WALKTHROUGH.md
+  source_repo: CAE-ML-data-pipelines
+  reason: Carries no verbatim text -- its own footer says 'no new quotations were introduced by this document'
+    -- but it points into QUOTES.md, cites 10 Q- anchors that resolve to nothing here, and states that
+    its numbers are transcribed from the sibling README.md, which R5 bars. With the README gone it is
+    no longer coherent on its own, so the benchmark's two prose documents defer as a pair.
+  remedy: re-extract with the README once its quotes are re-sourced.
+- path: examples/TASK-8-1102-drag-lift/WALKTHROUGH.md
+  source_repo: CAE-ML-data-pipelines
+  reason: 'R5: 14-line blockquote of the NASA CFD Vision 2030 Study abstract (NASA/CR-2014-218178), which
+    the file itself labels ''quote block Q-cae-03 in QUOTES.md''.'
+  remedy: NASA/CR reports are US-government works and likely re-usable, but that is a licence judgment,
+    not an extraction judgment. Clear it, then re-extract.
+- path: examples/TASK-8-1103-peak-stress/WALKTHROUGH.md
+  source_repo: CAE-ML-data-pipelines
+  reason: 'R5: 8-line verbatim blockquote from Bathe, *Finite Element Procedures* (a copyrighted textbook),
+    carrying a relative markdown link into QUOTES.md.'
+  remedy: paraphrase the framing and cite Bathe normally, then re-extract.
+- path: examples/TASK-8-1104-peak-temperature/WALKTHROUGH.md
+  source_repo: CAE-ML-data-pipelines
+  reason: 'R5: same Bathe textbook blockquote and QUOTES.md link as 1103.'
+  remedy: same as 1103.
+- path: examples/TASK-8-1105-motor-torque-efficiency/WALKTHROUGH.md
+  source_repo: CAE-ML-data-pipelines
+  reason: 'R5: same Bathe textbook blockquote and QUOTES.md link as 1103.'
+  remedy: same as 1103.
 - path: .github/workflows/validate-model-package.yml
   source_repo: cae-ml-gui
   reason: the EXTRACT brief's anti-scope forbids adding CI workflows in this pass, and EXTRACTION-MANIFEST

@@ -56,6 +56,45 @@ The reconciliation test asserts that shipped ∪ deferred covers every extractab
 file in each source map exactly — so a silent drop cannot pass for a clean
 extraction.
 
+**Six documents carrying verbatim third-party text.** These were the single most
+consequential finding of the extraction, and they are worth reading carefully
+because the failure they represent is the one this repository exists to prevent.
+
+All six are bucketed `open` and carry `extract_to: trust-standard`. That
+bucketing is correct — they are documentation of open components. They are
+nonetheless barred, because the map carries a rule that **overrides the bucket**:
+
+> **R5.** Third-party content (verbatim quoted text, licensed datasets, vendored
+> snippets) is never extracted, *whatever its bucket*.
+
+What they contain:
+
+| File | Content |
+|---|---|
+| `TASK-8-1103`, `TASK-8-1104`, `TASK-8-1105` walkthroughs | an 8-line verbatim blockquote from Bathe, *Finite Element Procedures* — a copyrighted textbook — each carrying a relative markdown link into `QUOTES.md` |
+| `TASK-8-1102-drag-lift/WALKTHROUGH.md` | a 14-line verbatim blockquote of the NASA CFD Vision 2030 Study abstract, labelled in-file as "quote block `Q-cae-03` in `QUOTES.md`" |
+| `TASK-9-falsifier-benchmark/README.md` | verbatim sentences attributed to (Jin2001) and to Kaw2012 — the latter annotated in-file as "the legal stand-in anchor for Burden §2.1" — plus two more |
+| `TASK-9-falsifier-benchmark/WALKTHROUGH.md` | no verbatim text, but it points into `QUOTES.md` and its numbers are transcribed from the README above; incoherent once that is gone, so the pair defers together |
+
+Excluding `QUOTES.md` itself was never sufficient. Roughly 460 verbatim spans
+were known to sit in two *files*, and the response was to exclude those files —
+but D18 opened a set of worked cells and a benchmark whose prose had
+**transcribed excerpts inlined into it**, each pointing back at `QUOTES.md` by
+anchor. A path-based exclusion cannot see that. It took a content scan.
+
+`tests/test_no_verbatim_third_party_text` now encodes each excerpt as a
+whitespace-insensitive fragment, so a copy that is reflowed, un-indented or
+pasted inline still fails the build.
+
+**A related measurement, because the existing figure is badly wrong.** The
+extraction manifest records the dangling-citation hazard as five `Q-` anchors
+across three worked model cards. Measured across the post-D18 extraction set it
+is **129 anchor references, 32 distinct anchors, across 21 files.** The manifest's
+figure predates D18 and nobody re-measured after the worked cells and the
+benchmark were opened. The remaining anchors (after the six removals above) are
+citation keys rather than quoted text — a dangling-reference problem, not an R5
+problem — but every one resolves to a file that will not be published.
+
 **The corpus-gate test suite** (`test_corpus_gate.py`, `test_model_gate.py`,
 their `conftest.py` and `__init__.py`). Every test in both files takes a fixture
 that loads `rules/pv-c2.physics_rules.json`, a CLOSED calibrated rules pack, and
@@ -84,10 +123,12 @@ Stated plainly rather than left to be discovered.
    and hand off to the gate engine, or to ship a minimal open reference trainer.
    **Until it is fixed, do not read the worked cells as runnable end to end.**
 
-2. **The three worked model cards cite anchors into `QUOTES.md`**
-   (`examples/worked-model-cards/`, five `Q-` anchors across the three). Those
-   anchors resolve to nothing here. Each needs re-sourcing to its public
-   DOI/arXiv reference, or dropping, before publication.
+2. **Dangling `Q-` citation anchors, repo-wide.** 15 shipped files still carry
+   74 citation keys into `QUOTES.md`, which is not here and will not be published.
+   These are keys, not quoted text — the files carrying quoted text were removed
+   — but they resolve to nothing. Each needs re-sourcing to its public DOI/arXiv
+   reference, or dropping, before publication. See the measurement above: the
+   real count is an order of magnitude larger than the manifest records.
 
 3. **`safeload.py` ships without its test suite.** Its upstream tests are bound
    to `physics-surrogates` internals (`physsur.cloud`, `physsur.mesh`,
