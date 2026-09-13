@@ -288,6 +288,47 @@ def test_forbidden_content_is_absent_from_every_recorded_source(pattern, why, pr
     assert not hits, f"extracted from a forbidden source ({why}):\n  " + "\n  ".join(hits)
 
 
+#: The files allowed to say "spine".
+#:
+#: PROVENANCE.yaml must name the upstream branch and paths accurately --
+#: renaming them there would falsify the record. docs/EXTRACTION.md is where the
+#: rename is explained. This file is the detector, and a detector unavoidably
+#: contains the string it looks for; the cost is that a genuine leak *inside
+#: this file* would not be caught, which is an acceptable blind spot for a file
+#: whose entire content is this check.
+SHORTHAND_EXEMPT = {"PROVENANCE.yaml", "docs/EXTRACTION.md", "tests/test_provenance.py"}
+
+
+def test_internal_shorthand_does_not_leak_into_published_content(tracked):
+    """`spine` was the internal name; `contract` is the public one.
+
+    A rename that is done once and never asserted comes back the first time
+    somebody copies a paragraph out of an old document, so this is a standing
+    gate rather than a one-off sweep.
+    """
+    rx = re.compile(r"spine", re.IGNORECASE)
+    hits = []
+    for rel in tracked:
+        if rel in SHORTHAND_EXEMPT:
+            continue
+        if rx.search(rel):
+            hits.append(f"{rel}: in the path itself")
+            continue
+        p = REPO / rel
+        try:
+            text = p.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            continue
+        for i, line in enumerate(text.splitlines(), 1):
+            if rx.search(line):
+                hits.append(f"{rel}:{i}: {line.strip()[:90]}")
+    assert not hits, (
+        "internal shorthand 'spine' leaked into published content (%d hit(s)):\n  %s\n\n"
+        "Rename to 'contract'. If a hit is a deliberate historical note, add its "
+        "file to SHORTHAND_EXEMPT and say why." % (len(hits), "\n  ".join(hits[:25]))
+    )
+
+
 def test_no_source_repo_is_wired_in_as_a_git_remote():
     """Seeding fresh is the control that stops encumbered history travelling.
 

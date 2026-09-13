@@ -121,7 +121,7 @@ authored:
   sha256: c506c9cf3a04aa3bc9198a3466b2b753d885a9a1ba66f1bc24dbde02024d1276
 - path: docs/EXTRACTION.md
   why: what was left behind and why
-  sha256: 66429652688f1a0aed38748778b600a7188502cffd78b39bb62998f28440a4eb
+  sha256: cbdb6cde3750af74e462ccdaa17f1320005d6cb62b676128d7f968562737875a
 - path: pyproject.toml
   why: packaging metadata for the extracted distribution
   sha256: e8257130d6ac3dc272eac73124b26fe558998f347ccd87928ce65620b43b60af
@@ -130,7 +130,7 @@ authored:
   sha256: 4e3a7d365fb83d4ff5b4c9c3cc992b29cddf4e673ae8b81c4b12e5d5775cdad5
 - path: tests/test_provenance.py
   why: the extraction falsifier
-  sha256: 37325899b22d9247eb3a9538db8823d4809bec68babd93caf4707f103b83b386
+  sha256: 89617d9eb3266da9bc7817bf6070d85ff507bb7980ed633daa90ac6017ff9d56
 extracted:
 - path: src/opencontractml/verify.py
   source_repo: CAE-ML-data-pipelines
