@@ -166,12 +166,15 @@ these are carried here so they are not lost.
 import, schema `$id`, identifier, CLI string and the `schema_version` key were
 renamed — 177 occurrences across 13 files.
 
-`grep -ri spine` over this tree returns hits in exactly two files, and both are
-deliberate: `PROVENANCE.yaml`, whose `source_ref` and `source_path` fields must
-name the upstream branch and paths accurately — renaming them would falsify the
-provenance record — and this document, which explains the rename.
-`test_internal_shorthand_does_not_leak_into_published_content` asserts that,
-so the rename cannot quietly regress.
+`grep -ri spine` over this tree returns hits in exactly three files, and all
+three are deliberate: `PROVENANCE.yaml`, whose `source_ref` and `source_path`
+fields must name the upstream branch and paths accurately — renaming them would
+falsify the provenance record; this document, which explains the rename; and
+`tests/test_provenance.py`, the detector itself, which unavoidably contains the
+string it searches for.
+`test_internal_shorthand_does_not_leak_into_published_content` asserts that —
+its `SHORTHAND_EXEMPT` set is exactly those three files — so the rename cannot
+quietly regress.
 
 The rename shortened `examples/reference-package/predict.py` by six bytes, which
 made the reference manifest's `sha256`/`bytes` pin stale, and `M013` caught it.
