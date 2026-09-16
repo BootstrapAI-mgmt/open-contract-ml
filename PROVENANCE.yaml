@@ -121,7 +121,7 @@ authored:
   sha256: c506c9cf3a04aa3bc9198a3466b2b753d885a9a1ba66f1bc24dbde02024d1276
 - path: docs/EXTRACTION.md
   why: what was left behind and why
-  sha256: 90c48709a439f03db105e9a210a9f7356fdd64de07576dd608206f0a85df116b
+  sha256: 7385d6ccf925e3762fa1682d09341037a9b5ee536b3456e44bc1b359761ee295
 - path: pyproject.toml
   why: packaging metadata for the extracted distribution
   sha256: e8257130d6ac3dc272eac73124b26fe558998f347ccd87928ce65620b43b60af
