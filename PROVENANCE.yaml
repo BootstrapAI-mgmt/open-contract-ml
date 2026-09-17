@@ -104,6 +104,11 @@ authored:
 - path: .gitattributes
   why: eol=lf, without which a Windows clone breaks the M013 sha256 pins
   sha256: 609f07c3a7510e873281bdab0ef01e451d8ad1f3e3479f5476ddf0ef3cac415f
+- path: .github/workflows/ci.yml
+  why: the build gate; runs the suite on 3.11/3.12/3.13 and on Windows, then builds
+    the wheel and drives the installed checker from outside the checkout so that a
+    packaging fault cannot hide behind a green source-tree run
+  sha256: d5c3a6304370657f77496f934e8bbdc75bf2d8fdf9de5b93f273d599bd51671d
 - path: .gitignore
   why: build/venv/cache exclusions
   sha256: 38c5a9d7013ee239145bf21a49ac5006eb48f7f5b2f1057a5e6aef6a44fbd44a
@@ -118,7 +123,7 @@ authored:
   sha256: null
 - path: README.md
   why: what the Contract is and how to verify a package
-  sha256: a87bddbb6101fcc4dd88a7e91d97a1818975df52152d3515669411d1a624fadc
+  sha256: aec8bd1ebe4a4b4735ae478917042db77776ae93d210324b33ffb576f365ad76
 - path: docs/EXTRACTION.md
   why: what was left behind and why
   sha256: f950df8c22cfacb929dae8df8a6f02788ae007d824fe16fd060307ccf75f0d89
@@ -148,7 +153,7 @@ authored:
   sha256: 3e762f473d10f1ac77e4693100ba2a4ba557252d2ab266145fd2ac884d1289bc
 - path: pyproject.toml
   why: packaging metadata for the extracted distribution
-  sha256: e8257130d6ac3dc272eac73124b26fe558998f347ccd87928ce65620b43b60af
+  sha256: b423aed11a9c39f9204b2afb4c595ab47be233c13b0d02b67c868b78b8e1a634
 - path: src/opencontractml/__init__.py
   why: package root; lazily re-exports the checker
   sha256: 4e3a7d365fb83d4ff5b4c9c3cc992b29cddf4e673ae8b81c4b12e5d5775cdad5

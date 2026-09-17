@@ -1,0 +1,256 @@
+# The gate that decides whether this repository still keeps its own promises.
+#
+# This repository ships a standard and a checker for it, and its central claim is
+# that a gate is only worth something if it can be seen failing. The same applies
+# to the build: until this file existed, every statement about the suite passing
+# was a statement about one Windows machine with a particular set of packages on
+# it. Three of the things that suite checks -- the provenance falsifier, the
+# link-integrity gate and the M013 hash pins -- are exactly the kind of check that
+# passes locally for reasons that do not survive a clean clone, so they run here.
+#
+# Two jobs, because they answer different questions:
+#
+#   tests    does the source tree pass on every interpreter it claims to support,
+#            on Linux and on Windows?
+#   package  does the artifact a consumer actually installs work, from outside
+#            this checkout, with none of this checkout on sys.path?
+#
+# The second exists because `pytest` in the source tree cannot detect a packaging
+# mistake. The schemas travel inside the wheel via `[tool.setuptools.package-data]`
+# and are resolved with `importlib.resources`; if that wiring broke, the source
+# tree would keep passing and every `pip install` would be broken. So the wheel is
+# built, installed into an empty virtualenv, and driven from a directory that is
+# not this repository.
+#
+# Deliberately not here: any publishing step. Releasing is an owner act, and a
+# workflow that can push to PyPI is a workflow that can push to PyPI by accident.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # ------------------------------------------------------------------------- #
+  # The suite, on every interpreter the package claims and on both platforms
+  # that have ever run it.
+  # ------------------------------------------------------------------------- #
+  tests:
+    name: tests (py${{ matrix.python-version }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # Without this, the first red cell cancels the others and hides whether a
+      # failure is version-specific or universal -- which is the single most
+      # useful thing a matrix can tell you.
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        # The floor is `requires-python = ">=3.11"` and it is real, not
+        # aspirational: `opencontractml.manifest` imports `enum.StrEnum`, which
+        # does not exist before 3.11. Measured on CPython 3.10.19 -- pip refuses
+        # with "requires a different Python: 3.10.19 not in '>=3.11'", and
+        # bypassing the install with PYTHONPATH fails with "cannot import name
+        # 'StrEnum' from 'enum'". Lowering this line alone would not buy 3.10.
+        python-version: ["3.11", "3.12", "3.13"]
+        include:
+          # Windows is not decoration. This repository's `.gitattributes` exists
+          # because a CRLF checkout rewrites examples/reference-package/predict.py
+          # from 2429 to 2495 bytes and all four M013 pins fail. That regression
+          # is invisible on Linux, so the platform where it happens is tested.
+          - os: windows-latest
+            python-version: "3.13"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # `[dev]` pulls pytest, build and `[gate]` (numpy/pandas/scikit-learn).
+      # Installing the declared extra rather than a hand-listed set means a
+      # broken extra is a build failure instead of a surprise for the first
+      # contributor who trusts the README.
+      - name: Install the package and its declared dev extra
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      # Cheap, and it has already earned its place: a user-level editable install
+      # of a *different* checkout silently shadowed this one on a developer
+      # machine, so a before/after comparison was run against the wrong files.
+      # Printing the resolved path makes that class of mistake visible in the log
+      # instead of inferred from a suspiciously green run.
+      - name: Show which opencontractml is under test
+        run: python -c "import opencontractml.verify as v; print(v.__file__)"
+
+      # Two tests fail for reasons that predate this workflow, in a file this
+      # change does not touch. They are named here, out loud, rather than left to
+      # make the badge red forever or quietly skipped with `-k`:
+      #
+      #   test_unqualified_cython_loss_module_needs_sklearn_to_own_it
+      #     asserts that importing sklearn.ensemble leaves a bare `_loss` key in
+      #     sys.modules. True up to scikit-learn 1.8.0, false from 1.9.0.
+      #     `[gate]` asks for `scikit-learn>=1.3` with no ceiling, so every fresh
+      #     install resolves 1.9.1 and the test fails on all four cells. It
+      #     passes on a developer machine that installed its extras months ago,
+      #     which is why nothing noticed.
+      #
+      #   test_hostile_bundle_is_live_under_plain_pickle_load[subprocess.call]
+      #     builds its hostile payload as `cmd /c ...`. There is no `cmd` on
+      #     Linux, so Popen raises FileNotFoundError and the anti-vacuity guard
+      #     fails. A defect in the test's payload, not in the guard it exercises;
+      #     Windows is unaffected, so it is excluded only off Windows.
+      #
+      # Fixing either means editing tests/, which this branch does not own.
+      - name: Name the pre-existing failures this workflow does not own
+        shell: bash
+        run: |
+          {
+            echo 'KNOWN_BROKEN<<KNOWN_BROKEN_EOF'
+            echo 'tests/test_safe_artifact.py::test_unqualified_cython_loss_module_needs_sklearn_to_own_it'
+            if [ "$RUNNER_OS" != 'Windows' ]; then
+              echo 'tests/test_safe_artifact.py::test_hostile_bundle_is_live_under_plain_pickle_load[subprocess.call]'
+            fi
+            echo 'KNOWN_BROKEN_EOF'
+          } >> "$GITHUB_ENV"
+
+      # `-rs` because two checks in this suite skip rather than fail when what
+      # they need is absent (the deep source-digest verification needs the
+      # private source worktrees, which are not on a runner). A skip that is not
+      # printed is indistinguishable from a pass, and this repository's whole
+      # argument is that those are different things.
+      - name: Run the suite
+        shell: bash
+        run: |
+          args=() names=()
+          while IFS= read -r t; do
+            [ -z "$t" ] && continue
+            names+=( "$t" )
+            args+=( --deselect "$t" )
+          done <<< "$KNOWN_BROKEN"
+          echo "deselecting ${#names[@]} known-broken test(s):"
+          printf '  %s\n' "${names[@]}"
+          python -m pytest -q -rs "${args[@]}"
+
+      # The ratchet, and the reason the step above is a record rather than an
+      # amnesty. tests/test_link_integrity.py does exactly this to KNOWN_DANGLING:
+      # an entry that starts passing fails the build, so the list can only ever
+      # shrink and cannot quietly become the place new breakage is hidden.
+      - name: Every excluded test must still be failing
+        shell: bash
+        run: |
+          fixed=() stale=() checked=0
+          while IFS= read -r t; do
+            [ -z "$t" ] && continue
+            checked=$(( checked + 1 ))
+            # `< /dev/null` so a test that spawns a subprocess cannot swallow the
+            # here-string this loop is reading its work list from.
+            python -m pytest -q --no-header -p no:cacheprovider "$t" > /dev/null 2>&1 < /dev/null && rc=0 || rc=$?
+            case "$rc" in
+              0) fixed+=( "$t" ) ;;
+              1) echo "still failing, as recorded: $t" ;;
+              *) stale+=( "$t (pytest exit $rc)" ) ;;
+            esac
+          done <<< "$KNOWN_BROKEN"
+
+          for t in "${stale[@]}"; do
+            echo "::error::known-broken entry does not name a collectable test: $t"
+          done
+          for t in "${fixed[@]}"; do
+            echo "::error::known-broken entry now passes -- delete it from .github/workflows/ci.yml: $t"
+          done
+
+          # `exit 1` explicitly, not `[ x ] && [ y ]`. Measured: under `bash -e`,
+          # a false first element of an && list short-circuits and does *not*
+          # terminate the script, so the version that ended on the test expression
+          # printed both ::error:: lines and still exited 0. A ratchet that cannot
+          # fail is the exact thing this repository exists to argue against.
+          if [ ${#fixed[@]} -ne 0 ] || [ ${#stale[@]} -ne 0 ]; then
+            exit 1
+          fi
+          echo "all $checked recorded failure(s) are still failing"
+
+  # ------------------------------------------------------------------------- #
+  # The artifact, exercised the way a consumer meets it.
+  # ------------------------------------------------------------------------- #
+  package:
+    name: wheel, metadata, and the checker run from outside the checkout
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the build toolchain
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build twine
+
+      - name: Build the sdist and the wheel
+        run: python -m build
+
+      # Catches the metadata faults that only surface at upload time: a README
+      # that does not render, a bad long-description content type, a malformed
+      # classifier. Finding those during a release is finding them too late.
+      - name: Check the distribution metadata
+        run: python -m twine check dist/*
+
+      # An empty virtualenv outside the workspace. Nothing from this checkout is
+      # importable from it, so anything the checker finds it must have carried
+      # inside the wheel.
+      - name: Install the wheel into a clean environment
+        run: |
+          python -m venv "$RUNNER_TEMP/clean"
+          "$RUNNER_TEMP/clean/bin/python" -m pip install --upgrade pip
+          "$RUNNER_TEMP/clean/bin/python" -m pip install dist/*.whl
+
+      # `working-directory` is the point of this step, not a detail: run from the
+      # repository root and a checker that resolved its schemas relative to the
+      # current directory would pass and still be broken for every real user.
+      - name: A conformant package passes, checked from outside the checkout
+        working-directory: ${{ runner.temp }}
+        run: |
+          "$RUNNER_TEMP/clean/bin/python" -c "import opencontractml.verify as v; print('checker under test:', v.__file__)"
+          "$RUNNER_TEMP/clean/bin/open-contract-ml" check "$GITHUB_WORKSPACE/examples/reference-package"
+
+      # The README documents this exact demonstration. If it ever stopped being
+      # true, the first thing a reader tries would fail in front of them -- so it
+      # is asserted rather than trusted, on both the exit code and the rule id.
+      #
+      # The untampered copy is checked first on purpose. Without it, a copy step
+      # that itself corrupted the package would produce the same red result and
+      # look like a successful demonstration.
+      - name: One appended byte must fail the package with M013
+        working-directory: ${{ runner.temp }}
+        run: |
+          CHECK="$RUNNER_TEMP/clean/bin/open-contract-ml"
+          cp -r "$GITHUB_WORKSPACE/examples/reference-package" "$RUNNER_TEMP/tampered"
+
+          echo "--- the untouched copy must still pass ---"
+          "$CHECK" check "$RUNNER_TEMP/tampered"
+
+          echo "--- now append one line to the pinned entrypoint ---"
+          printf '# tampered\n' >> "$RUNNER_TEMP/tampered/predict.py"
+          out=$("$CHECK" check "$RUNNER_TEMP/tampered" 2>&1) && rc=0 || rc=$?
+          echo "$out"
+          echo "exit code: $rc"
+
+          if [ "$rc" -ne 1 ]; then
+            echo "::error::a tampered package was not rejected (exit $rc, expected 1)"
+            exit 1
+          fi
+          case "$out" in
+            *M013*) echo "OK: rejected with M013, as README.md documents" ;;
+            *) echo "::error::rejected, but not by M013 -- the hash pin did not fire"
+               exit 1 ;;
+          esac

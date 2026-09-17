@@ -54,3 +54,16 @@ opencontractml = ["schemas/**/*.json", "templates/*.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Test *this* checkout's src/, not whatever `opencontractml` happens to be
+# installed. Measured, not hypothetical: with a user-level editable install of a
+# second checkout on sys.path, `python -m pytest` in this tree imported that
+# other tree's verify.py, so a before/after comparison ran against files nobody
+# had edited and reported green. pytest prepends these entries to sys.path, so
+# the working tree wins over site-packages.
+#
+# This does not weaken the installed-package intent described in
+# docs/EXTRACTION.md: tests/test_verify.py still resolves the schemas through
+# `importlib.resources`, which finds them under src/ here and inside the wheel
+# once installed. CI exercises the installed path separately -- the `package`
+# job in .github/workflows/ci.yml runs the checker from outside the checkout.
+pythonpath = ["src"]

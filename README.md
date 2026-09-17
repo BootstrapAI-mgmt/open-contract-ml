@@ -1,5 +1,7 @@
 # open-contract-ml
 
+[![CI](https://github.com/BootstrapAI-mgmt/open-contract-ml/actions/workflows/ci.yml/badge.svg)](https://github.com/BootstrapAI-mgmt/open-contract-ml/actions/workflows/ci.yml)
+
 **The Contract v1** — a model-card / manifest / provenance / validation standard
 for engineering ML, and the checker that decides whether a given package obeys it.
 
