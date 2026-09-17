@@ -169,8 +169,8 @@ Catalog anchors:
   regression flavor (warpage / shrinkage / peak-stress / weld-line-
   strength scalars) is named in TASK-1 §6 A.10.2 Trainable-ML-
   architectures as the deployed industrial pattern; GBM / MLP are the
-  listed tabular architectures ([Chen2016] / [Ke2017] / [Goodfellow2016];
-  Q-ml-tab-02 / Q-ml-tab-02b / Q-ml-tab-03 / Q-ml-tab-01). The fibre-
+  listed tabular architectures ([Chen2016] / [Ke2017] /
+  [Goodfellow2016]). The fibre-
   orientation-tensor *field* prediction flavor is a different bucket and
   a different architecture (3-D CNN / GNN — research-active, not this
   tabular surrogate).
@@ -193,3 +193,7 @@ process). TASK-8-1101 (bracket fatigue-life) is the arc's first B1 and
 demonstrates a log-scale target. TASK-8-1107 / TASK-8-1401 (pump
 operating-point / performance-curve) demonstrate the B1 / B7 split for a
 downstream-question shift. All are worth reading alongside this example.
+
+---
+
+*Citations of the form `[Key]` resolve to [`docs/REFERENCES.md`](../../../../docs/REFERENCES.md).*

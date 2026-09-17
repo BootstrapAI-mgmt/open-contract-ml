@@ -409,6 +409,11 @@ entrypoint and compares against the in-process fit.
    single hole in v1.0 and it is on the critical path for the physsur adoption.
 4. **No signature or attestation.** `provenance` proves the bytes have not changed since
    packaging. It does not prove who packaged them. Signing is a v2 concern.
+   [PROVENANCE-SIGNING.md](PROVENANCE-SIGNING.md) designs an optional
+   OpenSSF-Model-Signing sidecar and concludes the *field* can land additively at
+   1.1 while *enforcement* stays a v2 concern. It also records what `provenance`
+   does not cover: the manifest, the card and the validation report are not
+   hashed by anything, so their contents are not tamper-evident.
 5. **The checker's front-matter parser accepts only flat scalars.** This is stated as a
    spec rule (4.1) rather than hidden as an implementation limit, but a future card
    needing structured front-matter would need both changed together.

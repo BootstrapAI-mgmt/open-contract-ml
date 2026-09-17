@@ -29,10 +29,10 @@
 | CAE analysis | A.8.1 — Fatigue: Stress-Life and Strain-Life (`tasks/TASK-1-cae-analysis-catalog.md` §6) |
 | Architecture bucket | B1 — Tabular surrogate over integral / scalar outputs |
 | Architecture family | Two-model B1: GBM (primary) + GP (UQ companion) |
-| Reference papers | Chen & Guestrin 2016, *XGBoost: A Scalable Tree Boosting System* (KDD); Ke et al. 2017, *LightGBM* (NeurIPS); Rasmussen & Williams 2006, *Gaussian Processes for Machine Learning* (textbook); Q-cae-08 [Miner1945] verbatim cumulative-damage rule |
-| Survey-level anchor | [Miner1945] / Q-cae-08 — log-life target framing and Miner-scatter motivation |
+| Reference papers | Chen & Guestrin 2016, *XGBoost: A Scalable Tree Boosting System* (KDD); Ke et al. 2017, *LightGBM* (NeurIPS); Rasmussen & Williams 2006, *Gaussian Processes for Machine Learning* (textbook); [Miner1945] cumulative-damage rule |
+| Survey-level anchor | [Miner1945] — log-life target framing and Miner-scatter motivation |
 | Contract sheet | `WORKED-INSTANCE-A81-link3-fatigue-contract.md` |
-| Methodology anchors (physics) | [Stephens2001] (Marin factors, mean-stress correction families, multiaxial criteria); [Suresh1998] (mechanism framing); [Paris1963] / Q-cae-07 (crack-growth boundary) |
+| Methodology anchors (physics) | [Stephens2001] (Marin factors, mean-stress correction families, multiaxial criteria); [Suresh1998] (mechanism framing); [Paris1963] (crack-growth boundary) |
 
 ---
 
@@ -109,7 +109,7 @@ This pair structure is anchored to TASK-3 §6 A.8.1 mapping rows (GBM as product
 | Kernel composition | k(x,x') = k_cont · k_cat (separable) | |
 | Mean function | linear in continuous features | Stabilizes posterior away from training data |
 | Noise model | iid Gaussian, learned variance σ²_noise | |
-| Noise floor σ²_floor | (log10(2.0) − log10(0.6))²/4 ≈ 0.072 (so σ_floor ≈ 0.27) | Anchored to Miner-scatter Q-cae-08 |
+| Noise floor σ²_floor | (log10(2.0) − log10(0.6))²/4 ≈ 0.072 (so σ_floor ≈ 0.27) | Anchored to the [Miner1945] Miner-scatter range |
 | Optimizer (kernel hyperparam) | L-BFGS-B with multiple restarts | Standard for GP marginal-likelihood |
 | Inducing points | None (exact GP up to ~3000 rows; switch to sparse-GP / SVGP if corpus grows) | |
 | Inference latency | ~10 ms per query (full posterior) on CPU | Linear in corpus size for prediction |
@@ -169,7 +169,7 @@ where
   θ = (length-scales, per-categorical-block variances, σ²_noise, mean coefficients)
 
 Constrained optimization: σ²_noise floor anchored to (log10(2.0) − log10(0.6))²/4
-                          per Q-cae-08 Miner-scatter range.
+                          per the [Miner1945] Miner-scatter range.
 ```
 
 ### 5.3 Combined-output assembly (deterministic, no learnable parameters)
@@ -199,7 +199,7 @@ The chain-composite `L_endpoint` term — special-case treatment because GBM doe
 | Method | Two-source: GBM deep ensemble for epistemic; GP for combined epistemic + aleatoric |
 | Per-hot-spot output | (log10_N_f_gbm_mean, log10_N_f_gbm_sigma, log10_N_f_gp_mean, log10_N_f_gp_sigma, p5_log10_N_f) |
 | Decomposition | aleatoric_sigma_log10 (Miner-scatter floor) + epistemic_sigma_log10 (training coverage) — exposed separately in the output dataclass per contract §4.2 |
-| Aleatoric floor | σ²_floor = (log10(2.0) − log10(0.6))²/4 ≈ 0.072² per Q-cae-08 Miner-scatter range |
+| Aleatoric floor | σ²_floor = (log10(2.0) − log10(0.6))²/4 ≈ 0.072² per the [Miner1945] Miner-scatter range |
 | Calibration check | Hold-out coverage at 95 % prediction interval should be ≥ 95 % AND ≤ 99 %. Over-coverage means UQ is too conservative |
 | Long-life extrapolation | log10_N_f_gp_mean > 7 raises explicit `long_life_extrapolation_flag` per contract §4.3 — coupon endurance limit data only, no component-level test cycles |
 | Cross-source consistency check | If log10_N_f_gbm_mean and log10_N_f_gp_mean differ by > 0.5 log-decades, raise an internal warning (one of the two is mis-calibrated for this row) |
@@ -225,9 +225,9 @@ The chain-composite `L_endpoint` term — special-case treatment because GBM doe
 |---|---|---|
 | GBM family choice | **Anchored** | TASK-3 §6 A.8.1 + TASK-4 §5 B1 roster; deck slide 19 deployment-evidence |
 | GP companion for calibrated UQ | **Anchored** | TASK-4 §5 B1 GP rows (calibrated-UQ certification tier) |
-| log10(N_f) target | **Anchored** | Q-cae-08 [Miner1945] |
+| log10(N_f) target | **Anchored** | [Miner1945] |
 | Marin factor product feature | **Anchored** | [Stephens2001] |
-| Aleatoric noise floor formula | **Anchored** | Q-cae-08 Miner-scatter range |
+| Aleatoric noise floor formula | **Anchored** | [Miner1945] Miner-scatter range |
 | Mean-stress correction enumeration | **Anchored** | [Stephens2001] |
 | GBM hyperparameters (num_leaves, lr, regularization) | **Illustrative** | Standard LightGBM defaults |
 | GP kernel choice (Matérn 5/2 ARD + per-categorical-axis blocks) | **Illustrative (informed)** | Standard engineering-surrogate default per Rasmussen2006 |
@@ -240,3 +240,7 @@ The chain-composite `L_endpoint` term — special-case treatment because GBM doe
 ## 9. Open questions
 
 None at v0.1. The format probe surfaced five contract-sheet questions (two-model architecture granularity, aleatoric component disclosure, categorical-heavy schema, terminal-link asymmetry, deployment-maturity disclosure rows) — those are flagged in contract §10. This model card surfaces no new format questions: the v0.3 link-1 + v0.1 link-2 model card structure (identity → topology → hyperparameters → training → loss → UQ → alternatives → disclosure) extrapolates to two-model B1 cleanly.
+
+---
+
+*Citations of the form `[Key]` resolve to [`docs/REFERENCES.md`](../../docs/REFERENCES.md).*

@@ -104,7 +104,7 @@ examples' "use the same mesh-refinement policy across all rows" rule.
    workflow; [Bergman2017] is the textbook anchor for the
    conduction-equation derivations and the Biot / Fourier dimensionless
    framework, [Patankar1980] for the FV/FE discretisation family, and
-   [Bathe2014] / Q-cae-05 for the Galerkin-FE machinery shared with
+   [Bathe2014] for the Galerkin-FE machinery shared with
    structural FEA).
 2. **One row per FE run.** Each row is one completed steady-state thermal
    solve: the 7 input parameters and the 768 field values the run
@@ -210,7 +210,7 @@ Catalog anchors:
 - TASK-1 section 6 A.3.1 -- FEA Thermal Steady governing equations /
   fidelity tiers. Textbook anchors: [Bergman2017] (conduction-equation
   framing, Biot / Fourier dimensionless-number framework), [Patankar1980]
-  (FV discretisation), [Bathe2014] / Q-cae-05 (Galerkin-FE machinery),
+  (FV discretisation), [Bathe2014] (Galerkin-FE machinery),
   [Hughes2000] (FE machinery).
 - TASK-4 section 5 Bucket B2 roster, the **A.3.1 row**: "volumetric
   temperature scalar field T(x) on regular voxel grids
@@ -243,3 +243,7 @@ cleanest way to see what "stepping one cell right on the grid" means in
 practice. TASK-8-1101 (fatigue-life) is the arc's first B1 and the
 template proof. The BRIDGE-A deck (slide 9) is the conceptual home of the
 input-vs-output grid this example's cell comes from.
+
+---
+
+*Citations of the form `[Key]` resolve to [`docs/REFERENCES.md`](../../../../docs/REFERENCES.md).*

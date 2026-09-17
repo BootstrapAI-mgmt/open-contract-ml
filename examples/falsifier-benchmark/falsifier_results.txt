@@ -809,7 +809,7 @@ supports, then the numbers; 'settles' = decided by this experiment,
 ==============================================================================
 [V1 IC-1]
   IC-1 tolerance check (cell: B1-B4 rows x accuracy axis, smooth
-  deterministic DOE; anchors Q-surr-15, Q-surr-19).
+  deterministic DOE; sources [Jin2001], [WangShan2007]).
   Strict form (all of B1,B2,B3,B4 within 1 CV-fold std of the best):
     holds in 0/24 smooth noise-free cells.
   Core form ({B2,B3,B4}; B1 poly-2 is inadequate-degree on sin-exp/
@@ -844,9 +844,9 @@ supports, then the numbers; 'settles' = decided by this experiment,
   above are the boundary the taxonomy should quote.
 
 [V2 R1-bisection]
-  R1 cell (B6/B8 rows x C-axis continuous inverse; Q-surr-46 is the
-  continuity+sign-change precondition; Q-surr-38/42 piecewise-
-  constant; Q-surr-44 exact tree inversion is NP-Hard).
+  R1 cell (B6/B8 rows x C-axis continuous inverse; [Kaw2012] is the
+  continuity+sign-change precondition; [Hastie2009] piecewise-
+  constant; [Misic2020] exact tree inversion is NP-Hard).
   N= 50: smooth-family success min/mean  67%/ 85%; step-family (B6a,B6b,B8)  10%/  5%/ 23%
   N=200: smooth-family success min/mean  67%/ 93%; step-family (B6a,B6b,B8)  38%/ 40%/ 60%
   N=800: smooth-family success min/mean  68%/ 94%; step-family (B6a,B6b,B8)  57%/ 68%/ 83%
@@ -858,20 +858,20 @@ supports, then the numbers; 'settles' = decided by this experiment,
   below - not a gross localization failure.
 
 [V3 R1-gradients]
-  R1 cell, gradient leg (C-axis analytic gradients; Q-surr-39).
+  R1 cell, gradient leg (C-axis analytic gradients; [Hastie2009]).
   sin-exp N=200 noise 0: gcos B1..B5 = 0.183, 0.999, 1.000, 1.000, 1.000; B6a/B6b/B8 = 0.390, 0.116, 0.755;
   grel B3=0.00119 B4=0.0197 vs B6a=1.13 B6b=2.51 B8=1.13.
   Central-difference gradients on partition surrogates are 0-or-spike;
   the cosine collapse quantifies the cell.
 
 [V4 sweeps]
-  C-axis smoothness-of-sweeps cell (Q-surr-39; Q-surr-03).
+  C-axis smoothness-of-sweeps cell ([Hastie2009]; [Grinsztajn2022]).
   sin-exp N=200 noise 0 roughness (x1e3): B1=0.00716 B2=0.123 B3=0.121 B4=0.131 B5=0.12
   vs B6a=4.99 B6b=7.02 B8=5.22 (B7=0.209).
 
 [V5 R4-extrapolation]
-  R4 cell (C-axis extrapolation behavior; Q-surr-26/31 GP
-  reversion, Q-surr-34 MLP linear far field, hull-constant trees).
+  R4 cell (C-axis extrapolation behavior; [Rasmussen2006]/[KimeldorfWahba1970] GP
+  reversion, [Xu2021] MLP linear far field, hull-constant trees).
   (a) Hull-constancy - axis rays: B6a=0.0000 B6b=0.0000 B8=0.0285 vs
       B3=0.320 B1=0.127 B4=0.212. Random rays: B6a=0.0572 B6b=0.0454
       B8=0.0379 - SETTLED: exactly constant on axis-aligned
@@ -882,21 +882,21 @@ supports, then the numbers; 'settles' = decided by this experiment,
       B1 1.14 -> 1.14 (CONSTANT curvature = the fitted quadratic's
       divergence signature); B7 5.11 -> 2.72 and B3 4.97 -> 2.83
       (both DECAY ~3x - flattening; at <=2x hull curvature alone
-      cannot yet separate B7's asymptotic linearity [Q-surr-34]
+      cannot yet separate B7's asymptotic linearity [Xu2021]
       from B3's flattening); B6a 8.66 -> 5.51 (persistent plateau
       kinks).
   (c) farVsMu at 2x hull: B3=0.580 B1=0.427 B4=0.272 B7=0.354 -
       the MLE'd Matern mean has NOT reverted to the train mean by
       2x hull (B3 is not the smallest here): mean-side reversion
-      (Q-surr-31, 'for large |t|') is ASYMPTOTIC in lengthscale
+      ([KimeldorfWahba1970], 'for large |t|') is ASYMPTOTIC in lengthscale
       units, not operative at 1.2-2x hull - at this range the R4
-      honesty story lives on the VARIANCE side (Q-surr-26), which
+      honesty story lives on the VARIANCE side ([Rasmussen2006]), which
       a mean-only harness does not measure.
   (d) 1.2x-shell xnrmse (sin-exp N=200): B3=0.00848 B1=0.37 B2=0.0168 B4=0.0437 B7=0.0401 B6a=0.119 B6b=0.185
 
 [V6 R9-noise]
   R9 cell (B4 row x noise axis: exact interpolation under noise;
-  Q-surr-17, Q-surr-22; nugget-GP and poly robustness).
+  [Jin2001], [WangShan2007]; nugget-GP and poly robustness).
   sin-exp N=800, same design, noise 0 -> 5% of range:
     B4 exact-TPS nrmse 0.0005 -> 0.0498 (interpolates the noise;
     the 5%-sigma floor is 0.05); B3 nugget 0.0000 -> 0.0133;
@@ -906,7 +906,7 @@ supports, then the numbers; 'settles' = decided by this experiment,
 
 [V7 IC-2]
   IC-2 tolerance check (B6b/B7 rows x accuracy axis on irregular
-  noisy cells; anchor Q-surr-04). Approximate: N=800 is below the
+  noisy cells; source [McElfresh2023]). Approximate: N=800 is below the
   class's 1k-10k window and B10 is not runnable in the pinned
   dependency set - this SUPPORTS, it does not settle.
   kinked N=800 5%: B6b 0.0268 vs B7 0.0121, |gap| 0.0147 (<= 0.03 'a few percent')
@@ -914,7 +914,7 @@ supports, then the numbers; 'settles' = decided by this experiment,
 
 [V8 DOE-lattice]
   B-axis DOE-geometry cell (full-factorial lattice vs space-
-  filling at matched N; Q-surr-57 pins the pathology to HIGH-
+  filling at matched N; [Trefethen2013] pins the pathology to HIGH-
   DEGREE equispaced interpolation - low-order LS escapes).
   Largest |Delta nrmse| over 5 surfaces x 9 families: B7 MLP-2x64 on step, +0.107.
   No family collapses on the lattice at these orders; the lattice
@@ -924,7 +924,7 @@ supports, then the numbers; 'settles' = decided by this experiment,
 [V9 d5-check]
   d=5 smooth check (B-axis d scaling; IC-1 at d=4-10).
   N=200: B3 0.0013 B4 0.0694 B2 0.0181 B1 0.1325 | N=800: B3 0.0004 B4 0.0254 B2 0.0013 B1 0.1256
-  GP fit seconds N=200 (full) -> N=800 (sub-400 cap): 0.3 -> 2.5 - the budget cap in action; Q-surr-27 carries the O(n^3)
+  GP fit seconds N=200 (full) -> N=800 (sub-400 cap): 0.3 -> 2.5 - the budget cap in action; [Rasmussen2006] carries the O(n^3)
   ceiling this experiment does not re-measure.
 
 [V10 design-structure]

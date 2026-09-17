@@ -197,21 +197,17 @@ Four things this folder does **not** show.
    §7 below, and taxonomy §9 for the boundaries on the whole taxonomy.
 4. **Family choice is usually not the biggest lever.** The taxonomy is
    careful about this and so should you be. The benchmark literature it
-   leans on reports that
+   leans on finds that over a large sweep of datasets the accuracy gap
+   between boosted trees and neural networks is frequently negligible,
+   and that modest tuning effort spent on a boosted-tree baseline tends
+   to buy more than switching families does ([McElfresh2023]).
 
-   > "the 'NN vs. GBDT' debate is overemphasized: for a surprisingly
-   > high number of datasets, either the performance difference between
-   > GBDTs and NNs is negligible, or light hyperparameter tuning on a
-   > GBDT is more important than choosing between NNs and GBDTs"
-   >
-   > — [McElfresh2023], abstract, p. 1 (Q-surr-04)
-
-   with the caveat the taxonomy states and this folder inherits: that
-   study is **classification-only**, across 176 OpenML datasets, and it
-   transfers to a deterministic regression surrogate at N = 720 by
-   analogy rather than by measurement. What this instance shows is a
-   case where the family choice is load-bearing **because a requirement
-   is** — not a general claim that families matter most.
+   That finding carries the caveat the taxonomy states and this folder
+   inherits: the study is **classification-only**, across 176 OpenML
+   datasets, and it transfers to a deterministic regression surrogate at
+   N = 720 by analogy rather than by measurement. What this instance
+   shows is a case where the family choice is load-bearing **because a
+   requirement is** — not a general claim that families matter most.
 
 ---
 
@@ -343,3 +339,7 @@ named candidates and a runtime cost, rather than a blank.
 F-4. Physics, DOE and grading all live in this folder; there is exactly
 one copy of the truth and `run_ht_instance.py` imports it from
 `data/synthesize_sample.py` rather than restating it.*
+
+---
+
+*Citations of the form `[Key]` resolve to [`docs/REFERENCES.md`](../../../docs/REFERENCES.md).*

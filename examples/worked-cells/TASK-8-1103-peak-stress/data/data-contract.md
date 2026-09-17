@@ -98,8 +98,8 @@ that lives in the structural-FE domain.
 Catalog anchors:
 
 - TASK-1 §6 A.2.1 — FEA Linear Static governing equations / fidelity
-  tiers. Textbook anchors: [Bathe2014] (foundational framing per
-  Q-cae-05), [Hughes2000] (linear-static-and-dynamic monograph),
+  tiers. Textbook anchors: [Bathe2014] (foundational framing),
+  [Hughes2000] (linear-static-and-dynamic monograph),
   [Zienkiewicz2013] (variational methods and error estimation),
   [Roark2020] (handbook-tier analytical stress formulas — the
   low-fidelity benchmark).
@@ -119,3 +119,7 @@ focused on fatigue life rather than peak stress; TASK-8-1102
 TASK-8-1107 / TASK-8-1401 (pump operating-point / performance-curve)
 demonstrate the B1 / B7 split for a downstream-question shift. All
 four are worth reading alongside this example.
+
+---
+
+*Citations of the form `[Key]` resolve to [`docs/REFERENCES.md`](../../../../docs/REFERENCES.md).*

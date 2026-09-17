@@ -1188,7 +1188,7 @@ def run(smoke=False):
     dmax_all = max(d3 for _, d3 in core_cells)
     dmed = float(np.median([d3 for _, d3 in core_cells]))
     v1 = ["IC-1 tolerance check (cell: B1-B4 rows x accuracy axis, smooth",
-          "deterministic DOE; anchors Q-surr-15, Q-surr-19).",
+          "deterministic DOE; sources [Jin2001], [WangShan2007]).",
           "Strict form (all of B1,B2,B3,B4 within 1 CV-fold std of the best):",
           "  holds in %d/%d smooth noise-free cells." % (hold4, len(ic1_stats)),
           "Core form ({B2,B3,B4}; B1 poly-2 is inadequate-degree on sin-exp/",
@@ -1214,9 +1214,9 @@ def run(smoke=False):
     # V2 bisection separation
     smooth_fams = ["B1", "B2", "B3", "B4", "B5"]
     tree_fams = ["B6a", "B6b", "B8"]
-    v2 = ["R1 cell (B6/B8 rows x C-axis continuous inverse; Q-surr-46 is the",
-          "continuity+sign-change precondition; Q-surr-38/42 piecewise-",
-          "constant; Q-surr-44 exact tree inversion is NP-Hard)."]
+    v2 = ["R1 cell (B6/B8 rows x C-axis continuous inverse; [Kaw2012] is the",
+          "continuity+sign-change precondition; [Hastie2009] piecewise-",
+          "constant; [Misic2020] exact tree inversion is NP-Hard)."]
     for n in n_grid:
         sm = [100 * bis_tab[(f, n)][0] / max(bis_tab[(f, n)][1], 1) for f in smooth_fams]
         tr = [100 * bis_tab[(f, n)][0] / max(bis_tab[(f, n)][1], 1) for f in tree_fams]
@@ -1240,7 +1240,7 @@ def run(smoke=False):
     if kg not in results:                       # smoke fallback
         kg = ("sin-exp", "lhs", 2, 50, 0.0)
     rs = results[kg]
-    v3 = ["R1 cell, gradient leg (C-axis analytic gradients; Q-surr-39).",
+    v3 = ["R1 cell, gradient leg (C-axis analytic gradients; [Hastie2009]).",
           "sin-exp N=200 noise 0: gcos B1..B5 = %s; B6a/B6b/B8 = %s;"
           % (", ".join("%.3f" % rs[f]["gcos"] for f in smooth_fams),
              ", ".join("%.3f" % rs[f]["gcos"] for f in tree_fams)),
@@ -1252,7 +1252,7 @@ def run(smoke=False):
     vd("V3 R1-gradients", v3)
 
     # V4 sweeps
-    v4 = ["C-axis smoothness-of-sweeps cell (Q-surr-39; Q-surr-03).",
+    v4 = ["C-axis smoothness-of-sweeps cell ([Hastie2009]; [Grinsztajn2022]).",
           "sin-exp N=200 noise 0 roughness (x1e3): B1=%.3g B2=%.3g B3=%.3g "
           "B4=%.3g B5=%.3g" % tuple(rs[f]["rough"] for f in smooth_fams),
           "vs B6a=%.3g B6b=%.3g B8=%.3g (B7=%.3g)."
@@ -1263,8 +1263,8 @@ def run(smoke=False):
     # V5 extrapolation shape
     if probe_rows is not None:
         pr = {r["fam"]: r["probe"] for r in probe_rows}
-        v5 = ["R4 cell (C-axis extrapolation behavior; Q-surr-26/31 GP",
-              "reversion, Q-surr-34 MLP linear far field, hull-constant trees).",
+        v5 = ["R4 cell (C-axis extrapolation behavior; [Rasmussen2006]/[KimeldorfWahba1970] GP",
+              "reversion, [Xu2021] MLP linear far field, hull-constant trees).",
               "(a) Hull-constancy - axis rays: B6a=%.4f B6b=%.4f B8=%.4f vs"
               % (pr["B6a"][0], pr["B6b"][0], pr["B8"][0]),
               "    B3=%.3f B1=%.3f B4=%.3f. Random rays: B6a=%.4f B6b=%.4f"
@@ -1281,7 +1281,7 @@ def run(smoke=False):
               "    divergence signature); B7 %.3g -> %.3g and B3 %.3g -> %.3g"
               % (pr["B7"][2], pr["B7"][3], pr["B3"][2], pr["B3"][3]),
               "    (both DECAY ~3x - flattening; at <=2x hull curvature alone",
-              "    cannot yet separate B7's asymptotic linearity [Q-surr-34]",
+              "    cannot yet separate B7's asymptotic linearity [Xu2021]",
               "    from B3's flattening); B6a %.3g -> %.3g (persistent plateau"
               % (pr["B6a"][2], pr["B6a"][3]),
               "    kinks).",
@@ -1289,9 +1289,9 @@ def run(smoke=False):
               % (pr["B3"][4], pr["B1"][4], pr["B4"][4], pr["B7"][4]),
               "    the MLE'd Matern mean has NOT reverted to the train mean by",
               "    2x hull (B3 is not the smallest here): mean-side reversion",
-              "    (Q-surr-31, 'for large |t|') is ASYMPTOTIC in lengthscale",
+              "    ([KimeldorfWahba1970], 'for large |t|') is ASYMPTOTIC in lengthscale",
               "    units, not operative at 1.2-2x hull - at this range the R4",
-              "    honesty story lives on the VARIANCE side (Q-surr-26), which",
+              "    honesty story lives on the VARIANCE side ([Rasmussen2006]), which",
               "    a mean-only harness does not measure.",
               "(d) 1.2x-shell xnrmse (sin-exp N=200): B3=%.3g B1=%.3g B2=%.3g "
               "B4=%.3g B7=%.3g B6a=%.3g B6b=%.3g"
@@ -1305,7 +1305,7 @@ def run(smoke=False):
     if kn5 in results:
         r0, r5 = results[kn0], results[kn5]
         v6 = ["R9 cell (B4 row x noise axis: exact interpolation under noise;",
-              "Q-surr-17, Q-surr-22; nugget-GP and poly robustness).",
+              "[Jin2001], [WangShan2007]; nugget-GP and poly robustness).",
               "sin-exp N=800, same design, noise 0 -> 5% of range:",
               "  B4 exact-TPS nrmse %.4f -> %.4f (interpolates the noise;"
               % (r0["B4"]["nrmse"], r5["B4"]["nrmse"]),
@@ -1324,7 +1324,7 @@ def run(smoke=False):
     # V7 IC-2
     if ic2_stats:
         v7 = ["IC-2 tolerance check (B6b/B7 rows x accuracy axis on irregular",
-              "noisy cells; anchor Q-surr-04). Approximate: N=800 is below the",
+              "noisy cells; source [McElfresh2023]). Approximate: N=800 is below the",
               "class's 1k-10k window and B10 is not runnable in the pinned",
               "dependency set - this SUPPORTS, it does not settle."]
         for s, b6, b7, gap in ic2_stats:
@@ -1337,7 +1337,7 @@ def run(smoke=False):
     if lat_stats:
         worst = max(lat_stats, key=lambda t: abs(t[2]))
         v8 = ["B-axis DOE-geometry cell (full-factorial lattice vs space-",
-              "filling at matched N; Q-surr-57 pins the pathology to HIGH-",
+              "filling at matched N; [Trefethen2013] pins the pathology to HIGH-",
               "DEGREE equispaced interpolation - low-order LS escapes).",
               "Largest |Delta nrmse| over 5 surfaces x 9 families: %s on %s, "
               "%+.3g." % (FAM_LABEL[worst[1]], worst[0], worst[2]),
@@ -1358,7 +1358,7 @@ def run(smoke=False):
                                    r5b["B3"]["nrmse"], r5b["B4"]["nrmse"],
                                    r5b["B2"]["nrmse"], r5b["B1"]["nrmse"]),
               "GP fit seconds N=200 (full) -> N=800 (sub-400 cap): %.1f -> "
-              "%.1f - the budget cap in action; Q-surr-27 carries the O(n^3)"
+              "%.1f - the budget cap in action; [Rasmussen2006] carries the O(n^3)"
               % (r5a["B3"]["sec"], r5b["B3"]["sec"]),
               "ceiling this experiment does not re-measure."]
         vd("V9 d5-check", v9)

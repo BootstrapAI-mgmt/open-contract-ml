@@ -37,7 +37,7 @@
    workflow; [Bergman2017] is the textbook anchor for the
    conduction-equation derivations and the Biot / Fourier dimensionless
    framework, [Patankar1980] for the FV/FE discretisation family, and
-   [Bathe2014] / Q-cae-05 for the Galerkin-FE machinery shared with
+   [Bathe2014] for the Galerkin-FE machinery shared with
    structural FEA).
 2. **One row per FE run.** Each row is one completed steady-state
    thermal solve: the 7 input parameters and the 2 response numbers
@@ -127,8 +127,8 @@ Catalog anchors:
 - TASK-1 §6 A.3.1 — FEA Thermal Steady governing equations / fidelity
   tiers. Textbook anchors: [Bergman2017] (foundational
   conduction-equation framing, Biot / Fourier dimensionless-number
-  framework), [Patankar1980] (FV discretisation), [Bathe2014] /
-  Q-cae-05 (Galerkin-FE machinery shared with structural FEA),
+  framework), [Patankar1980] (FV discretisation), [Bathe2014]
+  (Galerkin-FE machinery shared with structural FEA),
   [Hughes2000] (FE machinery).
 - TASK-3 §6 A.3.1 → Bucket B1 mapping — GBM and GP both listed as
   tabular surrogates for parameter-vector → peak-temperature
@@ -149,3 +149,7 @@ and demonstrates a log-scale target. TASK-8-1107 / TASK-8-1401 (pump
 operating-point / performance-curve) demonstrate the B1 / B7 split
 for a downstream-question shift. All four are worth reading
 alongside this example.
+
+---
+
+*Citations of the form `[Key]` resolve to [`docs/REFERENCES.md`](../../../../docs/REFERENCES.md).*

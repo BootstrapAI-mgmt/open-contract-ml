@@ -11,8 +11,8 @@
 > **Disclosure** inherits from the contract sheet §8 in full. Specific
 > hyperparameter values, network depth, channel widths, and λ-weight
 > defaults below are *illustrative configurations*; the FNO family choice
-> and the operator-learning framing are *anchored* to Q-ml-op-01
-> [Kovachki2023]. The architecture topology is *contractual* in the sense
+> and the operator-learning framing are *anchored* to [Kovachki2023].
+> The architecture topology is *contractual* in the sense
 > that any re-tune of these defaults bumps `model_version` and triggers
 > chain re-validation per the contract sheet's §3.3 metadata schema.
 
@@ -27,7 +27,7 @@
 | Architecture bucket | B4 — Operator / parameter-to-function surrogate (`tasks/TASK-4-architecture-buckets.md` §3) |
 | Architecture family | FNO (Fourier Neural Operator) (`tasks/TASK-2-ml-model-catalog.md` §5) |
 | Reference paper | Li et al. 2021, *Fourier Neural Operator for Parametric PDEs* (arXiv:2010.08895) |
-| Survey anchor | Q-ml-op-01 [Kovachki2023] — operator-learning framing, verified-true |
+| Survey anchor | [Kovachki2023] — operator-learning framing |
 | Contract sheet | `WORKED-INSTANCE-A81-link1-thermal-contract.md` |
 | Methodology anchors (physics) | [Bergman2017] (Fourier conduction; Bi/Fo); [Patankar1980] (FV discretization for CHT) |
 
@@ -120,7 +120,7 @@ Default (pure-data FNO):           λ_int = λ_conv = λ_bc = 0
 Ablation (physics-informed FNO):   λ_int = 0.1, λ_conv = 0.1, λ_bc = 1.0
 ```
 
-The physics-residual terms are an *optional ablation lever*, not the default training. Pure-data FNO is the §3 / §4 default per the operator-learning framing of Q-ml-op-01 [Kovachki2023]. Q-ml-pinn-02 [Karniadakis2021] framing applies when the ablation is run.
+The physics-residual terms are an *optional ablation lever*, not the default training. Pure-data FNO is the §3 / §4 default per the operator-learning framing of [Kovachki2023]. The [Karniadakis2021] physics-informed framing applies when the ablation is run.
 
 The chain-composite `L_endpoint` term is added during chain-level fine-tuning; specified in the chain-level contract sheet.
 
@@ -154,8 +154,8 @@ The chain-composite `L_endpoint` term is added during chain-level fine-tuning; s
 
 | Element | Status | Anchor |
 |---|---|---|
-| FNO family choice | **Anchored** | Q-ml-op-01 [Kovachki2023] |
-| Operator-learning framing | **Anchored** | Q-ml-op-01 [Kovachki2023] |
+| FNO family choice | **Anchored** | [Kovachki2023] |
+| Operator-learning framing | **Anchored** | [Kovachki2023] |
 | Architecture topology pattern (lifting → Fourier blocks → projection) | **Anchored** | Li2021 |
 | Specific hyperparameter values (F_h=32, N_blocks=4, modes (16,12,12,6)) | **Illustrative configuration** | Defaults; tune against held-out validation |
 | λ-weight defaults (0.1 / 0.1 / 1.0) for physics ablation | **Illustrative** | Tune against ablation study; no anchored values |
@@ -169,3 +169,7 @@ A re-tune of any *illustrative* element bumps `model_version`; per the contract 
 ## 9. Open questions
 
 None at v0.1. All v0.2 contract-sheet questions resolved at user review (Q1: detailed-in-card → this document; Q2: loss consolidated here in §5; Q3–Q5: no excessive detail). This card surfaces no new format questions.
+
+---
+
+*Citations of the form `[Key]` resolve to [`docs/REFERENCES.md`](../../docs/REFERENCES.md).*

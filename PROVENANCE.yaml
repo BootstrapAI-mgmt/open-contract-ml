@@ -118,16 +118,43 @@ authored:
   sha256: null
 - path: README.md
   why: what the Contract is and how to verify a package
-  sha256: c506c9cf3a04aa3bc9198a3466b2b753d885a9a1ba66f1bc24dbde02024d1276
+  sha256: a87bddbb6101fcc4dd88a7e91d97a1818975df52152d3515669411d1a624fadc
 - path: docs/EXTRACTION.md
   why: what was left behind and why
-  sha256: 7385d6ccf925e3762fa1682d09341037a9b5ee536b3456e44bc1b359761ee295
+  sha256: f950df8c22cfacb929dae8df8a6f02788ae007d824fe16fd060307ccf75f0d89
+- path: docs/PUBLICATION-CHECKLIST.md
+  why: 'D21 preparation: the owner-run checks that gate making this repository
+    public, each with the command that reproduces it'
+  sha256: 54c1b701cd804057d1998bb98cb778ab3e77e45b122ee4b019cfbd769fdb309b
+- path: docs/REFERENCES.md
+  why: the repository's bibliography; written here so citations resolve to a shipped
+    file instead of to an internal ledger that is never published
+  sha256: 62327f6d98ac5bd3d4a985e7f0d632d5fecf8251d755ba016ef5b2e91d17c24a
+- path: docs/STANDARDS-ALIGNMENT.md
+  why: where the Contract sits relative to the ASME VVUQ standards and the nearest
+    related work, and where it does not reach
+  sha256: 2d977b6aaa723b876c54e2b78b2cf1bd9fd2defce715beae42f56fd3516f832f
+- path: docs/productization-exec/CITE-dangling-citations.md
+  why: session report for the citation-anchor removal; records the key->source
+    mapping and the pre-existing dangling links the new gate surfaced
+  sha256: d85d12b7e2d5ed118b0970be24693e6d3a0be1283a22fd1efd4477cf2e66fda9
+- path: docs/productization-exec/OCM2-cite-merge-and-standards.md
+  why: session report for the citation merge, the standards-alignment note, the
+    signing design and the publication checklist
+  sha256: 51a4d13878f7327bd6a1cd8a2e622b8b7e4d6a5ee46041bc6921130a5f8896cd
+- path: docs/spec/PROVENANCE-SIGNING.md
+  why: design for an optional OpenSSF Model Signing sidecar at contract 1.1; design
+    only, nothing implemented and no dependency proposed
+  sha256: 3e762f473d10f1ac77e4693100ba2a4ba557252d2ab266145fd2ac884d1289bc
 - path: pyproject.toml
   why: packaging metadata for the extracted distribution
   sha256: e8257130d6ac3dc272eac73124b26fe558998f347ccd87928ce65620b43b60af
 - path: src/opencontractml/__init__.py
   why: package root; lazily re-exports the checker
   sha256: 4e3a7d365fb83d4ff5b4c9c3cc992b29cddf4e673ae8b81c4b12e5d5775cdad5
+- path: tests/test_link_integrity.py
+  why: the dangling-pointer gate; no markdown link may resolve outside the shipped tree
+  sha256: fd85271e5c84e7a146f3f0665512f1cfa11622f031888b4129937c96869efbf6
 - path: tests/test_provenance.py
   why: the extraction falsifier
   sha256: 8c03ba2287d4014a751dcf3a4b3b4fb7e97403268218dd1ad24ae886af4990fe
@@ -279,7 +306,7 @@ extracted:
   source_ref_sha: 3d8d7d489704e064fbc9d7b66d4a2884ac84b0e5
   source_path: docs/spec/SPINE-CONTRACT-v1.md
   source_sha256: 7d083f8bd62f7393120306f78706309f3b17be9a4e13ed5d8b4d07bc8f8cf26e
-  sha256: 2dfcd7cc467f353bd8e0705a552d2a29fa01d6e0b1d5ef5af748d2cfc8f0bbf4
+  sha256: ae31004e4d5290f554abd1797f73e037f6114032dc696945d506912f7cc03251
   transformed: true
   map_status: not-in-map
   justification: G1D deliverable on prod/g1d-spine-contract; not yet merged to main, so the rule-d18 map
@@ -438,8 +465,8 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: examples/TASK-9-falsifier-benchmark/falsifier_benchmark.py
   source_sha256: ce6df0872055796ccd15bf9e1e84d3613a2298c1e24e12120eadad3f36fd30fe
-  sha256: ce6df0872055796ccd15bf9e1e84d3613a2298c1e24e12120eadad3f36fd30fe
-  transformed: false
+  sha256: 2d851bb25c211a6a72a70d1eb39ccfc9dca2e07aeb1f084705bb60a0be67b725
+  transformed: true
   map_status: extractable
 - path: examples/falsifier-benchmark/falsifier_results.txt
   source_repo: CAE-ML-data-pipelines
@@ -447,8 +474,8 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: examples/TASK-9-falsifier-benchmark/falsifier_results.txt
   source_sha256: 65ee94c9ee2e13e2ed0e8823718ab392973b02ef228b60a3735fd64f97075170
-  sha256: 65ee94c9ee2e13e2ed0e8823718ab392973b02ef228b60a3735fd64f97075170
-  transformed: false
+  sha256: 6be7cc715e111c109cbbaaa51de943eb00e62245ce656bfe901f6518cd5f72ab
+  transformed: true
   map_status: extractable
 - path: examples/falsifier-benchmark/Run-Falsifier.bat
   source_repo: CAE-ML-data-pipelines
@@ -465,8 +492,8 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: examples/TASK-9-surrogate-selector/data/problem-spec-contract.md
   source_sha256: 878e5dd26e42963916062141085523b0835de13a4f881362f2632553f363de44
-  sha256: 878e5dd26e42963916062141085523b0835de13a4f881362f2632553f363de44
-  transformed: false
+  sha256: 1a529fd8a5be050f9265a868f56119f8e73d5d60d6c0a7d2ecb84ed6f0b6a6de
+  transformed: true
   map_status: extractable
 - path: examples/problem-spec/problem-spec-template.yaml
   source_repo: CAE-ML-data-pipelines
@@ -519,8 +546,8 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: examples/TASK-8-1103-peak-stress/data/data-contract.md
   source_sha256: a6668f029cba6f6b8788b06832cd95d61a100954dd84ed20fb858f390a4522c8
-  sha256: a6668f029cba6f6b8788b06832cd95d61a100954dd84ed20fb858f390a4522c8
-  transformed: false
+  sha256: fcc016f44b8df553e7af3c985f3196bf223e3862992046c451e972f6a599877d
+  transformed: true
   map_status: extractable
 - path: examples/worked-cells/TASK-8-1103-peak-stress/data/template.csv
   source_repo: CAE-ML-data-pipelines
@@ -555,8 +582,8 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: examples/TASK-8-1104-peak-temperature/data/data-contract.md
   source_sha256: 960591d67418ea1c19c9b14ea04e00ef8fb3aaad0c26ce9a95401a7eb03f47c5
-  sha256: 960591d67418ea1c19c9b14ea04e00ef8fb3aaad0c26ce9a95401a7eb03f47c5
-  transformed: false
+  sha256: e185e2e42a4b1b3373e4061f5310b68afb0d73347ab8d973faa184411c8b72d3
+  transformed: true
   map_status: extractable
 - path: examples/worked-cells/TASK-8-1104-peak-temperature/data/template.csv
   source_repo: CAE-ML-data-pipelines
@@ -591,8 +618,8 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: examples/TASK-8-1105-motor-torque-efficiency/data/data-contract.md
   source_sha256: ff765db777ead795fe71592eb916904d5acaad44d2108cd3fcbc8621ef9f0ef8
-  sha256: ff765db777ead795fe71592eb916904d5acaad44d2108cd3fcbc8621ef9f0ef8
-  transformed: false
+  sha256: b51fbce11d8da911abb8846d80faab3a8a9b424474a03a1b9c237ac13a875226
+  transformed: true
   map_status: extractable
 - path: examples/worked-cells/TASK-8-1105-motor-torque-efficiency/data/template.csv
   source_repo: CAE-ML-data-pipelines
@@ -636,8 +663,8 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: examples/TASK-8-1106-injection-warpage/data/data-contract.md
   source_sha256: cf5a597e33410751f802964793ab72bb833556e36eda3e95d44b41b234ec17f1
-  sha256: cf5a597e33410751f802964793ab72bb833556e36eda3e95d44b41b234ec17f1
-  transformed: false
+  sha256: 99911172fbd62cb63f0c7fbcce16aee096809f99adb2a29c73bb1972e57acf38
+  transformed: true
   map_status: extractable
 - path: examples/worked-cells/TASK-8-1106-injection-warpage/data/template.csv
   source_repo: CAE-ML-data-pipelines
@@ -681,8 +708,8 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: examples/TASK-8-1201-temperature-field/data/data-contract.md
   source_sha256: ea7a2c3951624415a75df6677445aa2ed8f07ae14bfee4fad840165d3207a8e3
-  sha256: ea7a2c3951624415a75df6677445aa2ed8f07ae14bfee4fad840165d3207a8e3
-  transformed: false
+  sha256: 1838c1d5ec0952d3f9d279788cadd270c3ce4afd7b34690be7d2a1f00b1b6f54
+  transformed: true
   map_status: extractable
 - path: examples/worked-cells/TASK-8-1201-temperature-field/data/template.csv
   source_repo: CAE-ML-data-pipelines
@@ -726,8 +753,8 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: examples/TASK-8-1202-plate-temperature-field/data/data-contract.md
   source_sha256: 1fbd57e1b92f958c135a275d6353e130e5c70f66ac0d9a06340877a460ba31aa
-  sha256: 1fbd57e1b92f958c135a275d6353e130e5c70f66ac0d9a06340877a460ba31aa
-  transformed: false
+  sha256: c6ca207937961ac331ecdb58f355e2e668b0bca720c092389ebc80d9d3c28442
+  transformed: true
   map_status: extractable
 - path: examples/worked-cells/TASK-8-1202-plate-temperature-field/data/template.csv
   source_repo: CAE-ML-data-pipelines
@@ -771,8 +798,8 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: examples/TASK-8-2101-drag-from-shape/data/data-contract.md
   source_sha256: a495c2c14e397f2f4e2c16d7b5ddd531008d2511dbd70665c99978c00ddba1b8
-  sha256: a495c2c14e397f2f4e2c16d7b5ddd531008d2511dbd70665c99978c00ddba1b8
-  transformed: false
+  sha256: e063c72eecd581e5c22419c6edd0443302a6d1680633dab35abf5c9b2d8d9178
+  transformed: true
   map_status: extractable
 - path: examples/worked-cells/TASK-8-2101-drag-from-shape/data/template.csv
   source_repo: CAE-ML-data-pipelines
@@ -816,8 +843,8 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: examples/TASK-9-HT-worked-instance/WALKTHROUGH.md
   source_sha256: 582332f10ee7524e198ffdac937df78af4a4a2dfca844fb7350da79aef9c9003
-  sha256: 582332f10ee7524e198ffdac937df78af4a4a2dfca844fb7350da79aef9c9003
-  transformed: false
+  sha256: 8203b294c380910bb1429eccd91fbaa0c53e8faf059a4a0ee5b8cf695553187f
+  transformed: true
   map_status: extractable
 - path: examples/worked-cells/TASK-9-HT-worked-instance/data/data-contract.md
   source_repo: CAE-ML-data-pipelines
@@ -852,7 +879,7 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: WORKED-INSTANCE-A81-link1-thermal-model-card.md
   source_sha256: 00eaa80c1821260d0f7f002ee3901102fb2d35851ecafe999c7e110797ff4e3c
-  sha256: bc4b617a2645349db0110a69f3c5e57d6e6d9fc2c90f9a3b80c9768f14e7b362
+  sha256: a7e008c7303283dae52f4f1e34eaab0e530b8b409df1cf242bc94cf67c711353
   transformed: true
   map_status: extractable
 - path: examples/worked-model-cards/A81-link2-thermo-mech-model-card.md
@@ -861,7 +888,7 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: WORKED-INSTANCE-A81-link2-thermo-mech-model-card.md
   source_sha256: 7c348598ec498ac0b922b06102ad634e60755f50b79aa674efb761d0d1b2936a
-  sha256: 1b2a2d3735b5435ac5d8a77d7f11b6d3496dc05d6073b9ed7ad33a20169bcced
+  sha256: 0279b23e2e5523d1fc09134df0017ab5384065d9f1fd75a55a33c68b08bce59d
   transformed: true
   map_status: extractable
 - path: examples/worked-model-cards/A81-link3-fatigue-model-card.md
@@ -870,7 +897,7 @@ extracted:
   source_ref_sha: b1beb64a1891d468696fbbdaa29f14f32bb67ea0
   source_path: WORKED-INSTANCE-A81-link3-fatigue-model-card.md
   source_sha256: 0332ba302df4b039200fc371cefee1dea65511c6589fe10fc5bba8b902a4735b
-  sha256: b139b0c21b84bd4e9ae129b1991b7088719cfbc5b331a18ca292f79e145a86d0
+  sha256: d0429095460858427486db54874083fd8f7ed01e75569ffee61876a9815365c2
   transformed: true
   map_status: extractable
 - path: tests/test_verify.py

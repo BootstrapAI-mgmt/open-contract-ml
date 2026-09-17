@@ -40,7 +40,7 @@
    vector. Catalog anchor: TASK-1 entry A.5.1 (Electromagnetics:
    Low-frequency — motors, induction; [Jackson1998] is the textbook
    anchor for the Maxwell-equation derivations and the magneto-
-   quasi-static reduction, and [Bathe2014] / Q-cae-05 / [Hughes2000]
+   quasi-static reduction, and [Bathe2014] / [Hughes2000]
    for the Galerkin-FE machinery shared with structural FE).
 2. **One row per FE run.** Each row is one completed low-frequency-EM
    solve at one operating point: the 8 input parameters and the 3
@@ -151,14 +151,13 @@ Catalog anchors:
 - TASK-1 §6 A.5.1 — Electromagnetics: Low-frequency (motors,
   induction) governing equations / fidelity tiers. Textbook anchors:
   [Jackson1998] (Maxwell-equation derivations and the magneto-
-  quasi-static reduction `∇×H = J`), [Bathe2014] / Q-cae-05 (Galerkin-FE
+  quasi-static reduction `∇×H = J`), [Bathe2014] (Galerkin-FE
   machinery shared with structural FE), [Hughes2000] (FE machinery).
   The integral-output regression flavor (torque / efficiency / loss)
   is named in TASK-1 A.5.1 Trainable-ML-architectures as the
   production-mature target with deep deployment in motor-design
   optimisation; GBM / MLP / GP are the listed tabular architectures
-  ([Chen2016] / [Ke2017] / [Goodfellow2016] / [Rasmussen2006];
-  Q-ml-tab-02 / Q-ml-tab-02b / Q-ml-tab-03 / Q-ml-tab-04).
+  ([Chen2016] / [Ke2017] / [Goodfellow2016] / [Rasmussen2006]).
 - TASK-3 §6 A.5.1 → Bucket B1 mapping — integral-output regression
   (forces, torques, efficiency, flux-linkage maps) as the easier,
   production-mature surrogate target; full-field B/H/J regression is
@@ -178,3 +177,7 @@ fatigue-life) is the arc's first B1 and demonstrates a log-scale
 target. TASK-8-1107 / TASK-8-1401 (pump operating-point /
 performance-curve) demonstrate the B1 / B7 split for a downstream-
 question shift. All are worth reading alongside this example.
+
+---
+
+*Citations of the form `[Key]` resolve to [`docs/REFERENCES.md`](../../../../docs/REFERENCES.md).*

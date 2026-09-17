@@ -162,7 +162,7 @@ states the assumption out loud.
 One Markdown verdict sheet, `surrogate-verdict-<problem_name>.md`, written to
 the folder you point `--out` at (this folder by default). It carries the
 recommended family, the admissible set with per-family similarity, every
-answer you gave, the rule trace with citation keys and `Q-surr` quote ids,
+answer you gave, the rule trace with its citation keys,
 the four things the verdict does not claim, and a provenance block stamping
 the engine's sha256 and the run date. It is written to stand on its own in an
 email.

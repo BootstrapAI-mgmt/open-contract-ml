@@ -87,7 +87,11 @@ because a consumer *validating* a package does not need a training stack to do i
 docs/spec/CONTRACT-v1.md            the normative text
 docs/spec/ADOPTION.md               what each producer has to change
 docs/spec/GAP-MATRIX.md             the measured three-way gap
+docs/spec/PROVENANCE-SIGNING.md     design for an optional signature at 1.1 (not implemented)
 docs/EXTRACTION.md                  what this repo is and what it deliberately omits
+docs/STANDARDS-ALIGNMENT.md         where this sits against ASME VVUQ, and where it does not reach
+docs/REFERENCES.md                  the bibliography every [Key] citation resolves to
+docs/PUBLICATION-CHECKLIST.md       the owner-run checks that gate going public
 src/opencontractml/
   verify.py                         the conformance checker
   manifest.py, model_card.py        the validation library

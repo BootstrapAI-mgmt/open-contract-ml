@@ -72,7 +72,7 @@ What they contain:
 | File | Content |
 |---|---|
 | `TASK-8-1103`, `TASK-8-1104`, `TASK-8-1105` walkthroughs | an 8-line verbatim blockquote from Bathe, *Finite Element Procedures* — a copyrighted textbook — each carrying a relative markdown link into `QUOTES.md` |
-| `TASK-8-1102-drag-lift/WALKTHROUGH.md` | a 14-line verbatim blockquote of the NASA CFD Vision 2030 Study abstract, labelled in-file as "quote block `Q-cae-03` in `QUOTES.md`" |
+| `TASK-8-1102-drag-lift/WALKTHROUGH.md` | a 14-line verbatim blockquote of the NASA CFD Vision 2030 Study abstract, labelled in-file as a keyed quote block in `QUOTES.md` |
 | `TASK-9-falsifier-benchmark/README.md` | verbatim sentences attributed to (Jin2001) and to Kaw2012 — the latter annotated in-file as "the legal stand-in anchor for Burden §2.1" — plus two more |
 | `TASK-9-falsifier-benchmark/WALKTHROUGH.md` | no verbatim text, but it points into `QUOTES.md` and its numbers are transcribed from the README above; incoherent once that is gone, so the pair defers together |
 
@@ -91,9 +91,10 @@ extraction manifest records the dangling-citation hazard as five `Q-` anchors
 across three worked model cards. Measured across the post-D18 extraction set it
 is **129 anchor references, 32 distinct anchors, across 21 files.** The manifest's
 figure predates D18 and nobody re-measured after the worked cells and the
-benchmark were opened. The remaining anchors (after the six removals above) are
+benchmark were opened. The remaining anchors (after the six removals above) were
 citation keys rather than quoted text — a dangling-reference problem, not an R5
-problem — but every one resolves to a file that will not be published.
+problem — but every one resolved to a file that will not be published. They have
+since been re-sourced; see **Citations** below.
 
 **The corpus-gate test suite** (`test_corpus_gate.py`, `test_model_gate.py`,
 their `conftest.py` and `__init__.py`). Every test in both files takes a fixture
@@ -123,30 +124,60 @@ Stated plainly rather than left to be discovered.
    and hand off to the gate engine, or to ship a minimal open reference trainer.
    **Until it is fixed, do not read the worked cells as runnable end to end.**
 
-2. **Dangling `Q-` citation anchors, repo-wide.** 15 shipped files still carry
-   74 citation keys into `QUOTES.md`, which is not here and will not be published.
-   These are keys, not quoted text — the files carrying quoted text were removed
-   — but they resolve to nothing. Each needs re-sourcing to its public DOI/arXiv
-   reference, or dropping, before publication. See the measurement above: the
-   real count is an order of magnitude larger than the manifest records.
-
-3. **`safeload.py` ships without its test suite.** Its upstream tests are bound
+2. **`safeload.py` ships without its test suite.** Its upstream tests are bound
    to `physics-surrogates` internals (`physsur.cloud`, `physsur.mesh`,
    `physsur.models.registry`) and to `torch`, so they could not travel. Its
    sibling `safe_artifact.py` *is* tested here.
 
-4. **Two independent safe-load implementations.** `safe_artifact.py` restricts
+3. **Two independent safe-load implementations.** `safe_artifact.py` restricts
    `pickle` unpickling; `safeload.py` loads tensor checkpoints. They share
    `sha256_file` and two exception types and nothing else — they are siblings,
    not duplicates. The shared core is worth factoring; it was not factored here
    because refactoring security-critical code during an extraction is how
    subtle bugs get introduced.
 
-5. **The worked datasets are synthetic, and that claim is checkable** — each
+4. **The worked datasets are synthetic, and that claim is checkable** — each
    cell ships the generator that produced its `sample-dataset.csv`. Only two of
    the nine data contracts say "synthetic" in prose. The generator is stronger
    evidence than prose, but the published contracts would read better with an
    explicit provenance line.
+
+## Citations
+
+The shipped documents once cited an internal quote ledger by anchor. That ledger
+is not published, so every one of those anchors was a dead end for the only
+reader who matters here: someone outside the organisation. They were removed in
+two passes and replaced by `docs/REFERENCES.md`, a bibliography whose every entry
+carries a DOI, ISBN or stable URL.
+
+The two passes are worth recording separately, because the second exists only
+because the first verified itself too narrowly:
+
+| Pass | Scope | Removed |
+|---|---|---|
+| markdown | 13 `.md` files | 36 references, 15 distinct keys |
+| everything else | `falsifier_benchmark.py` and its captured `falsifier_results.txt` | 36 references, 15 distinct keys |
+
+The first pass confirmed itself with `git ls-files '*.md' | xargs grep`, which
+reported zero remaining and was **true of markdown and false of the repository**.
+A benchmark script and its output file carried exactly as many references as the
+markdown had, and none of them were in scope of the check that declared the job
+done. Re-running that same `.md`-only command today still reports zero against a
+planted defect in a `.txt` file.
+
+Two standing gates in `tests/test_link_integrity.py` close the class:
+
+- `test_no_retired_citation_anchor_survives_anywhere` reads **the whole tracked
+  set**, not one file type. Its two exemptions are `PROVENANCE.yaml` and
+  `tests/test_provenance.py`, which are the record of the removal rather than a
+  use of it.
+- `test_every_citation_key_resolves_to_the_bibliography` requires every `[Key]`
+  in the tree to have a table row in `docs/REFERENCES.md`. Keys are parsed from
+  the table rows, not from bracketed tokens anywhere in the file, because the
+  prose above the table cites invented keys to explain the scheme.
+
+At the time of writing the bibliography defines **38 keys** and the tree cites
+**38**, with nothing dangling and nothing unused in either direction.
 
 ## Divergences from upstream
 
@@ -157,6 +188,7 @@ these are carried here so they are not lost.
 |---|---|
 | `manifest.py` | `server.paths.resource_path` (PyInstaller `sys._MEIPASS` resolution) replaced with `importlib.resources`. This was the only open→closed import edge in `cae-ml-gui`, and removing it also removes the frozen-bundle special case: the schema now travels inside the wheel. |
 | `safeload.py` | self-references re-pointed from `physsur.safeload` to `opencontractml.safeload`; pointers at the external converter now name the package that provides it. `_METADATA_KEY`, `_FORMAT` and the `PHYSSUR_*` environment variables are deliberately unchanged — the first two are an on-disk format identifier and the others are the names of live security controls. |
+| `falsifier_benchmark.py`, `falsifier_results.txt` | 18 citation anchors each, pointing into the unpublished ledger, replaced by the bracket keys of the works they stood for. The pair is edited together and kept in step: each narrative line in the captured output is a string literal in the script, so a substitution applied to one and not the other is visible as a line that no longer matches. |
 | `.gitattributes` | authored here. `cae-ml-gui` has none, and without `eol=lf` a clone on a machine with `core.autocrlf=true` rewrites `examples/reference-package/predict.py` from 2429 to 2495 bytes and all four `M013` pins fail. |
 | `tests/test_verify.py` | schema parity now resolves through `importlib.resources`, so it measures the installed package rather than the source tree. |
 

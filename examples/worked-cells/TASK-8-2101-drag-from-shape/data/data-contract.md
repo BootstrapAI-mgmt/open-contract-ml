@@ -113,9 +113,8 @@ example asks of you.
    trainer. Catalog anchor: TASK-1 entry A.1.1 (CFD External-Aero -- the
    geometry-as-image encoding is named there as "geometry encoded as an
    SDF, surface-normal map, or unwrapped surface texture"; [Ronneberger2015]
-   is the U-Net anchor and Q-ml-cnn-02 / Q-ml-cnn-02b the CNN-inductive-
-   bias quotes; [Slotnick2014] is the CFD-vision anchor shared with
-   TASK-8-1102).
+   is the U-Net and CNN-inductive-bias anchor; [Slotnick2014] is the
+   CFD-vision anchor shared with TASK-8-1102).
 2. **One row per CFD run.** Each row is one completed external-aero CFD
    case: the SDF image of one body geometry and the two coefficients the
    run produced at the fixed operating point. Use the *same* mesh-
@@ -234,3 +233,7 @@ field) rather than a richer *input* (an image); the two together show the
 two genuinely-distinct shape steps the arc can take from the B1 corner.
 The BRIDGE-A deck (slide 9) is the conceptual home of the input-vs-output
 grid this example's cell comes from.
+
+---
+
+*Citations of the form `[Key]` resolve to [`docs/REFERENCES.md`](../../../../docs/REFERENCES.md).*

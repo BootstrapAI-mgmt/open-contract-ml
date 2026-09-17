@@ -24,7 +24,7 @@
 | Architecture bucket | B7 — Reduced-order / latent-dynamics (`tasks/TASK-4-architecture-buckets.md` §3) |
 | Architecture family | Autoencoder + Neural-ODE (Pattern 6 Layer 3 latent-space coupled-dynamics ROM) |
 | Reference papers | Chen et al. 2018, *Neural Ordinary Differential Equations* (NeurIPS, arXiv:1806.07366); Battaglia et al. 2018, *Relational inductive biases, deep learning, and graph networks* (arXiv:1806.01261) |
-| Survey-level anchor | Q-ml-rom-02 [Lee2020] — nonlinear-manifold ROM via autoencoder projection, the family-fit anchor for autoencoder + Neural-ODE in continuous time (verified-true) |
+| Survey-level anchor | [Lee2020] — nonlinear-manifold ROM via autoencoder projection, the family-fit anchor for autoencoder + Neural-ODE in continuous time |
 | Contract sheet | `WORKED-INSTANCE-A81-link2-thermo-mech-contract.md` |
 | Methodology anchors (physics) | [Bazilevs2013] / [HsuBazilevs2012] (coupling-scheme taxonomy); [Bathe2014], [Belytschko2014] (FE structural mech foundations); ROADMAP A.2 (symmetric-tensor preservation pitfall) |
 
@@ -201,3 +201,7 @@ A re-tune of any *illustrative* element bumps `model_version`; per the contract 
 ## 9. Open questions
 
 None at v0.1. The format probe surfaced three contract-sheet questions (mesh-as-graph storage, training-vs-inference output reconciliation, coupling-class enforcement protocol) — those are flagged in contract §10. This model card surfaces no new format questions: the v0.3 link-1 model card structure (identity → topology → hyperparameters → training → loss → UQ → alternatives → disclosure) extrapolates cleanly even though the architecture family is structurally different (FNO → autoencoder + Neural-ODE).
+
+---
+
+*Citations of the form `[Key]` resolve to [`docs/REFERENCES.md`](../../docs/REFERENCES.md).*
