@@ -125,7 +125,7 @@ authored:
 - path: docs/PUBLICATION-CHECKLIST.md
   why: 'D21 preparation: the owner-run checks that gate making this repository
     public, each with the command that reproduces it'
-  sha256: 54c1b701cd804057d1998bb98cb778ab3e77e45b122ee4b019cfbd769fdb309b
+  sha256: 39ceaf98398aaab9f7d631833b7470d8858b78bd586a60b5b4168113881d921e
 - path: docs/REFERENCES.md
   why: the repository's bibliography; written here so citations resolve to a shipped
     file instead of to an internal ledger that is never published
