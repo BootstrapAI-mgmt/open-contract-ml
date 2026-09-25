@@ -1,0 +1,3 @@
+This file stands in for the 9478229-byte weights file of plate_heat_fno.
+It is a fixture stub: open-contract-ml check hashes it (rule M013) and never loads it,
+so the entrypoint beside it cannot run from this copy. See README.md.

@@ -1,0 +1,292 @@
+{
+  "contract_version": "1.0",
+  "supported_major": 1,
+  "card_sections_required": [
+    "TL;DR",
+    "Intended use",
+    "Out of scope",
+    "Training data",
+    "Architecture",
+    "Training configuration",
+    "Performance",
+    "Uncertainty quantification",
+    "Known failure modes",
+    "Provenance",
+    "Version history"
+  ],
+  "card_sections_reserved": [
+    "Alternatives considered",
+    "Disclosure",
+    "Open questions",
+    "References"
+  ],
+  "min_section_chars": 40,
+  "ladder": {
+    "A": [
+      "A1_accuracy",
+      "A2_extrapolation",
+      "A3_uq_calibration",
+      "A4_baseline_beat",
+      "A5_reproducibility"
+    ],
+    "B": [
+      "B1_monotonicity",
+      "B2_bounds",
+      "B3_residual",
+      "B4_conservation",
+      "B5_invariance",
+      "B6_integrated_quantities"
+    ],
+    "C": [
+      "C1_ood_guard",
+      "C2_serve_parity",
+      "C3_provenance_integrity",
+      "C4_deployment_readiness"
+    ]
+  },
+  "statuses": [
+    "PASS",
+    "FAIL",
+    "NOT_RUN",
+    "NOT_APPLICABLE"
+  ],
+  "blocking_statuses": [
+    "FAIL",
+    "NOT_RUN"
+  ],
+  "artifact_roles": [
+    "asset",
+    "entrypoint",
+    "weights"
+  ],
+  "input_types": [
+    "boolean",
+    "categorical",
+    "file",
+    "float",
+    "integer",
+    "string"
+  ],
+  "output_types": [
+    "categorical",
+    "distribution",
+    "field",
+    "float",
+    "integer",
+    "timeseries"
+  ],
+  "protocols": [
+    "stdio_json"
+  ],
+  "legacy_aliases": {
+    "FG1": "A1_accuracy",
+    "FG10": "B5_invariance",
+    "FG11": "B6_integrated_quantities",
+    "FG2": "A2_extrapolation",
+    "FG3": "A3_uq_calibration",
+    "FG4": "A4_baseline_beat",
+    "FG5": "A5_reproducibility",
+    "FG6": "B3_residual",
+    "FG8": "C1_ood_guard",
+    "FG9": "C2_serve_parity",
+    "V1.1": "A1_accuracy",
+    "V1.2": "A2_extrapolation",
+    "V1.3": "A3_uq_calibration",
+    "V1.4": "A4_baseline_beat",
+    "V1.5": "A5_reproducibility",
+    "V2.1": "B1_monotonicity",
+    "V2.2": "B2_bounds",
+    "V2.3": "B4_conservation",
+    "V2.4": "B5_invariance",
+    "V3": "C4_deployment_readiness"
+  },
+  "legacy_aliases_lane_dependent": {
+    "FG7": {
+      "grid": "B4_conservation",
+      "mesh": "B4_conservation",
+      "cloud": "B6_integrated_quantities"
+    }
+  },
+  "legacy_aliases_retired": {
+    "FG7": {
+      "cloud": "FG11"
+    }
+  },
+  "rules": [
+    {
+      "id": "E001",
+      "severity": "ERROR",
+      "title": "package directory exists and is readable"
+    },
+    {
+      "id": "E002",
+      "severity": "ERROR",
+      "title": "a YAML parser is available for a .yaml artifact"
+    },
+    {
+      "id": "M001",
+      "severity": "ERROR",
+      "title": "manifest present and parses to a mapping"
+    },
+    {
+      "id": "M002",
+      "severity": "ERROR",
+      "title": "spec_version present, MAJOR.MINOR, major supported"
+    },
+    {
+      "id": "M003",
+      "severity": "ERROR",
+      "title": "identity block complete (id, name, version, owner, domain, modality, purpose)"
+    },
+    {
+      "id": "M004",
+      "severity": "ERROR",
+      "title": "inputs declared and well formed"
+    },
+    {
+      "id": "M005",
+      "severity": "ERROR",
+      "title": "outputs declared and well formed"
+    },
+    {
+      "id": "M006",
+      "severity": "ERROR",
+      "title": "no duplicate input or output names"
+    },
+    {
+      "id": "M007",
+      "severity": "ERROR",
+      "title": "every output is covered by an uncertainty.per_output block"
+    },
+    {
+      "id": "M008",
+      "severity": "ERROR",
+      "title": "invocation block complete and protocol is supported"
+    },
+    {
+      "id": "M009",
+      "severity": "ERROR",
+      "title": "model_card path declared and the file exists"
+    },
+    {
+      "id": "M010",
+      "severity": "ERROR",
+      "title": "validation.report path declared and the file exists"
+    },
+    {
+      "id": "M011",
+      "severity": "ERROR",
+      "title": "provenance block present"
+    },
+    {
+      "id": "M012",
+      "severity": "ERROR",
+      "title": "provenance.artifacts entries well formed (path, role, sha256, bytes)"
+    },
+    {
+      "id": "M013",
+      "severity": "ERROR",
+      "title": "every declared artifact exists and its sha256 matches the file on disk"
+    },
+    {
+      "id": "M014",
+      "severity": "ERROR",
+      "title": "provenance.dataset carries a well formed sha256"
+    },
+    {
+      "id": "M015",
+      "severity": "ERROR",
+      "title": "provenance.code carries repo and commit"
+    },
+    {
+      "id": "M016",
+      "severity": "WARN",
+      "title": "provenance.environment names the interpreter"
+    },
+    {
+      "id": "C001",
+      "severity": "ERROR",
+      "title": "model card parses with a flat scalar front-matter"
+    },
+    {
+      "id": "C002",
+      "severity": "ERROR",
+      "title": "card front-matter identity matches the manifest"
+    },
+    {
+      "id": "C003",
+      "severity": "ERROR",
+      "title": "the eleven required card sections are present, first, in order"
+    },
+    {
+      "id": "C004",
+      "severity": "ERROR",
+      "title": "no required card section is a stub"
+    },
+    {
+      "id": "C005",
+      "severity": "ERROR",
+      "title": "the uncertainty section states a method and a number"
+    },
+    {
+      "id": "C006",
+      "severity": "WARN",
+      "title": "extra H2 sections use reserved names"
+    },
+    {
+      "id": "V001",
+      "severity": "ERROR",
+      "title": "validation report parses and declares its identity"
+    },
+    {
+      "id": "V002",
+      "severity": "ERROR",
+      "title": "validation report identity matches the manifest"
+    },
+    {
+      "id": "V003",
+      "severity": "ERROR",
+      "title": "validation report dataset hash matches the manifest provenance"
+    },
+    {
+      "id": "V004",
+      "severity": "ERROR",
+      "title": "every ladder key is present"
+    },
+    {
+      "id": "V005",
+      "severity": "ERROR",
+      "title": "every check declares a known status"
+    },
+    {
+      "id": "V006",
+      "severity": "ERROR",
+      "title": "a PASS carries a numeric measurement and a numeric threshold"
+    },
+    {
+      "id": "V007",
+      "severity": "ERROR",
+      "title": "NOT_APPLICABLE states a reason"
+    },
+    {
+      "id": "V008",
+      "severity": "ERROR",
+      "title": "the declared overall verdict matches the recomputed one"
+    },
+    {
+      "id": "V009",
+      "severity": "ERROR",
+      "title": "B4 conservation is measured, not declared"
+    },
+    {
+      "id": "V010",
+      "severity": "ERROR",
+      "title": "A3 uq_calibration reports nominal, empirical coverage, n and method"
+    },
+    {
+      "id": "V011",
+      "severity": "ERROR",
+      "title": "A5 reproducibility declares a determinism class and a tolerance"
+    }
+  ]
+}

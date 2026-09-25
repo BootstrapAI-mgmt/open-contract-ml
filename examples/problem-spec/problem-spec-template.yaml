@@ -1,0 +1,58 @@
+# Surrogate-selection problem spec -- TEMPLATE
+# =============================================================================
+# Fill this in and pass it to a surrogate-family selector with --spec. The
+# selector is not part of this repository; this file and
+# problem-spec-contract.md beside it define the format it reads.
+#
+# One field per line, in the form  field_name: value
+# Anything after a # is a comment. Order does not matter. All sixteen fields
+# below must be present; the tool stops and names any field that is missing,
+# misspelled, or given a value outside its allowed list.
+#
+# Prefer answering interactively the first time -- the selector's
+# --interactive mode explains each question as it asks it, then writes a
+# filled copy of this file for you.
+#
+# Field-by-field guidance, including which rule reads which field and what
+# each answer costs you, is in problem-spec-contract.md.
+# =============================================================================
+
+# Optional, recorded on the verdict sheet, ignored by the rules.
+problem_name: my-problem
+
+# -- How the response behaves ------------------------------------------------
+# known_physics_low_order | smooth_nonlinear | kinked_nonsmooth |
+# discontinuous | unknown
+response_class:                  unknown
+
+# -- Repeatability of the source ---------------------------------------------
+# These two must agree: deterministic yes goes with noise none;
+# deterministic no goes with noise low or high.
+deterministic:                   yes          # yes | no
+noise:                           none         # none | low | high
+
+# -- The dataset you have ----------------------------------------------------
+doe:                             space_filling  # full_factorial | space_filling | observational
+N_bin:                           small        # tiny <30 | small 30-300 | medium 300-5k | large >5k
+d_bin:                           d4_10        # d1_3 | d4_10 | d11_20
+
+# -- What you will DO with the model (the answers that prune families) -------
+# Answer yes only for things you will actually do, not things you would like.
+# An undeclared requirement cannot prune anything; an over-declared one
+# prunes families you might have wanted.
+needs_inverse:                   no    # solve backwards by a root-find?
+needs_gradients:                 no    # need d(output)/d(input) from the model?
+needs_smooth_sweeps:             no    # fine sweeps read as smooth trends?
+needs_monotonicity:              no    # enforce a known direction by construction?
+needs_native_uq:                 no    # an uncertainty band on every prediction?
+conformal_ok:                    yes   # is a band calibrated after the fact acceptable?
+                                       # (also read as: is an explicit
+                                       #  out-of-range guard acceptable?)
+needs_honest_extrapolation:      no    # must out-of-range queries be flagged?
+deployment_tiny:                 no    # ships inside Excel/VBA or a small exe?
+needs_equation_interpretability: no    # is a readable closed-form equation a deliverable?
+
+# -- Recorded, never branched on ---------------------------------------------
+# No rule reads this: tuning burden is what the final tie-break already
+# orders on. It is here so the verdict sheet states the assumption aloud.
+low_tuning_budget:               yes

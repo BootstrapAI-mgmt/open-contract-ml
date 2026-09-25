@@ -1,0 +1,4 @@
+stator_od_mm,stack_length_mm,airgap_mm,magnet_thickness_mm,turns_per_coil,current_a,speed_rpm,temperature_c,torque_nm,efficiency_pct,total_loss_w,notes
+,,,,,,,,,,,
+,,,,,,,,,,,
+,,,,,,,,,,,

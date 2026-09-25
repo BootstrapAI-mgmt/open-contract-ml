@@ -1,0 +1,37 @@
+# This repository is byte-exact by design, so newline translation is a
+# correctness bug here, not a cosmetic preference.
+#
+# examples/reference-package carries sha256 + byte-count pins that the
+# conformance checker enforces (rule M013), and the worked-cell datasets are
+# verified by re-running their committed generator and diffing the output.
+# A newline filter on the way out of the object store breaks both.
+#
+# Measured, not assumed: cloning this repo on a machine with core.autocrlf=true
+# and no .gitattributes rewrites examples/reference-package/predict.py from
+# 2418 to 2484 bytes (66 CRLF conversions) and all four M013 pins fail. The
+# first thing a new user does is clone and run the checker, so that is the
+# worst possible place for the standard to appear broken.
+
+* text=auto eol=lf
+
+# Batch files conventionally want CRLF, and a Windows-first repository would say
+# `*.bat text eol=crlf` for that reason. That rule is wrong
+# *here*: PROVENANCE.yaml records a content digest per file, and a file whose
+# bytes change on checkout can never match its record -- a fresh clone failed
+# test_recorded_digests_match_what_is_on_disk on exactly this file and nothing
+# else. Byte-exactness is this repository's defining property, so it wins.
+#
+# Checked rather than assumed: the one .bat here is a linear launcher with no
+# labels and no `goto`, which is where LF line endings actually bite cmd.exe.
+*.bat -text
+
+# Belt and braces for the hash-pinned artifacts: `-text` disables newline
+# conversion outright, so these bytes are identical regardless of what any
+# consumer's core.autocrlf is set to.
+examples/reference-package/** -text
+tests/fixtures/producer_packages/** -text
+examples/worked-cells/**/data/*.csv -text
+
+*.png binary
+*.jpg binary
+*.pdf binary

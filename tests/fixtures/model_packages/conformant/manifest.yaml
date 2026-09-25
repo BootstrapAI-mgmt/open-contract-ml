@@ -1,0 +1,39 @@
+# Conformant model package fixture for the pre-publish gate.
+# Minimal but complete: passes schema, typed, semantic (per_output coverage),
+# spec_version, and the sibling-card checks. Ships no .exe on purpose — the gate
+# validates the contract only; executable existence is checked at dispatch.
+id: demo_surrogate
+name: Demo Surrogate
+version: 1.0.0
+spec_version: "1.0"
+owner:
+  team: Demo Team
+  contact: demo@example.com
+domain: demo
+modality: scalar_in_scalar_out
+purpose: Predicts a demo scalar from one input, with a 90% predictive interval.
+inputs:
+  - name: x
+    type: float
+    required: true
+outputs:
+  - name: y
+    type: float
+    viewer: scalar_with_uq
+uncertainty:
+  form: predictive_interval
+  per_output:
+    y:
+      lower_field: y_lower
+      upper_field: y_upper
+      level: 0.9
+invocation:
+  executable: ./demo.exe
+  protocol: stdio_json
+  timeout_s: 30
+lineage:
+  training_data_version: v1
+  training_date: "2026-01-01"
+  metrics:
+    mae: 0.1
+model_card: ./model_card.md

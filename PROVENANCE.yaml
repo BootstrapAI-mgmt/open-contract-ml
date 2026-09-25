@@ -1,0 +1,558 @@
+# PROVENANCE.yaml -- where every file in this repository comes from.
+# Read by tests/test_provenance.py; see `what_this_is`.
+schema_version: 2
+repo: open-contract-ml
+what_this_is: 'One record per tracked file, in one of three classes. `authored`: written for this package.
+  `extracted`: carried over from the maintainer''s earlier work on these tools; `transformed` says whether
+  the file was edited for publication. `modified_copies`: a file of another producer''s package, copied
+  in as a test fixture; `copy_of` names the package and `changes` says how the copy differs, which the
+  package''s README repeats file by file. Every record says why the file is here and pins its sha256 (this
+  file''s own record excepted). tests/test_provenance.py fails if a file has no record, if a record names
+  a file that is not here, or if a committed file no longer matches its recorded digest. The public history
+  of this repository starts at a single snapshot; earlier development history is retained privately.'
+authored:
+- path: .gitattributes
+  why: eol=lf, without which a Windows clone breaks the M013 sha256 pins
+  sha256: 69f4a71f0665a3131efe42d7b1b63f0ada5a00d0890f513644a90917199de097
+- path: .github/workflows/ci.yml
+  why: the build gate; runs the suite (one Linux interpreter per pull request, the full interpreter matrix
+    weekly and on demand), then builds the wheel and drives the installed checker from outside the checkout
+    so that a packaging fault cannot hide behind a green source-tree run
+  sha256: a39a82a0be21ef0c22d244f0efcf0437ccf5811b9ee69f4cb58e089600cb142e
+- path: .gitignore
+  why: build/venv/cache exclusions
+  sha256: 38c5a9d7013ee239145bf21a49ac5006eb48f7f5b2f1057a5e6aef6a44fbd44a
+- path: LICENSE
+  why: Apache-2.0, verbatim from apache.org (sha256 cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30)
+  sha256: cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30
+- path: MANIFEST.in
+  why: 'what the sdist carries beyond the package: its tests and the example and fixture files those tests
+    read'
+  sha256: f198c1e402555833211f4c54376f74ba6df02fa6373170b0ffee2a5db06cd077
+- path: NOTICE
+  why: copyright notice; reproduces the MIT notice safeload.py arrives under
+  sha256: 93422d79dca301d8b309a19da3f79a31a0fe450cc5d14a0606ec7ea09a347706
+- path: PROVENANCE.yaml
+  why: 'this file: the provenance record the falsifier reads'
+  sha256: null
+- path: README.md
+  why: what the Contract is and how to verify a package
+  sha256: 2ddb2d75cd7b725a63a374a2fa0333d82e526be280c2dbbbb9bc2977a89f34b7
+- path: docs/EXTRACTION.md
+  why: where the files came from, and the known gaps in what is here
+  sha256: 5931344f40caf037b0454e7cb968df1105d2ed051c59383f79ed0b374fe51ef3
+- path: docs/REFERENCES.md
+  why: the repository's bibliography; every [Key] citation resolves to an entry here
+  sha256: 0c6b2be66e8a7b83a76c09ee0ed53909e7aa69fd9b335a90f4a1b8be1005f087
+- path: docs/STANDARDS-ALIGNMENT.md
+  why: where the Contract sits relative to the ASME VVUQ standards and the nearest related work, and where
+    it does not reach
+  sha256: effffa8243e8468db68e6e681be1d578cb2bda597a578c901700ac57b2f08f61
+- path: docs/spec/PROVENANCE-SIGNING.md
+  why: design for an optional OpenSSF Model Signing sidecar at contract 1.1; design only, nothing implemented
+    and no dependency proposed
+  sha256: 04398833264cf265aff2f8c387854d3b9d16084d0ba1f976e156bde0fce97ece
+- path: pyproject.toml
+  why: packaging metadata
+  sha256: 1fc856aac9759f9472a513b59aa4c09cac690eee6ea36bc174e2bf99fda03ec8
+- path: src/opencontractml/__init__.py
+  why: package root; lazily re-exports the checker
+  sha256: 4e3a7d365fb83d4ff5b4c9c3cc992b29cddf4e673ae8b81c4b12e5d5775cdad5
+- path: tests/fixtures/producer_packages/README.md
+  why: what the producer fixture packages are, how CI checks them, and how a copy differs from what its
+    producer shipped
+  sha256: 4f7ba4642b376d78562e96b66bc1f6f962ebfc632f2a1e687473bdfd68f1ab96
+- path: tests/fixtures/producer_packages/brake_disc_link1_thermal_fno/README.md
+  why: 'provenance of the fixture package brake_disc_link1_thermal_fno: the digest of each file in the
+    copy and what the copy changed'
+  sha256: 7943f861349f73ba67f41313d4f6bedbc96dff81b5b8378f93c4324271201e80
+- path: tests/fixtures/producer_packages/brake_disc_link2_thermo_mech_rom/README.md
+  why: 'provenance of the fixture package brake_disc_link2_thermo_mech_rom: the digest of each file in
+    the copy and what the copy changed'
+  sha256: 88e3bf1ed2adec91231bcf3c905d022161ca1558681a4c49f6cd4f092a874f5b
+- path: tests/fixtures/producer_packages/brake_disc_link3_fatigue_gbm_gp/README.md
+  why: 'provenance of the fixture package brake_disc_link3_fatigue_gbm_gp: the digest of each file in
+    the copy and what the copy changed'
+  sha256: e1d89559511d1bb58b73f7d2d7306830521d3c12ef1559ae3d6d1746ad54ff1e
+- path: tests/fixtures/producer_packages/plate_heat_fno/README.md
+  why: 'provenance of the fixture package plate_heat_fno: the digest of each file in the copy and what
+    the copy changed'
+  sha256: 61a7fadf54b46c4141bf18a1ed22b278ad4099d595a71250d8476cfb717533c1
+- path: tests/test_link_integrity.py
+  why: the dangling-pointer gate; no markdown link may resolve outside the shipped tree
+  sha256: 3befb774def7b5a5c8b7411c6124167208bd78bde8536e64997b9554f3512fc4
+- path: tests/test_producer_fixtures.py
+  why: 'the producer-fixture gate: every pinned producer package must stay conformant and keep its honest
+    FAIL'
+  sha256: d0fad61c38a1f901ed7f362ccd692858aded8f145739d5c97d9daf01d08e79d7
+- path: tests/test_provenance.py
+  why: the provenance falsifier
+  sha256: 915c90b323009413f03184b858167fa1b2821ccc5d75daece18c56278ceb0968
+extracted:
+- path: docs/model-onboarding.md
+  transformed: true
+  why: how to package a trained model and validate it before publishing
+  sha256: 9776d744c35d488fb20c738b986403e5e4c256204925ca034ac401562bcc737f
+- path: docs/model-packages.md
+  transformed: true
+  why: what a model registry directory holds and how a consumer validates it
+  sha256: 0208ffe6929595fb8962e89ffd3b0ca2d1c430d2888184722b51cf01bb3ecbe4
+- path: docs/spec/CONTRACT-v1.md
+  transformed: true
+  why: the normative specification of the Contract, version 1.0
+  sha256: 00c7302dea98150c0de95978dce330286a44b353aedf20b19d9eb5d3c2e67392
+- path: examples/brake_disc_tmf_v1/fake_model.py
+  transformed: true
+  why: a deterministic stdio_json stub model for the package-v1 worked example
+  sha256: 288ca271f4cced1b45b1edf3af7a496eb7973f4d74d74a0eeff5504a48c76cd7
+- path: examples/brake_disc_tmf_v1/manifest.yaml
+  transformed: true
+  why: the package-v1 worked example's manifest
+  sha256: 70314ec6ae80b01438284faa815302eaafa17fe94f93651563bd301c76026684
+- path: examples/brake_disc_tmf_v1/model_card.md
+  transformed: true
+  why: the package-v1 worked example's model card (illustrative)
+  sha256: c09eb0eda02ab019607d936e584fea98ee0a6a22616ebcefc652f9fb5132ff98
+- path: examples/corpus-consumer/README.md
+  transformed: true
+  why: what the corpus consumer is and how its gates are run
+  sha256: e9bfc6974efdd3070f74bb5dfcbc48630084fa70ebb42bc2a6fa181e4128eb57
+- path: examples/corpus-consumer/WALKTHROUGH.md
+  transformed: true
+  why: a walkthrough of the corpus consumer
+  sha256: 09d08a8023385462309d5d276d239ac699033cb46d2e14319a1fe32374a3af13
+- path: examples/falsifier-benchmark/Run-Falsifier.bat
+  transformed: true
+  why: a Windows launcher for the falsifier benchmark
+  sha256: 8dd76dc780f1113467060c48daa34cf4f4f731d1ec8c7a7deca7759183ae0114
+- path: examples/falsifier-benchmark/falsifier_benchmark.py
+  transformed: true
+  why: the adversarial falsifier benchmark
+  sha256: 0474c2b29889f790cfbe10caa6293aa1e4f3bc2bb3fcebd4b1cdce3d313bd732
+- path: examples/falsifier-benchmark/falsifier_results.txt
+  transformed: true
+  why: the falsifier benchmark's captured output
+  sha256: 4e9e1c324cb841d6230c14b0588b5dce7acdbf137dc09f09bfa2981e815ab08d
+- path: examples/problem-spec/problem-spec-contract.md
+  transformed: true
+  why: the problem-spec contract for describing a surrogate-selection problem
+  sha256: 83e4a7668c89c2094ded2c8df4159a5a1553b7c4e197c18192fcdbb2374fc3b6
+- path: examples/problem-spec/problem-spec-template.yaml
+  transformed: true
+  why: an empty problem-spec template
+  sha256: c2d8e25aee264d219e28f4e8da2768198b09a6e4fffd87d8f08bd17edbf7b49a
+- path: examples/reference-package/manifest.yaml
+  transformed: true
+  why: the reference package's manifest
+  sha256: c3559c4b8a14f0bbe2351a6498ea702fd196ed1f7dc19654e2fc9af623578753
+- path: examples/reference-package/model_card.md
+  transformed: true
+  why: the reference package's model card
+  sha256: a45ad78ecebbf4b69028b8607aa87933cc11f3176df22869da6a0867ed7976f0
+- path: examples/reference-package/model_weights.json
+  transformed: false
+  why: the reference package's weights
+  sha256: d2f233407ff908a709cf7abd434d45e3283ad104d4f15070d71a4e590aaac813
+- path: examples/reference-package/predict.py
+  transformed: true
+  why: the reference package's stdio_json entrypoint
+  sha256: a196f1cb68586f1e8ccedc2164700331541584063b3559bb9bfbc142707071bd
+- path: examples/reference-package/validation_report.json
+  transformed: true
+  why: the reference package's validation report
+  sha256: 99a2e117392bf34fcdea1fc815a5b60eef2036e26f2bbd285c87880016be561c
+- path: examples/worked-cells/drag-from-shape/WALKTHROUGH.md
+  transformed: true
+  why: the walkthrough of the drag-from-shape worked cell
+  sha256: bf126f8ab216289374e85c0402bdc6b01b1418de258c63e87c1381e646ba56ca
+- path: examples/worked-cells/drag-from-shape/data/data-contract.md
+  transformed: true
+  why: the data contract of the drag-from-shape worked cell
+  sha256: d62b9d9bd8d3b87c9ade606b36c9a510ee43c2f8a9142e6cd1b1c4d605b8e58b
+- path: examples/worked-cells/drag-from-shape/data/sample-dataset.csv
+  transformed: false
+  why: the drag-from-shape worked cell's synthetic sample dataset, regenerated by its synthesize_sample.py
+  sha256: 8e4527b3477e7053fc9853db70fa3b7e7d3caebb56b0eea64e880b3a63c21acd
+- path: examples/worked-cells/drag-from-shape/data/synthesize_sample.py
+  transformed: true
+  why: the generator of the drag-from-shape worked cell's sample dataset
+  sha256: d6f9ca0105463faf33518d516b26dd36de8d46685487ecbb7ba34650f4cc4f35
+- path: examples/worked-cells/drag-from-shape/data/template.csv
+  transformed: false
+  why: the empty column template of the drag-from-shape worked cell
+  sha256: a9c905969cfc5df8274dedc4f5176417d175d22409d4d224e1e01e9ecdb38959
+- path: examples/worked-cells/drag-lift/data/assembly-catalog.md
+  transformed: true
+  why: the assembly catalog of the drag-lift worked cell
+  sha256: 5258fba683618d99343867a2fb111bcd19ef000b7b34c38877ff2829d023cad1
+- path: examples/worked-cells/drag-lift/data/data-contract.md
+  transformed: true
+  why: the data contract of the drag-lift worked cell
+  sha256: c3acee4c837287b96a70e972a21934efd4d59357b2eecf0a74efcdbdb5c8388e
+- path: examples/worked-cells/drag-lift/data/sample-dataset.csv
+  transformed: true
+  why: the drag-lift worked cell's synthetic sample dataset, regenerated by its synthesize_sample.py
+  sha256: 2fb64b5b971850c05074f86063f211aad4020f65eb75494cd21bd92732697391
+- path: examples/worked-cells/drag-lift/data/synthesize_sample.py
+  transformed: true
+  why: the generator of the drag-lift worked cell's sample dataset
+  sha256: ab3fd47a9891cd8e4529b3383eeaca4d766f72eef50b33e40f08658d1ad214f3
+- path: examples/worked-cells/drag-lift/data/template.csv
+  transformed: true
+  why: the empty column template of the drag-lift worked cell
+  sha256: fd393ddc279f2554fb6b2ae6ce09b62c14787f557c0de2c9da8574354889737e
+- path: examples/worked-cells/injection-warpage/WALKTHROUGH.md
+  transformed: true
+  why: the walkthrough of the injection-warpage worked cell
+  sha256: 2bdf916fbb2acb5c92ae5d5f2a98610a13233a6c6c7fa152885d3c212d416483
+- path: examples/worked-cells/injection-warpage/data/data-contract.md
+  transformed: true
+  why: the data contract of the injection-warpage worked cell
+  sha256: 028ab37ec45aba06d2d7fbc33658585e4ab20ce5117809e46bb8a8a1c91c9cb8
+- path: examples/worked-cells/injection-warpage/data/sample-dataset.csv
+  transformed: false
+  why: the injection-warpage worked cell's synthetic sample dataset, regenerated by its synthesize_sample.py
+  sha256: 7155099b208342f0949b068869da22393c0b161fba9b639ba49906086588234b
+- path: examples/worked-cells/injection-warpage/data/synthesize_sample.py
+  transformed: true
+  why: the generator of the injection-warpage worked cell's sample dataset
+  sha256: 89216b25310b48918425dd084e6300e0a857928144cd546e454b2005729bce8c
+- path: examples/worked-cells/injection-warpage/data/template.csv
+  transformed: false
+  why: the empty column template of the injection-warpage worked cell
+  sha256: ceb712afbf542fdcf0f605a02016a2ac608631a36c6f20dce34579688e3b0c52
+- path: examples/worked-cells/motor-torque-efficiency/data/data-contract.md
+  transformed: true
+  why: the data contract of the motor-torque-efficiency worked cell
+  sha256: 8bb3675ae4a8e12161bf3a58a6f52ebf5148f8742e37f6b21e5ddd075e1c7b3f
+- path: examples/worked-cells/motor-torque-efficiency/data/sample-dataset.csv
+  transformed: true
+  why: the motor-torque-efficiency worked cell's synthetic sample dataset, regenerated by its synthesize_sample.py
+  sha256: 880db5e0e425d595fa95496130c1e339782c9c5c1eaf21406fdac2df5a790a57
+- path: examples/worked-cells/motor-torque-efficiency/data/synthesize_sample.py
+  transformed: true
+  why: the generator of the motor-torque-efficiency worked cell's sample dataset
+  sha256: ed0c85753094bbb85dde57b16e29c54f9f406b267f07fc564e28eb37b3ca76b9
+- path: examples/worked-cells/motor-torque-efficiency/data/template.csv
+  transformed: false
+  why: the empty column template of the motor-torque-efficiency worked cell
+  sha256: 07ac84ac8900d8bf0e271f080182e6f686de579ca84cc03db9eb2ebdfa9363e6
+- path: examples/worked-cells/peak-stress/data/data-contract.md
+  transformed: true
+  why: the data contract of the peak-stress worked cell
+  sha256: 1b692a5a07a4598eb1cc8765a3cd79ed408212643250f29daa38952dc7b0c1a0
+- path: examples/worked-cells/peak-stress/data/sample-dataset.csv
+  transformed: true
+  why: the peak-stress worked cell's synthetic sample dataset, regenerated by its synthesize_sample.py
+  sha256: 60b79220acb5ad1959ebc201654cfcbf33e70063aa19e9f77ff94ce4855ef699
+- path: examples/worked-cells/peak-stress/data/synthesize_sample.py
+  transformed: true
+  why: the generator of the peak-stress worked cell's sample dataset
+  sha256: 6e3b51550d1c07369a674cdebbc58c826a8fc23ac8d59522d0510c26bce1c314
+- path: examples/worked-cells/peak-stress/data/template.csv
+  transformed: false
+  why: the empty column template of the peak-stress worked cell
+  sha256: 19070d66dc58dc277891fdca8d8d6253c8a21c7650b92170abac01676c62a6d7
+- path: examples/worked-cells/peak-temperature/data/data-contract.md
+  transformed: true
+  why: the data contract of the peak-temperature worked cell
+  sha256: 0fd41e5f110c3badf2016813a415aa8c3a910403e44ced42e8ef997fbb288e69
+- path: examples/worked-cells/peak-temperature/data/sample-dataset.csv
+  transformed: true
+  why: the peak-temperature worked cell's synthetic sample dataset, regenerated by its synthesize_sample.py
+  sha256: 38c3e02a36c2b85105a97c3b0d486abffcf2159cfc254469ffb337773fd15599
+- path: examples/worked-cells/peak-temperature/data/synthesize_sample.py
+  transformed: true
+  why: the generator of the peak-temperature worked cell's sample dataset
+  sha256: 8b773f4544d8d91edd3a9a78574398558d3e01dc0582ba6c553e91c31917858a
+- path: examples/worked-cells/peak-temperature/data/template.csv
+  transformed: false
+  why: the empty column template of the peak-temperature worked cell
+  sha256: a580812ae92d776e3981b9caaac290d10ab908ee4b986f42e8ec869c396f2253
+- path: examples/worked-cells/plate-temperature-field/WALKTHROUGH.md
+  transformed: true
+  why: the walkthrough of the plate-temperature-field worked cell
+  sha256: 27ddb6a3e7a3caeea9e595c10fa9bafa5dbc2985e63c45aa2a3fbb3ffe928654
+- path: examples/worked-cells/plate-temperature-field/data/data-contract.md
+  transformed: true
+  why: the data contract of the plate-temperature-field worked cell
+  sha256: c8466341ce7197096d890808aea500eb601a400c50fa3ba8aa0f1d2872497760
+- path: examples/worked-cells/plate-temperature-field/data/sample-dataset.csv
+  transformed: false
+  why: the plate-temperature-field worked cell's synthetic sample dataset, regenerated by its synthesize_sample.py
+  sha256: 081df986f18052e79dab238358ac5b9035d18fbbeacbeb3beed20d7e10e448c3
+- path: examples/worked-cells/plate-temperature-field/data/synthesize_sample.py
+  transformed: true
+  why: the generator of the plate-temperature-field worked cell's sample dataset
+  sha256: e011fb0b5e94d66a378b9874ef6ed2bc59b10984b75cef4f41b89381e92b5d3f
+- path: examples/worked-cells/plate-temperature-field/data/template.csv
+  transformed: false
+  why: the empty column template of the plate-temperature-field worked cell
+  sha256: 4026f8f02d06ee982259ca957031ab6803e00c22020e05ee0f63ead5a12091d6
+- path: examples/worked-cells/temperature-field/WALKTHROUGH.md
+  transformed: true
+  why: the walkthrough of the temperature-field worked cell
+  sha256: bd14201058e8b20ec7d9845708b7ef0a6e031b9dd4e9ddd20f76ba712c93d2b1
+- path: examples/worked-cells/temperature-field/data/data-contract.md
+  transformed: true
+  why: the data contract of the temperature-field worked cell
+  sha256: 43e4b57b07755da583ca5d8281e9a2c1de55bb4ee0ce0f197f79cd1d1510a7f0
+- path: examples/worked-cells/temperature-field/data/sample-dataset.csv
+  transformed: false
+  why: the temperature-field worked cell's synthetic sample dataset, regenerated by its synthesize_sample.py
+  sha256: 7e7219328ec33f322e9b5200fc3f7c81390801c544bb4d83d1b07fe3dd60262c
+- path: examples/worked-cells/temperature-field/data/synthesize_sample.py
+  transformed: true
+  why: the generator of the temperature-field worked cell's sample dataset
+  sha256: 93c316d0008ec2403e78f636297992662d6a6c688b84a69815b68bd3c556301e
+- path: examples/worked-cells/temperature-field/data/template.csv
+  transformed: false
+  why: the empty column template of the temperature-field worked cell
+  sha256: 2a6749c347566da6af7f98a83c7469abd5239f4b16d0230361f7a450126401e4
+- path: examples/worked-cells/thermal-doe-worked-instance/WALKTHROUGH.md
+  transformed: true
+  why: the walkthrough of the thermal-doe-worked-instance worked cell
+  sha256: ce1f0a689418a9070e6f3097572faa212635a3a81151fda6f20ed32d1275946e
+- path: examples/worked-cells/thermal-doe-worked-instance/data/data-contract.md
+  transformed: true
+  why: the data contract of the thermal-doe-worked-instance worked cell
+  sha256: 94030d13c071d12e529f4efcf87493f2f747a1f598a9c7929c69050a172840fb
+- path: examples/worked-cells/thermal-doe-worked-instance/data/sample-dataset.csv
+  transformed: false
+  why: the thermal-doe-worked-instance worked cell's synthetic sample dataset, regenerated by its synthesize_sample.py
+  sha256: 7c24e95a62605b575a00e7d77710b17a976f353604009d672b3e19e3ba2fea8e
+- path: examples/worked-cells/thermal-doe-worked-instance/data/synthesize_sample.py
+  transformed: true
+  why: the generator of the thermal-doe-worked-instance worked cell's sample dataset
+  sha256: 0df372be303c4c98f427f578a1a97da5dea685c4126f5278cd370cc4c459c4e9
+- path: examples/worked-model-cards/brake-disc-link1-thermal-model-card.md
+  transformed: true
+  why: the worked model card for link 1 of the brake-disc TMF chain
+  sha256: 4c3d949574e944fdf519a04dedcdb4f7bbe9c29e138198e5222e26244ab548f9
+- path: examples/worked-model-cards/brake-disc-link2-thermo-mech-model-card.md
+  transformed: true
+  why: the worked model card for link 2 of the brake-disc TMF chain
+  sha256: 803cac892e3822f06dbe2cee59f924afc4d1c1fb3017f370768405882f4a1a30
+- path: examples/worked-model-cards/brake-disc-link3-fatigue-model-card.md
+  transformed: true
+  why: the worked model card for link 3 of the brake-disc TMF chain
+  sha256: 4f19f6c6c9d1940d2f16050ac1dc777fc31dee5066b2a84b2cb3f69d7fb9a860
+- path: src/opencontractml/cc_common.py
+  transformed: true
+  why: the corpus consumer's shared schema, loading, statistics and I/O helpers
+  sha256: 6ac5eee4847a5b319532d3c484144bc881e45ba43322c1d281dedeef4baf968c
+- path: src/opencontractml/corpus_gate.py
+  transformed: true
+  why: the G1 corpus acceptance gate
+  sha256: f6c4861438a3c263da7827188ac64e08d1f92908bea5cc8ffb12594201c98a7c
+- path: src/opencontractml/gate.py
+  transformed: true
+  why: the scalar gate engine's V1/V2/V3 model validation gate
+  sha256: de851a25ffd62a9dd929dd08d0e3ef05615dc7ba469741255bff407018f35b26
+- path: src/opencontractml/manifest.py
+  transformed: true
+  why: 'package-v1 manifest validation: JSON Schema, typed model and semantic checks'
+  sha256: 7e76f85768a192f561f04c721e53409743a2fee94a58da12242c2c9f0e80505a
+- path: src/opencontractml/model_card.py
+  transformed: true
+  why: 'model-card validation: front-matter and the required H2 sections'
+  sha256: 99285346b13cc6308b73c23efec9ad27ac0675575a0df9f6e4c5aabaffde4ba3
+- path: src/opencontractml/safe_artifact.py
+  transformed: true
+  why: 'restricted unpickling for model bundles: the safe-load policy for pickles'
+  sha256: 85fa678508d6c4cfed0894942ab38c43617c1c33d21b96c22bf7fab2f7b23d5c
+- path: src/opencontractml/safeload.py
+  transformed: true
+  why: safe loading of tensor checkpoints (MIT-licensed; its notice is in NOTICE)
+  sha256: 671b1c460138fae35efa86d168081ab0f93e2cb69c22c0895d14c6cb70d17687
+- path: src/opencontractml/schemas/contract-v1/contract-vocabulary.json
+  transformed: true
+  why: the machine-readable contract vocabulary, generated by verify.py
+  sha256: f73359ecef60499858b18a840f16c11d5a0380c386be5a75ad0a32406c3ed1cf
+- path: src/opencontractml/schemas/contract-v1/manifest.schema.json
+  transformed: true
+  why: the JSON Schema of the Contract v1 manifest
+  sha256: c26cc3b2232ae2833415ffceb93bbd39586a165e23de6ecdcba84c54ebdb9a6a
+- path: src/opencontractml/schemas/package-v1/manifest.schema.json
+  transformed: true
+  why: the JSON Schema of the package-v1 manifest
+  sha256: 1b16f65709f8c1f4a5dbdf47fc700ba52d87722b848dcdede84dbf8c34635348
+- path: src/opencontractml/synth_corpus.py
+  transformed: true
+  why: a synthetic heat-shield corpus generator with defect modes for the G1 fail demonstrations
+  sha256: 3da59721a2ed8525bda9bd67303886938a63d7b17d13ecc3f8c47a234e01cf9d
+- path: src/opencontractml/templates/model_card.template.md
+  transformed: true
+  why: the model-card template with the eleven required sections
+  sha256: eb29186300889582c0e64445d5e41f990996cb933425b775a5e484fe97dc5495
+- path: src/opencontractml/train_b1.py
+  transformed: true
+  why: the M1 corpus-native trainer whose artifacts the model gate validates
+  sha256: f10a2b8c1b8bf7e4e064333202106239d38fd0ebcd5a69e40535b71aa0f4ec23
+- path: src/opencontractml/verify.py
+  transformed: true
+  why: the conformance checker and the machine-readable contract vocabulary
+  sha256: 7080cd52e1c60e1622e8ef4870e13d208cd40246ccad142d980c4456bc7c5035
+- path: tests/fixtures/model_packages/conformant/manifest.yaml
+  transformed: true
+  why: 'a conformant package-v1 fixture: its manifest'
+  sha256: 7f8f9576fb35fce54b6becda5544fdda938991e456696fe4576af442ccaeff7c
+- path: tests/fixtures/model_packages/conformant/model_card.md
+  transformed: true
+  why: 'a conformant package-v1 fixture: its model card'
+  sha256: c410dd063edd6e91b7323ff9d192b250760a062a00a782177acd44f798aa5321
+- path: tests/fixtures/model_packages/nonconformant/manifest.yaml
+  transformed: true
+  why: 'a package-v1 fixture with one planted defect (an uncovered output): its manifest'
+  sha256: 06b973bd0af064f6b81e4c20619e2806e5e721d2cbb279ced6f2062def441cbf
+- path: tests/fixtures/model_packages/nonconformant/model_card.md
+  transformed: true
+  why: 'a package-v1 fixture with one planted defect (an uncovered output): its model card'
+  sha256: ca33d7cd203c77b32cdafb4accfc97de6261c850c30229d31d4e5159364b959d
+- path: tests/test_fake_model.py
+  transformed: true
+  why: tests of the brake-disc stub model's wire format
+  sha256: b9ee62c69af254eb078b84cdeb7aca94e1c4422e257fff74bc9cd4356d1cebbf
+- path: tests/test_manifest.py
+  transformed: true
+  why: tests of manifest validation and the pre-publish gate
+  sha256: 1b9e55ab1e2273207d4c9cd1f5a1415bfad195652a4303183ed8dbb726f7e61f
+- path: tests/test_model_card.py
+  transformed: true
+  why: tests of model-card validation
+  sha256: 8fdc72e6d56f56a2cc62a9a6e81855ef10ac0eb54032773ed7832ed7c363cfcf
+- path: tests/test_safe_artifact.py
+  transformed: true
+  why: fail-demos for the safe-load policy
+  sha256: 40e60d19ff4fba8947a9ae16eb58b28c3798e63f5533f94690ded84f95ce176e
+- path: tests/test_verify.py
+  transformed: true
+  why: tests of the conformance checker, one planted defect per ERROR rule
+  sha256: 2e94ebd334a2596f98bf390271e8e61328b56356556c2c5c55d94f409bb3dfaf
+modified_copies:
+- path: tests/fixtures/producer_packages/brake_disc_link1_thermal_fno/manifest.yaml
+  copy_of: brake_disc_link1_thermal_fno
+  changes: the package id and labels renamed; free text and fields that named the producer's repository,
+    contacts or documents reworded; provenance.code.commit and provenance.dataset.sha256 set to all-zero
+    values; edited artifacts re-pinned
+  why: a file of the fixture package brake_disc_link1_thermal_fno, a modified copy of a package its producer
+    emitted (see its README)
+  sha256: 32446a4af2425bd6a4fe896813452997e1838cbfb8a453f0ac9276ae21bdc548
+- path: tests/fixtures/producer_packages/brake_disc_link1_thermal_fno/model_card.md
+  copy_of: brake_disc_link1_thermal_fno
+  changes: model_id renamed with the package; prose that cited documents, tools or the producer's repository
+    reworded or rewritten; the H2 sequence kept
+  why: a file of the fixture package brake_disc_link1_thermal_fno, a modified copy of a package its producer
+    emitted (see its README)
+  sha256: d436a5c7c00e024d4ecaa584cf44b356f6f052f9fbed6a6e6eb0c3b1292dd1e9
+- path: tests/fixtures/producer_packages/brake_disc_link1_thermal_fno/predict.py
+  copy_of: brake_disc_link1_thermal_fno
+  changes: docstring, comments and messages that cited material which does not ship reworded (and the
+    model id renamed); the logic unchanged; re-pinned in the manifest
+  why: a file of the fixture package brake_disc_link1_thermal_fno, a modified copy of a package its producer
+    emitted (see its README)
+  sha256: f8f30088d31330b1b1133834393ffe2e0d9ddfa7a9e97e6540d4834fae7f7a0c
+- path: tests/fixtures/producer_packages/brake_disc_link1_thermal_fno/validation_report.json
+  copy_of: brake_disc_link1_thermal_fno
+  changes: model_id renamed and dataset_sha256 set to all zeros; free-text reasons that cited material
+    which does not ship reworded; one undefined classification key removed; every status, metric and threshold
+    unchanged
+  why: a file of the fixture package brake_disc_link1_thermal_fno, a modified copy of a package its producer
+    emitted (see its README)
+  sha256: 2337b901c3f5153bd279fde3c4df69a959ab697b8d525dbef00b6f772555938c
+- path: tests/fixtures/producer_packages/brake_disc_link2_thermo_mech_rom/manifest.yaml
+  copy_of: brake_disc_link2_thermo_mech_rom
+  changes: the package id and labels renamed; free text and fields that named the producer's repository,
+    contacts or documents reworded; provenance.code.commit and provenance.dataset.sha256 set to all-zero
+    values; edited artifacts re-pinned
+  why: a file of the fixture package brake_disc_link2_thermo_mech_rom, a modified copy of a package its
+    producer emitted (see its README)
+  sha256: d04fefd6a1884626a537a2705c4a82f83267540136ab70673a2d9dd90ed0a722
+- path: tests/fixtures/producer_packages/brake_disc_link2_thermo_mech_rom/model_card.md
+  copy_of: brake_disc_link2_thermo_mech_rom
+  changes: model_id renamed with the package; prose that cited documents, tools or the producer's repository
+    reworded or rewritten; the H2 sequence kept
+  why: a file of the fixture package brake_disc_link2_thermo_mech_rom, a modified copy of a package its
+    producer emitted (see its README)
+  sha256: e2914d3b6a640f7a0adb2d6648ca9b1f91035e11b32fdaae905cddef7d49fc77
+- path: tests/fixtures/producer_packages/brake_disc_link2_thermo_mech_rom/predict.py
+  copy_of: brake_disc_link2_thermo_mech_rom
+  changes: docstring, comments and messages that cited material which does not ship reworded (and the
+    model id renamed); the logic unchanged; re-pinned in the manifest
+  why: a file of the fixture package brake_disc_link2_thermo_mech_rom, a modified copy of a package its
+    producer emitted (see its README)
+  sha256: ab18cfd3a80e8de4117270dfd27f2b849b71f794420dc4e79b3d156cca47d93e
+- path: tests/fixtures/producer_packages/brake_disc_link2_thermo_mech_rom/validation_report.json
+  copy_of: brake_disc_link2_thermo_mech_rom
+  changes: model_id renamed and dataset_sha256 set to all zeros; free-text reasons that cited material
+    which does not ship reworded; one undefined classification key removed; every status, metric and threshold
+    unchanged
+  why: a file of the fixture package brake_disc_link2_thermo_mech_rom, a modified copy of a package its
+    producer emitted (see its README)
+  sha256: 0b9b077b0847ae1ec24913e1a895f9dc26eb76b88cf30f66d74ff26b35976cdd
+- path: tests/fixtures/producer_packages/brake_disc_link3_fatigue_gbm_gp/manifest.yaml
+  copy_of: brake_disc_link3_fatigue_gbm_gp
+  changes: the package id and labels renamed; free text and fields that named the producer's repository,
+    contacts or documents reworded; provenance.code.commit and provenance.dataset.sha256 set to all-zero
+    values; edited artifacts re-pinned
+  why: a file of the fixture package brake_disc_link3_fatigue_gbm_gp, a modified copy of a package its
+    producer emitted (see its README)
+  sha256: 0689ec79081525dc73a7654b11befb40bbca65de92341e2ae4a969e72b5de20e
+- path: tests/fixtures/producer_packages/brake_disc_link3_fatigue_gbm_gp/model_card.md
+  copy_of: brake_disc_link3_fatigue_gbm_gp
+  changes: model_id renamed with the package; prose that cited documents, tools or the producer's repository
+    reworded or rewritten; the H2 sequence kept
+  why: a file of the fixture package brake_disc_link3_fatigue_gbm_gp, a modified copy of a package its
+    producer emitted (see its README)
+  sha256: 074953a518c3af213abfddc47143f885e1b7ce5e10208f3c4aa5a09161ccb31d
+- path: tests/fixtures/producer_packages/brake_disc_link3_fatigue_gbm_gp/predict.py
+  copy_of: brake_disc_link3_fatigue_gbm_gp
+  changes: docstring, comments and messages that cited material which does not ship reworded (and the
+    model id renamed); the logic unchanged; re-pinned in the manifest
+  why: a file of the fixture package brake_disc_link3_fatigue_gbm_gp, a modified copy of a package its
+    producer emitted (see its README)
+  sha256: 43284fff606b11ca6086d5108fc0b9fb561c66781c34cd8ccc8ce9cf6950d675
+- path: tests/fixtures/producer_packages/brake_disc_link3_fatigue_gbm_gp/validation_report.json
+  copy_of: brake_disc_link3_fatigue_gbm_gp
+  changes: model_id renamed and dataset_sha256 set to all zeros; free-text reasons that cited material
+    which does not ship reworded; one undefined classification key removed; every status, metric and threshold
+    unchanged
+  why: a file of the fixture package brake_disc_link3_fatigue_gbm_gp, a modified copy of a package its
+    producer emitted (see its README)
+  sha256: 1dfbb6748acb19c8ee8182556a846dbd886606871d0aeab2c5964f04265bca6b
+- path: tests/fixtures/producer_packages/plate_heat_fno/fno_weights.npz
+  copy_of: plate_heat_fno
+  changes: the producer's weights file replaced by a text stub; re-pinned in the manifest
+  why: a file of the fixture package plate_heat_fno, a modified copy of a package its producer emitted
+    (see its README)
+  sha256: 654b3c9e5e7e791ad10b6aae0fbbbcbf4359ac427d95dcc001600c850821df40
+- path: tests/fixtures/producer_packages/plate_heat_fno/manifest.yaml
+  copy_of: plate_heat_fno
+  changes: the package id and labels renamed; free text and fields that named the producer's repository,
+    contacts or documents reworded; provenance.code.commit and provenance.dataset.sha256 set to all-zero
+    values; edited artifacts re-pinned
+  why: a file of the fixture package plate_heat_fno, a modified copy of a package its producer emitted
+    (see its README)
+  sha256: 60c49b687831df215439650f50ecc83c546c6dc622b4fee05730917894b49c0a
+- path: tests/fixtures/producer_packages/plate_heat_fno/model_card.md
+  copy_of: plate_heat_fno
+  changes: model_id renamed with the package; prose that cited documents, tools or the producer's repository
+    reworded or rewritten; the H2 sequence kept
+  why: a file of the fixture package plate_heat_fno, a modified copy of a package its producer emitted
+    (see its README)
+  sha256: 9a49918ac07bd9eb7fbe7ee7a0c32b2aeed1d9d98cc4d95792069482271f1af2
+- path: tests/fixtures/producer_packages/plate_heat_fno/predict.py
+  copy_of: plate_heat_fno
+  changes: docstring, comments and messages that cited material which does not ship reworded (and the
+    model id renamed); the logic unchanged; re-pinned in the manifest
+  why: a file of the fixture package plate_heat_fno, a modified copy of a package its producer emitted
+    (see its README)
+  sha256: 0780bca18917aa6fa0e0791fd9916bf9cece47419e81709e5f93880cdcbd6615
+- path: tests/fixtures/producer_packages/plate_heat_fno/validation_report.json
+  copy_of: plate_heat_fno
+  changes: model_id renamed and dataset_sha256 set to all zeros; free-text reasons that cited material
+    which does not ship reworded; one undefined classification key removed; every status, metric and threshold
+    unchanged
+  why: a file of the fixture package plate_heat_fno, a modified copy of a package its producer emitted
+    (see its README)
+  sha256: 7241cce634a200711fae31e3ce74d41ca228060647677d0537ca7c80d1e607e4

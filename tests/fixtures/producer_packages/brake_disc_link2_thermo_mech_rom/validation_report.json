@@ -1,0 +1,79 @@
+{
+  "spec_version": "1.0",
+  "produced_by": "the producer's package builder",
+  "model_id": "brake_disc_link2_thermo_mech_rom",
+  "model_version": "1.0.0",
+  "dataset_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "note": "This package is CONFORMANT and its model is NOT VALIDATED. Fourteen of fifteen ladder keys carry NOT_RUN or NOT_APPLICABLE because the brake-disc worked instance is a format probe with no trained model; the one PASS is provenance integrity, which is genuinely measured. overall is FAIL by recomputation, which is the correct and intended verdict.",
+  "checks": {
+    "A1_accuracy": {
+      "status": "NOT_RUN",
+      "reason": "no model has been trained against this contract; the check is owed, not waived"
+    },
+    "A2_extrapolation": {
+      "status": "NOT_RUN",
+      "reason": "no model has been trained against this contract; the check is owed, not waived"
+    },
+    "A3_uq_calibration": {
+      "status": "NOT_RUN",
+      "reason": "no model has been trained against this contract; the check is owed, not waived. The intended instrument is declared in the card's Uncertainty quantification section (latent-space ensemble disagreement over independently seeded autoencoder/Neural-ODE members)"
+    },
+    "A4_baseline_beat": {
+      "status": "NOT_RUN",
+      "reason": "no model has been trained against this contract; the check is owed, not waived, and no baseline roster has been run against it"
+    },
+    "A5_reproducibility": {
+      "status": "NOT_RUN",
+      "reason": "no model has been trained against this contract; the check is owed, not waived. Determinism class cannot be declared before there is a training run to characterise"
+    },
+    "B1_monotonicity": {
+      "status": "NOT_RUN",
+      "reason": "no model has been trained against this contract; the check is owed, not waived; the (feature, target, direction) triples this link would probe are not yet declared"
+    },
+    "B2_bounds": {
+      "status": "NOT_RUN",
+      "reason": "no model has been trained against this contract; the check is owed, not waived; no probe set covers a hull that does not exist"
+    },
+    "B3_residual": {
+      "status": "NOT_RUN",
+      "reason": "no model has been trained against this contract; the check is owed, not waived -- the momentum-balance residual of the predicted stress field is the intended B3; it has never been evaluated because no model exists"
+    },
+    "B4_conservation": {
+      "status": "NOT_APPLICABLE",
+      "applicable": false,
+      "reason": "Quasi-static thermo-mechanical equilibrium is a balance this link's physics satisfies, and a trained field surrogate would owe a measured relative imbalance on the predicted stress divergence. This PACKAGE cannot form one: its declared outputs are the reduced scalars peak_eps_p_eq_value and latent_disagreement, so there is no predicted field over which to integrate a balance. The link's full [N_nodes, 6] symmetric-tensor field is not expressible in manifest outputs[] under Contract v1.0 (spec section 10, limitation 3). When the v1.1 field-output extension lands, B4 becomes applicable: true for this link and the package MUST be regenerated with a measurement. Recorded by the producer."
+    },
+    "B5_invariance": {
+      "status": "NOT_RUN",
+      "reason": "no model has been trained against this contract; the check is owed, not waived -- symmetric-tensor preservation under mesh re-ordering is the intended B5 for this link (losing it is the known pitfall of this family); asserted by the 6-component convention, not measured"
+    },
+    "B6_integrated_quantities": {
+      "status": "NOT_APPLICABLE",
+      "reason": "this package's declared outputs ARE the integrated quantities (peak_eps_p_eq_value, latent_disagreement); there is no separately reported field from which to re-derive them"
+    },
+    "C1_ood_guard": {
+      "status": "NOT_RUN",
+      "reason": "no model has been trained against this contract; the check is owed, not waived. The link's contract calls for an in_distribution flag on the output; nothing implements it yet, and the scalar ladder has no OOD guard to port (spec section 5.5)"
+    },
+    "C2_serve_parity": {
+      "status": "NOT_RUN",
+      "reason": "there is no training-framework forward to compare the exported entrypoint against; predict.py is a hashed, runnable refusal, not a model"
+    },
+    "C3_provenance_integrity": {
+      "status": "PASS",
+      "method": "every declared artifact re-hashed against the file on disk at package-build time",
+      "metrics": {
+        "artifacts_verified": 1,
+        "hash_mismatches": 0
+      },
+      "thresholds": {
+        "max_hash_mismatches": 0
+      }
+    },
+    "C4_deployment_readiness": {
+      "status": "NOT_RUN",
+      "reason": "the deployment declarations are present in the card (inference target, latency framing, escalation owner) but no runtime has been measured, because there is nothing to run; a declaration without a measurement is not a pass (spec section 5.3, rule V006)"
+    }
+  },
+  "overall": "FAIL"
+}

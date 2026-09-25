@@ -1,0 +1,301 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/BootstrapAI-mgmt/open-contract-ml/schemas/package-v1/manifest.schema.json",
+  "title": "Model Manifest",
+  "description": "Per-model manifest declaring identity, inputs, outputs, UQ contract, invocation, lineage, and discoverability metadata. Co-located with the model executable and a sibling model_card.md. Validated at server registry-load.",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "version",
+    "owner",
+    "domain",
+    "modality",
+    "purpose",
+    "inputs",
+    "outputs",
+    "uncertainty",
+    "invocation",
+    "lineage",
+    "model_card"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "Stable identifier; used in URLs, run records, and registry keys. Lowercase ASCII, must start with a letter."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Human-readable name shown in catalog cards and reports."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version (MAJOR.MINOR.PATCH)."
+    },
+    "spec_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$",
+      "description": "Manifest-spec (schema) version this model is authored against, as MAJOR.MINOR. Optional and additive; an absent value is treated as \"1.0\" (the v1 spec). A consumer loads any manifest whose MAJOR is <= its supported maximum (minor bumps are additive and back-compatible) and rejects a higher MAJOR loud at load (back-compat policy). Distinct from `version`, which is the model's own semver."
+    },
+    "owner": {
+      "type": "object",
+      "required": ["team", "contact"],
+      "properties": {
+        "team": {
+          "type": "string",
+          "description": "Team responsible for the model."
+        },
+        "contact": {
+          "type": "string",
+          "description": "Contact for the team (email or chat handle)."
+        }
+      }
+    },
+    "domain": {
+      "type": "string",
+      "description": "Engineering domain (e.g., thermomechanical_fatigue, vibration, flow). Drives faceted catalog browse."
+    },
+    "modality": {
+      "type": "string",
+      "enum": [
+        "scalar_in_scalar_out",
+        "tabular_in_scalar_out",
+        "timeseries_in_scalar_out",
+        "timeseries_in_timeseries_out",
+        "geometry_in_scalar_out",
+        "geometry_in_field_out",
+        "field_in_field_out"
+      ],
+      "description": "Coarse input-to-output shape, for catalog facets."
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Free-form tags for catalog facets and search."
+    },
+    "analysis_type": {
+      "type": "string",
+      "description": "Plain-language analysis category for non-expert discovery (e.g. \"fatigue life\", \"vibration response\", \"flow rate\"). Optional and additive. Populated dynamically into the catalog's primary browse axis exactly like `domain`/`tags` — NOT a hardcoded vocabulary. Phrase it the way a non-CAE/ML user with an analysis in mind would."
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 10,
+      "description": "One-line statement, in plain language a non-CAE/ML reader can understand, of what the model predicts."
+    },
+    "when_to_use": {
+      "type": "string",
+      "description": "Plain-language guidance on appropriate use cases, written for a non-expert who has an analysis in mind. Drives non-expert discovery; an empty value draws an advisory warn at load (never a rejection)."
+    },
+    "when_not_to_use": {
+      "type": "string",
+      "description": "Plain-language guidance on inappropriate use cases. Surfaced in reports."
+    },
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/input_field" }
+    },
+    "outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/output_field" }
+    },
+    "primary_inputs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Input names shown as default columns in the history table."
+    },
+    "primary_outputs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Output names shown as default columns in the history table."
+    },
+    "uncertainty": { "$ref": "#/$defs/uncertainty" },
+    "invocation": {
+      "type": "object",
+      "required": ["executable", "protocol", "timeout_s"],
+      "properties": {
+        "executable": {
+          "type": "string",
+          "description": "Path to the model executable, relative to the manifest file."
+        },
+        "protocol": {
+          "const": "stdio_json",
+          "description": "v1 supports stdio_json only."
+        },
+        "timeout_s": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Hard timeout after which the server kills the .exe and records an error."
+        },
+        "expected_runtime_s": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Informational estimate shown in the UI."
+        },
+        "batch_supported": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, the .exe accepts mode=batch and emits one JSON output per input row."
+        }
+      }
+    },
+    "lineage": {
+      "type": "object",
+      "required": ["training_data_version", "training_date", "metrics"],
+      "properties": {
+        "training_data_version": {
+          "type": "string",
+          "description": "Identifier or version tag for the training dataset."
+        },
+        "training_date": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO-8601 date the model was trained."
+        },
+        "metrics": {
+          "type": "object",
+          "minProperties": 1,
+          "description": "Free-form map of metric_name -> value. At least one metric required."
+        },
+        "retrain_cadence": {
+          "type": "string",
+          "description": "Free-form description of retrain schedule (e.g., quarterly, on-demand)."
+        }
+      }
+    },
+    "model_card": {
+      "type": "string",
+      "description": "Path to the model card markdown file, relative to the manifest file. Required, validated at registry load (front-matter + 9 mandatory H2 sections)."
+    },
+    "examples": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/example" },
+      "description": "Pre-filled input sets for the model detail page 'Try this' buttons."
+    }
+  },
+  "$defs": {
+    "input_field": {
+      "type": "object",
+      "required": ["name", "type", "required"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][A-Za-z0-9_]*$",
+          "description": "Field key the entrypoint reads from its stdin JSON. Starts with a lowercase letter; after that, letters of either case, digits and underscores. The uppercase tail is deliberate: unit suffixes carry case (peak_temp_K is kelvin, peak_temp_k is kilo), so a lowercase-only rule would reject the name that says which. Every name the lowercase-only pattern accepted is still accepted."
+        },
+        "type": {
+          "enum": ["float", "integer", "categorical", "boolean", "file", "string"]
+        },
+        "units": {
+          "type": "string",
+          "description": "Display units. The GUI lets the user pick a compatible display unit."
+        },
+        "canonical_units": {
+          "type": "string",
+          "description": "Units the .exe expects. The GUI converts user input from display units to canonical before sending."
+        },
+        "range": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "[min, max] in canonical units. Values outside warn the user but do not block submission."
+        },
+        "choices": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Required for type=categorical."
+        },
+        "file_kind": {
+          "enum": ["stl", "step", "csv", "vtk", "npz"],
+          "description": "Required for type=file. Filters the file picker."
+        },
+        "required": { "type": "boolean" },
+        "default": {
+          "description": "Pre-filled in the auto-form when present."
+        },
+        "description": { "type": "string" }
+      }
+    },
+    "output_field": {
+      "type": "object",
+      "required": ["name", "type", "viewer"],
+      "properties": {
+        "name": { "type": "string" },
+        "type": {
+          "enum": ["float", "integer", "categorical", "timeseries", "field", "distribution"]
+        },
+        "units": { "type": "string" },
+        "choices": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Required for type=categorical."
+        },
+        "viewer": {
+          "enum": [
+            "scalar_with_uq",
+            "categorical_with_confidence",
+            "timeseries_with_band",
+            "field_contour",
+            "histogram"
+          ],
+          "description": "Selects the React viewer component. field_contour is reserved for a downstream phase."
+        }
+      }
+    },
+    "uncertainty": {
+      "type": "object",
+      "required": ["form", "per_output"],
+      "properties": {
+        "form": {
+          "enum": [
+            "predictive_interval",
+            "ensemble",
+            "quantiles",
+            "monte_carlo",
+            "class_probabilities"
+          ],
+          "description": "Default UQ form. Per-output blocks may override."
+        },
+        "per_output": {
+          "type": "object",
+          "minProperties": 1,
+          "description": "Map from output field name to its UQ field declarations. Must cover every output."
+        },
+        "calibration": {
+          "type": "object",
+          "properties": {
+            "holdout_size": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "empirical_coverage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Achieved coverage on the holdout set. Drives the trust badge."
+            },
+            "method": { "type": "string" }
+          }
+        }
+      }
+    },
+    "example": {
+      "type": "object",
+      "required": ["label", "inputs"],
+      "properties": {
+        "label": { "type": "string" },
+        "inputs": { "type": "object" },
+        "expected_hint": {
+          "type": "string",
+          "description": "Optional plain-language hint shown next to the Try this button."
+        }
+      }
+    }
+  }
+}

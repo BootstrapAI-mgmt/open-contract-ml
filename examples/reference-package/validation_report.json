@@ -1,0 +1,196 @@
+{
+  "spec_version": "1.0",
+  "produced_by": "the reference package's build script (not shipped with this repository)",
+  "model_id": "contract_reference_tmf_v1",
+  "model_version": "1.0.0",
+  "dataset_sha256": "7bd50c57ac6251e6011f4612ba75da49d4e48d320afbcb923f1aa94b6f140d64",
+  "lane": "scalar",
+  "splits": {
+    "train": 324,
+    "cal": 108,
+    "test_id": 108,
+    "test_extrap": 60
+  },
+  "checks": {
+    "A1_accuracy": {
+      "status": "PASS",
+      "method": "held-out random split, log-life space",
+      "metrics": {
+        "rmse": 0.122444,
+        "mae": 0.099684,
+        "r2": 0.996077,
+        "n": 108
+      },
+      "thresholds": {
+        "r2_min": 0.9,
+        "mae_max": 0.2
+      }
+    },
+    "A2_extrapolation": {
+      "status": "PASS",
+      "method": "corner split on cycle_count top decile",
+      "metrics": {
+        "rmse": 0.106891,
+        "mae": 0.080485,
+        "r2": 0.996099,
+        "n": 60,
+        "degradation_ratio": 0.872983,
+        "corner_threshold_cycles": 30238.0
+      },
+      "thresholds": {
+        "degradation_max": 3.0,
+        "rmse_extrap_max": 0.4
+      }
+    },
+    "A3_uq_calibration": {
+      "status": "PASS",
+      "method": "split conformal on |log residual|, calibrated on the cal split",
+      "determinism_class": null,
+      "metrics": {
+        "nominal": 0.9,
+        "empirical_coverage": 0.925926,
+        "n": 108,
+        "half_width_log": 0.210168
+      },
+      "thresholds": {
+        "coverage_band_lo": 0.85,
+        "coverage_band_hi": 0.96
+      }
+    },
+    "A4_baseline_beat": {
+      "status": "PASS",
+      "method": "RMSE ratio against the training-mean predictor",
+      "metrics": {
+        "rmse_model": 0.122444,
+        "rmse_mean_predictor": 1.962934,
+        "ratio_vs_mean": 0.062378,
+        "n": 108
+      },
+      "thresholds": {
+        "beat_mean_max_ratio": 0.5
+      },
+      "note": "the champion IS the linear model, so no linear-baseline clause applies"
+    },
+    "A5_reproducibility": {
+      "status": "PASS",
+      "method": "refit on the same rows with the same seed",
+      "determinism_class": "bitwise",
+      "metrics": {
+        "max_abs_coefficient_delta": 0.0,
+        "coefficients_compared": 5,
+        "bitwise_identical": 1
+      },
+      "thresholds": {
+        "tolerance": 0.0
+      }
+    },
+    "B1_monotonicity": {
+      "status": "PASS",
+      "method": "finite differences along 64-point probe lines",
+      "metrics": {
+        "violation_fraction_peak_temp": 0.0,
+        "violation_fraction_cycle_count": 0.0,
+        "n_probe_points": 64
+      },
+      "thresholds": {
+        "violation_fraction_max": 0.0
+      },
+      "declared": [
+        {
+          "feature": "peak_temp_K",
+          "target": "life_cycles",
+          "direction": "-"
+        },
+        {
+          "feature": "cycle_count",
+          "target": "life_cycles",
+          "direction": "-"
+        }
+      ]
+    },
+    "B2_bounds": {
+      "status": "PASS",
+      "method": "probe grid over the training hull expanded by 10 percent",
+      "metrics": {
+        "n_probe_points": 4096,
+        "n_violations": 0,
+        "min_predicted_life_cycles": 6.1026069
+      },
+      "thresholds": {
+        "lower_bound_life_cycles": 0.0,
+        "max_violations": 0
+      }
+    },
+    "B3_residual": {
+      "status": "NOT_APPLICABLE",
+      "reason": "a scalar life regressor has no field to evaluate a PDE residual on; the physics residual tier applies to field surrogates (the field ladder's FG6), not to this modality"
+    },
+    "B4_conservation": {
+      "status": "NOT_APPLICABLE",
+      "applicable": false,
+      "reason": "life-to-crack-initiation is not a conserved extensive quantity and the model integrates no control volume, so no balance can be formed. This is the NOT_APPLICABLE path of spec section 5.4: it is not a PASS and it is visible in the rollup."
+    },
+    "B5_invariance": {
+      "status": "NOT_APPLICABLE",
+      "reason": "scalar in, scalar out: there is no mesh, grid or point sampling whose choice the prediction could depend on"
+    },
+    "B6_integrated_quantities": {
+      "status": "NOT_APPLICABLE",
+      "reason": "the model predicts the integrated quantity directly; there is no field from which to re-derive it"
+    },
+    "C1_ood_guard": {
+      "status": "PASS",
+      "method": "axis-aligned box guard on the declared input ranges",
+      "metrics": {
+        "pass_fraction_test_id": 1.0,
+        "far_out_design_refused": 1,
+        "n": 108
+      },
+      "thresholds": {
+        "min_pass_fraction_id": 0.95,
+        "far_out_must_refuse": 1
+      }
+    },
+    "C2_serve_parity": {
+      "status": "PASS",
+      "method": "predict.py invoked as a stdio_json subprocess against the in-process fit",
+      "metrics": {
+        "max_rel_diff": 0.0,
+        "n_cases": 12
+      },
+      "thresholds": {
+        "max_rel_diff_allowed": 1e-09
+      }
+    },
+    "C3_provenance_integrity": {
+      "status": "PASS",
+      "method": "re-hash every declared artifact at report time",
+      "metrics": {
+        "artifacts_verified": 2,
+        "hash_mismatches": 0
+      },
+      "thresholds": {
+        "max_hash_mismatches": 0
+      }
+    },
+    "C4_deployment_readiness": {
+      "status": "PASS",
+      "method": "required deployment declarations present, and measured single-call runtime against the manifest timeout",
+      "metrics": {
+        "declarations_present": 4,
+        "measured_runtime_s": 0.154
+      },
+      "thresholds": {
+        "declarations_required": 4,
+        "timeout_s": 60
+      },
+      "declarations": {
+        "validation_anchor": "illustrative: this is a contract fixture, not a validated surrogate",
+        "inference_target": "workstation, single call",
+        "retrain_cadence": "not scheduled (fixture)",
+        "owner_escalation": "open-contract-ml@example.invalid"
+      }
+    }
+  },
+  "overall": "PASS"
+}

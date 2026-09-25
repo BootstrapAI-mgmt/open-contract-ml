@@ -1,0 +1,236 @@
+{
+  "spec_version": "1.0",
+  "produced_by": "the producer's packaging command 0.1.0",
+  "model_id": "plate_heat_fno",
+  "model_version": "1.0.0",
+  "dataset_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "splits": {
+    "train": 1785,
+    "val": 255,
+    "cal": 255,
+    "test_id": 255,
+    "test_extrap": 450
+  },
+  "source_gate_card": "the producer's gate card for this run (not shipped)",
+  "checks": {
+    "A1_accuracy": {
+      "status": "PASS",
+      "legacy_gate": "FG1_heldout_accuracy",
+      "method": "held-out interior test split, relative L2 / MAE in kelvin / peak-temperature R2",
+      "metrics": {
+        "n": 255,
+        "rel_l2_mean": 0.038111731921664053,
+        "rel_l2_p95": 0.10245061968830402,
+        "rel_l2_max": 0.26125011051166236,
+        "mae_K": 0.4985096333929344,
+        "rmse_K": 1.2367061744986962,
+        "max_abs_err_K": 60.04145812988281,
+        "tmax_mae_K": 1.3862500980788586,
+        "tmax_r2": 0.9866538508869885
+      },
+      "thresholds": {
+        "rel_l2_max": 0.05,
+        "mae_max_K": 1.0,
+        "tmax_r2_min": 0.98
+      }
+    },
+    "A2_extrapolation": {
+      "status": "PASS",
+      "legacy_gate": "FG2_extrapolation_honesty",
+      "method": "held-out high-power extrapolation band, against the interior split",
+      "metrics": {
+        "n": 450,
+        "rel_l2_mean": 0.04021791902718064,
+        "rel_l2_p95": 0.09417586512832152,
+        "rel_l2_max": 0.21332084742456014,
+        "mae_K": 2.067864779414825,
+        "rmse_K": 5.986502158447142,
+        "max_abs_err_K": 188.60205078125,
+        "tmax_mae_K": 6.049611981709798,
+        "tmax_r2": 0.9525142737514357,
+        "degradation_ratio": 1.0552634844788922,
+        "extrap_threshold": 41.1128635617745
+      },
+      "thresholds": {
+        "degradation_max": 3.0,
+        "rel_l2_extrap_max": 0.15
+      },
+      "extrap_axis": "P_total_W"
+    },
+    "A3_uq_calibration": {
+      "status": "PASS",
+      "legacy_gate": "FG3_uq_calibration",
+      "method": "split conformal on per-sample max |error| over the field, kelvin, calibrated on the frozen cal split",
+      "determinism_class": null,
+      "metrics": {
+        "band_halfwidth_K": 6.540130615234375,
+        "coverage_test_extrap": 0.68,
+        "resplit_coverage_mean": 0.9033921568627451,
+        "resplit_coverage_sd": 0.023893192749112693,
+        "frozen_split_floor": 0.8022136145017746,
+        "n_cal": 255,
+        "nominal": 0.9,
+        "empirical_coverage": 0.9176470588235294,
+        "n": 255
+      },
+      "thresholds": {
+        "alpha": 0.1,
+        "coverage_band": [
+          0.85,
+          0.96
+        ],
+        "n_resplits": 200,
+        "floor_sd_multiple": 2.0
+      }
+    },
+    "A4_baseline_beat": {
+      "status": "PASS",
+      "legacy_gate": "FG4_baseline_beat",
+      "method": "relative-L2 ratio against the mean-field and POD-ridge baselines",
+      "metrics": {
+        "ratio_vs_mean_field": 0.01735564844509367,
+        "ratio_vs_pod_ridge": 0.02655473504704946,
+        "mean_field_rel_l2": 2.1959267060654244,
+        "pod_ridge_rel_l2": 1.4352141662923015
+      },
+      "thresholds": {
+        "beat_mean_field": 0.5,
+        "beat_pod_ridge": 0.8
+      }
+    },
+    "A5_reproducibility": {
+      "status": "PASS",
+      "legacy_gate": "FG5_reproducibility",
+      "method": "a second training run with the same seed, compared on the interior relative L2",
+      "determinism_class": "seeded_tolerance",
+      "metrics": {
+        "rel_l2_run1": 0.038111731921664053,
+        "rel_l2_run2": 0.038111731921664053,
+        "relative_delta": 0.0
+      },
+      "thresholds": {
+        "rel_tol": 0.02,
+        "tolerance": 0.02
+      }
+    },
+    "B1_monotonicity": {
+      "status": "NOT_RUN",
+      "reason": "the field ladder has no monotonicity check: a temperature field has no single declared feature-to-target direction to finite-difference along, and inventing one here would be a new check rather than a re-keying of a measured one. This is NOT_RUN, not NOT_APPLICABLE -- it applies and was not executed, so it blocks."
+    },
+    "B2_bounds": {
+      "status": "NOT_RUN",
+      "reason": "the field ladder has no bounds check: the physical bound on dT is problem-dependent (it follows from the applied power and the convective coefficient, not from a fixed range), so no probe grid exists to run. NOT_RUN, and it blocks."
+    },
+    "B3_residual": {
+      "status": "PASS",
+      "legacy_gate": "FG6_physics_residual",
+      "method": "discrete energy balance of the predicted field, cell by cell, Jacobi-scaled to kelvin; needs no reference solution",
+      "metrics": {
+        "local_defect_K_mean": 0.030219764154310477,
+        "local_defect_K_p95": 0.08922869801560813,
+        "local_defect_worst_cell_K_mean": 0.4612689311879013,
+        "residual_norm_mean": 6.1109211702457635,
+        "residual_norm_p95": 15.233006978632108,
+        "imbalance_abs_mean": 0.1720884909170683,
+        "imbalance_abs_p95": 0.7067184264756712,
+        "edge_flow_err_mean": 0.21361783097261172,
+        "sink_flow_err_mean": 0.010762560376947734
+      },
+      "thresholds": {
+        "local_defect_K_max": 1.0,
+        "local_defect_worst_cell_K_max": 5.0
+      }
+    },
+    "B4_conservation": {
+      "status": "FAIL",
+      "legacy_gate": "FG7_conservation",
+      "applicable": true,
+      "quantity": "thermal energy (W)",
+      "control_volume": "the whole plate: applied source against convective sink plus conducted flux through the left Dirichlet edge",
+      "scope": "control_volume",
+      "method": "|source - sink - edge| / gross flow of the predicted field, averaged over 64 interior test designs",
+      "metrics": {
+        "imbalance_abs_mean": 0.1720884909170683,
+        "imbalance_abs_p95": 0.7067184264756712,
+        "edge_flow_err_mean": 0.21361783097261172,
+        "sink_flow_err_mean": 0.010762560376947734,
+        "n": 64,
+        "relative_imbalance": 0.1720884909170683
+      },
+      "thresholds": {
+        "imbalance_max": 0.05,
+        "relative_imbalance_max": 0.05
+      }
+    },
+    "B5_invariance": {
+      "status": "NOT_APPLICABLE",
+      "reason": "the grid ladder uses a single fixed 64x64 cell raster shared by every design; there is no mesh, resolution or point-sampling choice the prediction could depend on. The mesh ladder's FG10 is the gate that measures this claim."
+    },
+    "B6_integrated_quantities": {
+      "status": "NOT_APPLICABLE",
+      "reason": "no released integrated quantity accompanies this corpus. FG7 in this ladder is the global energy balance and is reported as B4_conservation; the point-cloud ladder's lift coefficient is the check that lands here, as FG11 since the producer renamed it off FG7, and as FG7 in the cards written before that."
+    },
+    "C1_ood_guard": {
+      "status": "PASS",
+      "legacy_gate": "FG8_ood_guard",
+      "method": "Mahalanobis guard fitted on the training descriptors; in-distribution pass fraction, and a far-out design that must be refused",
+      "metrics": {
+        "pass_fraction_test_id": 0.9921568627450981
+      },
+      "thresholds": {
+        "caution_quantile": 0.99,
+        "refuse_factor": 3.0,
+        "caution_margin": 0.1,
+        "refuse_margin": 0.5,
+        "min_pass_fraction_id": 0.95
+      },
+      "far_out_design_verdict": "REFUSE",
+      "verdicts_test_extrap": {
+        "PASS": 395,
+        "CAUTION": 55,
+        "REFUSE": 0
+      }
+    },
+    "C2_serve_parity": {
+      "status": "PASS",
+      "legacy_gate": "FG9_serve_parity",
+      "method": "the torch-free numpy forward against the torch forward on interior test samples. This package's predict.py splices that exact numpy source, so the parity measured here is the parity of the shipped entrypoint",
+      "metrics": {
+        "max_abs_diff_normalised": 1.1920928955078125e-06
+      },
+      "thresholds": {
+        "max_abs_diff": 0.001
+      }
+    },
+    "C3_provenance_integrity": {
+      "status": "PASS",
+      "method": "re-hash every declared artifact after writing it and compare with the digest the manifest will pin",
+      "metrics": {
+        "artifacts_verified": 2,
+        "hash_mismatches": 0
+      },
+      "thresholds": {
+        "max_hash_mismatches": 0
+      }
+    },
+    "C4_deployment_readiness": {
+      "status": "PASS",
+      "method": "the required deployment declarations, and the median wall time of 3 stdio_json subprocess calls against the manifest timeout",
+      "metrics": {
+        "declarations_present": 4,
+        "measured_runtime_s": 0.7097
+      },
+      "thresholds": {
+        "declarations_required": 4,
+        "timeout_s": 60
+      },
+      "declarations": {
+        "validation_anchor": "none: the corpus is synthetic and solver-generated, so no measured-hardware anchor exists and none is claimed",
+        "inference_target": "workstation CPU, one stdio_json call per design, no accelerator required",
+        "retrain_cadence": "on any change to the corpus generator, the solver or the frozen splits -- the producer's run registry reports that drift",
+        "owner_escalation": "not recorded in this fixture copy (see README.md)"
+      }
+    }
+  },
+  "overall": "FAIL"
+}
