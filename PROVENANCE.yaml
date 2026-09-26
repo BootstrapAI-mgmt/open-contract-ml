@@ -66,10 +66,10 @@ authored:
   sha256: 04398833264cf265aff2f8c387854d3b9d16084d0ba1f976e156bde0fce97ece
 - path: pyproject.toml
   why: packaging metadata
-  sha256: 1fc856aac9759f9472a513b59aa4c09cac690eee6ea36bc174e2bf99fda03ec8
+  sha256: 0128b222e6d2754691cfcd3b50cfc3de66cdff8f83839c579bd50fa703fb6185
 - path: src/opencontractml/__init__.py
   why: package root; lazily re-exports the checker
-  sha256: 4e3a7d365fb83d4ff5b4c9c3cc992b29cddf4e673ae8b81c4b12e5d5775cdad5
+  sha256: e1cd370b42c7470f055160f3189ce682b65d8d8b57e87f28ab8e46088086b46f
 - path: tests/fixtures/producer_packages/README.md
   why: what the producer fixture packages are, how CI checks them, and how a copy differs from what its
     producer shipped
