@@ -28,7 +28,6 @@ import os
 import shutil
 import sys
 import tempfile
-import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -241,47 +240,19 @@ def v2_checks(key: str, entry: Dict[str, Any], dt: pd.DataFrame, rules: Dict[str
 #: ``validation_anchor_status``  whether that evidence is available yet
 V3_FIELDS = ("validation_anchor", "inference_target", "validation_anchor_status")
 
-#: The names two V3 declarations had before 0.1.1. A rules file that still uses one is read,
-#: with a DeprecationWarning, and the model card carries the former name beside the current
-#: one, until the release below.
-V3_FORMER_NAMES = {"validation_anchor": "rung4_anchor", "validation_anchor_status": "stage8_status"}
-V3_FORMER_NAMES_REMOVED_IN = "0.2.0"
-
 
 def v3_declarations(v3: Dict[str, Any]) -> Dict[str, Any]:
-    """Read V3's declarations from a rules file's ``v3`` block, keyed by their current names.
+    """Read V3's declarations from a rules file's ``v3`` block, keyed by their names.
 
-    A declaration given only under its former name (``V3_FORMER_NAMES``) is read from there.
-    A former name draws a DeprecationWarning that names the release which stops reading it,
-    and when both names are given the current one wins.
+    Only the names in ``V3_FIELDS`` are read. A rules file written for 0.1.0 declared two of
+    them under other names; those are not read, so such a file fails V3 until it is updated.
     """
-    fields: Dict[str, Any] = {}
-    for name in V3_FIELDS:
-        value = v3.get(name)
-        former = V3_FORMER_NAMES.get(name)
-        if former is not None and former in v3:
-            if value is None:
-                value = v3[former]
-                effect = "read as %r" % name
-            else:
-                effect = "ignored, because %r is also given" % name
-            warnings.warn(
-                "rules v3.%s is the former name of v3.%s and was %s; rename it -- the former name "
-                "is not read from %s on" % (former, name, effect, V3_FORMER_NAMES_REMOVED_IN),
-                DeprecationWarning, stacklevel=2)
-        fields[name] = value
-    return fields
+    return {name: v3.get(name) for name in V3_FIELDS}
 
 
 def v3_card_block(fields: Dict[str, Any]) -> Dict[str, Any]:
-    """The model card's ``V3`` block: the declarations and whether all of them are present.
-
-    Until ``V3_FORMER_NAMES_REMOVED_IN`` each renamed declaration also appears under its
-    former name, so a reader written against the earlier card keeps working.
-    """
+    """The model card's ``V3`` block: the declarations and whether all of them are present."""
     block = {name: fields.get(name) for name in V3_FIELDS}
-    for name, former in V3_FORMER_NAMES.items():
-        block[former] = fields.get(name)
     block["fields_present"] = all(bool(fields.get(name)) for name in V3_FIELDS)
     return block
 

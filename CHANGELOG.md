@@ -32,13 +32,13 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   `model_card` description names the eleven sections the card validators
   require; it said nine. No key, type or constraint changed.
 - `opencontractml.gate`: two V3 declarations are renamed to say what they hold.
-  `validation_anchor` (formerly `rung4_anchor`) is the independent evidence the
-  model is to be validated against beyond its training corpus, such as physical
-  test data; the reference package's `C4_deployment_readiness` check declares
-  it under the same name. `validation_anchor_status` (formerly
-  `stage8_status`) says whether that evidence is available yet.
-  `inference_target` is unchanged. The model card's `V3` block carries the new
-  names and, until 0.2.0, the former names beside them.
+  `validation_anchor` is the independent evidence the model is to be validated
+  against beyond its training corpus, such as physical test data; the reference
+  package's `C4_deployment_readiness` check declares it under the same name.
+  `validation_anchor_status` says whether that evidence is available yet.
+  `inference_target` is unchanged. Only these three names are read, and the
+  model card's `V3` block carries them: a rules file written for 0.1.0 names the
+  anchor and its status differently and fails V3 until it uses these names.
 - `open-contract-ml check`: the `V011` message says the two validation
   ladders' reproducibility tolerances are four orders of magnitude apart, as
   the specification does (1e-6 against 2e-2); it said three.
@@ -52,12 +52,6 @@ implements are separate numbers: `opencontractml.__version__` is the first,
 - Tests: names that still counted nine card sections, and comments that
   described an application outside this repository, are reworded. No test's
   behaviour changed.
-
-### Deprecated
-
-- `rung4_anchor` and `stage8_status` in the `v3` block of a gate rules file,
-  and the same keys in the model card's `V3` block. A rules file that uses them
-  is still read, with a `DeprecationWarning`; both are removed in 0.2.0.
 
 ## [0.1.0] - 2026-09-17
 

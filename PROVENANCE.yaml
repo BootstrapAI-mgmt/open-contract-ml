@@ -24,7 +24,7 @@ authored:
   sha256: 38c5a9d7013ee239145bf21a49ac5006eb48f7f5b2f1057a5e6aef6a44fbd44a
 - path: CHANGELOG.md
   why: what changed in each release, newest first; the sdist carries it
-  sha256: 19b011c2a95457c28cdea1b65f80728902688ae295694ebd1b70d7c991d30038
+  sha256: 0f9d73fdea3ee1b683e4c6c9e320aa5ea85a541b857fc7af49740a5d266a1099
 - path: CLAUDE.md
   why: notes for coding agents - the commands, what the tests enforce and what never to do here
   sha256: 5697bac445b96f180f1c542d7ffccd389e0e5f60e58e7ffe83aa88923958f6c5
@@ -91,8 +91,8 @@ authored:
     the copy changed'
   sha256: 61a7fadf54b46c4141bf18a1ed22b278ad4099d595a71250d8476cfb717533c1
 - path: tests/test_gate.py
-  why: tests of the V3 declarations of the gate engine, under their current and former names
-  sha256: 7f23819f2288fdf21f378f1ef7e6a64f5dc1ca5acbf19d9d0e0c8f11670d8f34
+  why: tests of the V3 declarations of the gate engine
+  sha256: 7f903ea54f0b8c99c034e040703a11775e5ccae5ba8e5cd710e6d055cd4f97ea
 - path: tests/test_link_integrity.py
   why: the dangling-pointer gate; no markdown link may resolve outside the shipped tree
   sha256: 3befb774def7b5a5c8b7411c6124167208bd78bde8536e64997b9554f3512fc4
@@ -131,7 +131,7 @@ extracted:
 - path: examples/corpus-consumer/README.md
   transformed: true
   why: what the corpus consumer is and how its gates are run
-  sha256: 7ad9c460364c63e054c92f7773b7734f7015eb1df02fea80e58685e1f7f8f327
+  sha256: 070f5fcc1a6871b996fca2a2a7c45754bb83a16f84b0d977d28c7a1024563c55
 - path: examples/corpus-consumer/WALKTHROUGH.md
   transformed: true
   why: a walkthrough of the corpus consumer
@@ -363,7 +363,7 @@ extracted:
 - path: src/opencontractml/gate.py
   transformed: true
   why: the scalar gate engine's V1/V2/V3 model validation gate
-  sha256: 8f0f32f474be730a29b19aa56629f9b61935d8a56c2d77097c400eea9b5d646d
+  sha256: 8436650f875c241dcbad4ec5092abb178a870c3bf6c47f5d86666f88d0f8a25f
 - path: src/opencontractml/manifest.py
   transformed: true
   why: 'package-v1 manifest validation: JSON Schema, typed model and semantic checks'

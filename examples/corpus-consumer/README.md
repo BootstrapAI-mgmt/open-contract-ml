@@ -82,11 +82,10 @@ skipped silently -- but see the known defect below.
 **V3.** The rules file's `v3` block must declare the validation anchor (the
 independent evidence the model is to be validated against, such as physical
 test data), the inference target, and whether the anchor's data is available
-yet: `validation_anchor`, `inference_target` and `validation_anchor_status`.
-The former names `rung4_anchor` and `stage8_status` are still read, with a
-deprecation warning, until 0.2.0. The model card records a use statement
-(extrapolation-tolerant on the corner axis, or interpolation-only) from the
-V1.2 outcome.
+yet: `validation_anchor`, `inference_target` and `validation_anchor_status`;
+a declaration made under any other name is not read. The model card records a
+use statement (extrapolation-tolerant on the corner axis, or interpolation-only)
+from the V1.2 outcome.
 
 ## Known defect: V2.3 / V2.4 declarations pass unchecked
 
