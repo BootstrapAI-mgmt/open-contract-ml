@@ -24,7 +24,7 @@ authored:
   sha256: 38c5a9d7013ee239145bf21a49ac5006eb48f7f5b2f1057a5e6aef6a44fbd44a
 - path: CHANGELOG.md
   why: what changed in each release, newest first; the sdist carries it
-  sha256: 4478d5742ff3e9564b0ec8b8f6957e576be082cfe2f1122dc3b6d467c017f08f
+  sha256: 10d9196b265b213bc8c666565a8a4bf1578ab35953717b5e9c07b8c4d9e5c346
 - path: CLAUDE.md
   why: notes for coding agents - the commands, what the tests enforce and what never to do here
   sha256: 90262dea80820941e9528a43f499fad3443fb12b94028325584addc5727277a1
