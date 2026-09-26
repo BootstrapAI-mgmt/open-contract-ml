@@ -810,7 +810,7 @@ def check_a5(check: Any, where: str, findings: List[Finding]) -> None:
         return
     if check.get("determinism_class") not in ("bitwise", "seeded_tolerance"):
         findings.append(Finding("V011", at, "A5 must declare determinism_class 'bitwise' or 'seeded_tolerance', "
-                                            "got %r -- the two ladders use tolerances three orders of magnitude "
+                                            "got %r -- the two ladders use tolerances four orders of magnitude "
                                             "apart for this one name" % (check.get("determinism_class"),)))
     thresholds = check.get("thresholds") if isinstance(check.get("thresholds"), dict) else {}
     tol = thresholds.get("tolerance")

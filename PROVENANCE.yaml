@@ -24,7 +24,7 @@ authored:
   sha256: 38c5a9d7013ee239145bf21a49ac5006eb48f7f5b2f1057a5e6aef6a44fbd44a
 - path: CHANGELOG.md
   why: what changed in each release, newest first; the sdist carries it
-  sha256: e95f06d09ed78d5307ce5f3aee4daa2c980cb3714e345224b6327f1d57ebe161
+  sha256: 70f3aa18e36deaa4db6a1041d7ee37da7fb8cd97829cd1e7a0cbaa0af17ee1ad
 - path: CLAUDE.md
   why: notes for coding agents - the commands, what the tests enforce and what never to do here
   sha256: 90262dea80820941e9528a43f499fad3443fb12b94028325584addc5727277a1
@@ -407,7 +407,7 @@ extracted:
 - path: src/opencontractml/verify.py
   transformed: true
   why: the conformance checker and the machine-readable contract vocabulary
-  sha256: 7080cd52e1c60e1622e8ef4870e13d208cd40246ccad142d980c4456bc7c5035
+  sha256: 059fb7aedb83475bd3ef602802e7a7ecc59eed93ca90fff16c5e87547e91de5e
 - path: tests/fixtures/model_packages/conformant/manifest.yaml
   transformed: true
   why: 'a conformant package-v1 fixture: its manifest'

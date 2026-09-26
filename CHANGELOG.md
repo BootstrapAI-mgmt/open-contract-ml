@@ -39,6 +39,9 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   `stage8_status`) says whether that evidence is available yet.
   `inference_target` is unchanged. The model card's `V3` block carries the new
   names and, until 0.2.0, the former names beside them.
+- `open-contract-ml check`: the `V011` message says the two validation
+  ladders' reproducibility tolerances are four orders of magnitude apart, as
+  the specification does (1e-6 against 2e-2); it said three.
 
 ### Deprecated
 
