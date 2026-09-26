@@ -102,6 +102,10 @@ examples/worked-cells/              nine worked data contracts with synthetic da
 examples/falsifier-benchmark/       the adversarial benchmark
 tests/fixtures/producer_packages/   copies of real producer packages, checked in CI
 PROVENANCE.yaml                     where every file in this repo came from
+CHANGELOG.md                        what changed in each release
+CONTRIBUTING.md                     running the checks, and how the Contract is amended
+SECURITY.md                         reporting a vulnerability; the safe-loading policy
+CLAUDE.md                           notes for coding agents working on this repository
 ```
 
 ## Provenance

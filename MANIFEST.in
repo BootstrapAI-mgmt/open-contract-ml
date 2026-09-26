@@ -6,6 +6,11 @@
 # two test modules that check the repository rather than the package -- every
 # tracked file has a provenance record, no markdown link dangles -- need a git
 # checkout of the whole repository, so they stay out of the sdist.
+#
+# The changelog ships, so a source distribution says what changed in it. The
+# contributing, security and agent notes are about working on this repository,
+# not about the package, and stay out.
+include CHANGELOG.md
 graft tests/fixtures
 graft examples/reference-package
 graft examples/brake_disc_tmf_v1
