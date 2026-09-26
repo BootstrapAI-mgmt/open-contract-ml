@@ -34,8 +34,8 @@ implements are separate numbers: `opencontractml.__version__` is the first,
 - `opencontractml.gate`: two V3 declarations are renamed to say what they hold.
   `validation_anchor` (formerly `rung4_anchor`) is the independent evidence the
   model is to be validated against beyond its training corpus, such as physical
-  test data, and matches the declaration of that name in a contract package's
-  `C4_deployment_readiness` check. `validation_anchor_status` (formerly
+  test data; the reference package's `C4_deployment_readiness` check declares
+  it under the same name. `validation_anchor_status` (formerly
   `stage8_status`) says whether that evidence is available yet.
   `inference_target` is unchanged. The model card's `V3` block carries the new
   names and, until 0.2.0, the former names beside them.
@@ -43,8 +43,8 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   ladders' reproducibility tolerances are four orders of magnitude apart, as
   the specification does (1e-6 against 2e-2); it said three.
 - The brake-disc worked example's model card (`examples/brake_disc_tmf_v1/`)
-  marks its training-data source, its sampling bias and its validation-report
-  reference as illustrative placeholders; none of them exists.
+  marks its training-data source, its sampling bias and its cited validation
+  report as illustrative; no such dataset or report exists.
 - Worked cells and docs: comments that pointed at rules or notes outside this
   repository now name what they meant, and `docs/STANDARDS-ALIGNMENT.md`
   describes the Contract's licence in the present tense. Every generator

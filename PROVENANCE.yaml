@@ -24,10 +24,10 @@ authored:
   sha256: 38c5a9d7013ee239145bf21a49ac5006eb48f7f5b2f1057a5e6aef6a44fbd44a
 - path: CHANGELOG.md
   why: what changed in each release, newest first; the sdist carries it
-  sha256: aaa50b48e6625af74414cbe6fe843571b2d14d34aedf2c14e3ed6759e8760c1c
+  sha256: 19b011c2a95457c28cdea1b65f80728902688ae295694ebd1b70d7c991d30038
 - path: CLAUDE.md
   why: notes for coding agents - the commands, what the tests enforce and what never to do here
-  sha256: 90262dea80820941e9528a43f499fad3443fb12b94028325584addc5727277a1
+  sha256: 5697bac445b96f180f1c542d7ffccd389e0e5f60e58e7ffe83aa88923958f6c5
 - path: CONTRIBUTING.md
   why: how to set up, run the checks and propose a change, including an amendment to the Contract
   sha256: f61f32a96d5c29faa3a884cc1c5913e08604bb21a4e3d2d5490cf6c44d1eacaf
@@ -363,7 +363,7 @@ extracted:
 - path: src/opencontractml/gate.py
   transformed: true
   why: the scalar gate engine's V1/V2/V3 model validation gate
-  sha256: 358996710f96c18ecf254d5a408989029d39523b5ece6cced3d9e0648ae640d4
+  sha256: 8f0f32f474be730a29b19aa56629f9b61935d8a56c2d77097c400eea9b5d646d
 - path: src/opencontractml/manifest.py
   transformed: true
   why: 'package-v1 manifest validation: JSON Schema, typed model and semantic checks'

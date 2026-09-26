@@ -234,9 +234,9 @@ def v2_checks(key: str, entry: Dict[str, Any], dt: pd.DataFrame, rules: Dict[str
 #: V3's declarations, by the names a rules file's ``v3`` block gives them:
 #:
 #: ``validation_anchor``         the independent evidence the model is to be validated against
-#:                               beyond its training corpus, such as physical test data; a
-#:                               contract package declares the same thing under the same name in
-#:                               its ``C4_deployment_readiness`` check
+#:                               beyond its training corpus, such as physical test data; the
+#:                               reference package's ``C4_deployment_readiness`` check declares
+#:                               it under the same name
 #: ``inference_target``          what the model is meant to run on, and how it is called
 #: ``validation_anchor_status``  whether that evidence is available yet
 V3_FIELDS = ("validation_anchor", "inference_target", "validation_anchor_status")

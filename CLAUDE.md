@@ -50,8 +50,9 @@ yours to explain.
   text is cited rather than copied (`tests/test_link_integrity.py`,
   `tests/test_provenance.py`). The provenance test also rejects a retired name
   for the Contract.
-- **Pickle.** No file but `safe_artifact.py` and its test calls `pickle.load`
-  or passes `allow_pickle=True` (an AST test in `tests/test_safe_artifact.py`).
+- **Pickle.** No file but `safe_artifact.py` and its test calls `pickle.load`,
+  `pickle.loads`, `joblib.load` or `dill.load`, or passes `allow_pickle=True`
+  (an AST test in `tests/test_safe_artifact.py`).
 - **One section list.** The package-v1 card validator and the checker share
   `verify.CARD_SECTIONS`, the eleven sections of a model card.
 
