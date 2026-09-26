@@ -241,13 +241,13 @@ distinct values per axis and can build a fine staircase. A six-level
 full factorial gives it five interior thresholds and nothing between
 them. **The falsifier never varied design structure** — it varied
 sample size, dimensionality and noise. That is a real gap in its
-coverage, and this instance is the first thing in the project to walk
+coverage, and this instance is the first thing in this repository to walk
 into it.
 
 This is recorded here rather than smoothed over because a worked
 instance that only ever confirms its document is not evidence of
 anything. The follow-on — a falsifier cell that varies design structure
-at fixed N — was logged as follow-on work.
+at fixed N — was queued at the time and has since been run (below).
 
 One further result the taxonomy does not predict: **the network fails 15 of 40
 inverses on a 0.40 °C held-out error.** The inverse requirement is

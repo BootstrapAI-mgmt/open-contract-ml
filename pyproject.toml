@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "open-contract-ml"
-version = "0.1.0"
+version = "0.1.1"
 description = "The Contract v1: a model-card / manifest / provenance / validation standard for engineering ML, and the checker that enforces it."
 readme = "README.md"
 requires-python = ">=3.11"

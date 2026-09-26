@@ -22,13 +22,22 @@ authored:
 - path: .gitignore
   why: build/venv/cache exclusions
   sha256: 38c5a9d7013ee239145bf21a49ac5006eb48f7f5b2f1057a5e6aef6a44fbd44a
+- path: CHANGELOG.md
+  why: what changed in each release, newest first; the sdist carries it
+  sha256: 0f9d73fdea3ee1b683e4c6c9e320aa5ea85a541b857fc7af49740a5d266a1099
+- path: CLAUDE.md
+  why: notes for coding agents - the commands, what the tests enforce and what never to do here
+  sha256: 5697bac445b96f180f1c542d7ffccd389e0e5f60e58e7ffe83aa88923958f6c5
+- path: CONTRIBUTING.md
+  why: how to set up, run the checks and propose a change, including an amendment to the Contract
+  sha256: f61f32a96d5c29faa3a884cc1c5913e08604bb21a4e3d2d5490cf6c44d1eacaf
 - path: LICENSE
   why: Apache-2.0, verbatim from apache.org (sha256 cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30)
   sha256: cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30
 - path: MANIFEST.in
-  why: 'what the sdist carries beyond the package: its tests and the example and fixture files those tests
-    read'
-  sha256: f198c1e402555833211f4c54376f74ba6df02fa6373170b0ffee2a5db06cd077
+  why: 'what the sdist carries beyond the package: the changelog, its tests, and the example and fixture
+    files those tests read'
+  sha256: 4466d4fbf056592d7f683ca6ba865acee0af15f4dec94ab1666b872e0ebd1601
 - path: NOTICE
   why: copyright notice; reproduces the MIT notice safeload.py arrives under
   sha256: 93422d79dca301d8b309a19da3f79a31a0fe450cc5d14a0606ec7ea09a347706
@@ -37,27 +46,30 @@ authored:
   sha256: null
 - path: README.md
   why: what the Contract is and how to verify a package
-  sha256: 2ddb2d75cd7b725a63a374a2fa0333d82e526be280c2dbbbb9bc2977a89f34b7
+  sha256: f38ea86e97cc330e8e56deb9544875924ec45cb3817e191c0b30e62d1f9a5af3
+- path: SECURITY.md
+  why: how to report a vulnerability, and the safe-loading policy
+  sha256: 251451df7a88dee10a2bca04fcd98f5731df566e1226875b1607f57d254433e5
 - path: docs/EXTRACTION.md
   why: where the files came from, and the known gaps in what is here
-  sha256: 5931344f40caf037b0454e7cb968df1105d2ed051c59383f79ed0b374fe51ef3
+  sha256: 98dde71c776b98f893995478dc963186b9f03fc819472d350df5e916d9998573
 - path: docs/REFERENCES.md
   why: the repository's bibliography; every [Key] citation resolves to an entry here
   sha256: 0c6b2be66e8a7b83a76c09ee0ed53909e7aa69fd9b335a90f4a1b8be1005f087
 - path: docs/STANDARDS-ALIGNMENT.md
   why: where the Contract sits relative to the ASME VVUQ standards and the nearest related work, and where
     it does not reach
-  sha256: effffa8243e8468db68e6e681be1d578cb2bda597a578c901700ac57b2f08f61
+  sha256: cda8789541b42ea3577677fb818bd189862acabe8e8cfcbf4dd599b9dca2e087
 - path: docs/spec/PROVENANCE-SIGNING.md
   why: design for an optional OpenSSF Model Signing sidecar at contract 1.1; design only, nothing implemented
     and no dependency proposed
   sha256: 04398833264cf265aff2f8c387854d3b9d16084d0ba1f976e156bde0fce97ece
 - path: pyproject.toml
   why: packaging metadata
-  sha256: 1fc856aac9759f9472a513b59aa4c09cac690eee6ea36bc174e2bf99fda03ec8
+  sha256: 0128b222e6d2754691cfcd3b50cfc3de66cdff8f83839c579bd50fa703fb6185
 - path: src/opencontractml/__init__.py
   why: package root; lazily re-exports the checker
-  sha256: 4e3a7d365fb83d4ff5b4c9c3cc992b29cddf4e673ae8b81c4b12e5d5775cdad5
+  sha256: e1cd370b42c7470f055160f3189ce682b65d8d8b57e87f28ab8e46088086b46f
 - path: tests/fixtures/producer_packages/README.md
   why: what the producer fixture packages are, how CI checks them, and how a copy differs from what its
     producer shipped
@@ -78,6 +90,9 @@ authored:
   why: 'provenance of the fixture package plate_heat_fno: the digest of each file in the copy and what
     the copy changed'
   sha256: 61a7fadf54b46c4141bf18a1ed22b278ad4099d595a71250d8476cfb717533c1
+- path: tests/test_gate.py
+  why: tests of the V3 declarations of the gate engine
+  sha256: 7f903ea54f0b8c99c034e040703a11775e5ccae5ba8e5cd710e6d055cd4f97ea
 - path: tests/test_link_integrity.py
   why: the dangling-pointer gate; no markdown link may resolve outside the shipped tree
   sha256: 3befb774def7b5a5c8b7411c6124167208bd78bde8536e64997b9554f3512fc4
@@ -112,11 +127,11 @@ extracted:
 - path: examples/brake_disc_tmf_v1/model_card.md
   transformed: true
   why: the package-v1 worked example's model card (illustrative)
-  sha256: c09eb0eda02ab019607d936e584fea98ee0a6a22616ebcefc652f9fb5132ff98
+  sha256: c1b782fe5e221fd615ead678c2c77369af1517039a876c6a36477626f8efcb7e
 - path: examples/corpus-consumer/README.md
   transformed: true
   why: what the corpus consumer is and how its gates are run
-  sha256: e9bfc6974efdd3070f74bb5dfcbc48630084fa70ebb42bc2a6fa181e4128eb57
+  sha256: 070f5fcc1a6871b996fca2a2a7c45754bb83a16f84b0d977d28c7a1024563c55
 - path: examples/corpus-consumer/WALKTHROUGH.md
   transformed: true
   why: a walkthrough of the corpus consumer
@@ -216,7 +231,7 @@ extracted:
 - path: examples/worked-cells/injection-warpage/data/synthesize_sample.py
   transformed: true
   why: the generator of the injection-warpage worked cell's sample dataset
-  sha256: 89216b25310b48918425dd084e6300e0a857928144cd546e454b2005729bce8c
+  sha256: f981ca65691032e498bf97894cc41845678f525aab9e73818fa8c4801e13083e
 - path: examples/worked-cells/injection-warpage/data/template.csv
   transformed: false
   why: the empty column template of the injection-warpage worked cell
@@ -232,7 +247,7 @@ extracted:
 - path: examples/worked-cells/motor-torque-efficiency/data/synthesize_sample.py
   transformed: true
   why: the generator of the motor-torque-efficiency worked cell's sample dataset
-  sha256: ed0c85753094bbb85dde57b16e29c54f9f406b267f07fc564e28eb37b3ca76b9
+  sha256: 163d8fd100c908b40d6724fb7b6b81a79432ac9295f36d38cb5d963acbb94921
 - path: examples/worked-cells/motor-torque-efficiency/data/template.csv
   transformed: false
   why: the empty column template of the motor-torque-efficiency worked cell
@@ -284,7 +299,7 @@ extracted:
 - path: examples/worked-cells/plate-temperature-field/data/synthesize_sample.py
   transformed: true
   why: the generator of the plate-temperature-field worked cell's sample dataset
-  sha256: e011fb0b5e94d66a378b9874ef6ed2bc59b10984b75cef4f41b89381e92b5d3f
+  sha256: 205774f7b5294ae5004e7e99741a6cd6d1279560dd7f08bbd3013103ca1fe27e
 - path: examples/worked-cells/plate-temperature-field/data/template.csv
   transformed: false
   why: the empty column template of the plate-temperature-field worked cell
@@ -304,7 +319,7 @@ extracted:
 - path: examples/worked-cells/temperature-field/data/synthesize_sample.py
   transformed: true
   why: the generator of the temperature-field worked cell's sample dataset
-  sha256: 93c316d0008ec2403e78f636297992662d6a6c688b84a69815b68bd3c556301e
+  sha256: 2aab8a3293b5093894b8f35278f384b7f819f0f4b6fd0577bb1c43a6985b9461
 - path: examples/worked-cells/temperature-field/data/template.csv
   transformed: false
   why: the empty column template of the temperature-field worked cell
@@ -312,7 +327,7 @@ extracted:
 - path: examples/worked-cells/thermal-doe-worked-instance/WALKTHROUGH.md
   transformed: true
   why: the walkthrough of the thermal-doe-worked-instance worked cell
-  sha256: ce1f0a689418a9070e6f3097572faa212635a3a81151fda6f20ed32d1275946e
+  sha256: 59eb98eafb1652d98b4ab0bd60b28b75660a220a9b92bcc2e84caa42f04e9802
 - path: examples/worked-cells/thermal-doe-worked-instance/data/data-contract.md
   transformed: true
   why: the data contract of the thermal-doe-worked-instance worked cell
@@ -348,7 +363,7 @@ extracted:
 - path: src/opencontractml/gate.py
   transformed: true
   why: the scalar gate engine's V1/V2/V3 model validation gate
-  sha256: de851a25ffd62a9dd929dd08d0e3ef05615dc7ba469741255bff407018f35b26
+  sha256: 8436650f875c241dcbad4ec5092abb178a870c3bf6c47f5d86666f88d0f8a25f
 - path: src/opencontractml/manifest.py
   transformed: true
   why: 'package-v1 manifest validation: JSON Schema, typed model and semantic checks'
@@ -376,7 +391,7 @@ extracted:
 - path: src/opencontractml/schemas/package-v1/manifest.schema.json
   transformed: true
   why: the JSON Schema of the package-v1 manifest
-  sha256: 1b16f65709f8c1f4a5dbdf47fc700ba52d87722b848dcdede84dbf8c34635348
+  sha256: 1dd8649fcd486ef2838fb44a9d0ff620812f46873a965de975ba3e112978d413
 - path: src/opencontractml/synth_corpus.py
   transformed: true
   why: a synthetic heat-shield corpus generator with defect modes for the G1 fail demonstrations
@@ -392,7 +407,7 @@ extracted:
 - path: src/opencontractml/verify.py
   transformed: true
   why: the conformance checker and the machine-readable contract vocabulary
-  sha256: 7080cd52e1c60e1622e8ef4870e13d208cd40246ccad142d980c4456bc7c5035
+  sha256: 059fb7aedb83475bd3ef602802e7a7ecc59eed93ca90fff16c5e87547e91de5e
 - path: tests/fixtures/model_packages/conformant/manifest.yaml
   transformed: true
   why: 'a conformant package-v1 fixture: its manifest'
@@ -412,7 +427,7 @@ extracted:
 - path: tests/test_fake_model.py
   transformed: true
   why: tests of the brake-disc stub model's wire format
-  sha256: b9ee62c69af254eb078b84cdeb7aca94e1c4422e257fff74bc9cd4356d1cebbf
+  sha256: a261b0c3a4758bf959f821fd2af3e7825bcd67abd54dbcd7062fe98757de8641
 - path: tests/test_manifest.py
   transformed: true
   why: tests of manifest validation and the pre-publish gate
@@ -420,15 +435,15 @@ extracted:
 - path: tests/test_model_card.py
   transformed: true
   why: tests of model-card validation
-  sha256: 8fdc72e6d56f56a2cc62a9a6e81855ef10ac0eb54032773ed7832ed7c363cfcf
+  sha256: a648a48298a6ef0a08ad9ab8c1db5eca9cbd40bd849e69a5987bb8330f893d81
 - path: tests/test_safe_artifact.py
   transformed: true
   why: fail-demos for the safe-load policy
-  sha256: 40e60d19ff4fba8947a9ae16eb58b28c3798e63f5533f94690ded84f95ce176e
+  sha256: e4b977a4d1807efc52101385dc9c2557511da7a145e3d7a73d9acec43498280b
 - path: tests/test_verify.py
   transformed: true
   why: tests of the conformance checker, one planted defect per ERROR rule
-  sha256: 2e94ebd334a2596f98bf390271e8e61328b56356556c2c5c55d94f409bb3dfaf
+  sha256: bc959422cf9fd2f62bccdaef28c1f7e8bbfc6973faa6c46b4dd94e242fd6904d
 modified_copies:
 - path: tests/fixtures/producer_packages/brake_disc_link1_thermal_fno/manifest.yaml
   copy_of: brake_disc_link1_thermal_fno

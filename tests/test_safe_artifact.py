@@ -12,14 +12,13 @@ executes an attacker's callable -- and proves:
    bytes do load once their digest is pinned.
 
 (1) is the part that keeps this suite honest.  A "gate" whose hostile input was
-never dangerous proves nothing; this repo already contains one such gate, whose
-V2 conservation check green-stamped a model whose text said it violated
-conservation by 400 percent.  The marker file is the witness here: if a refactor
-ever makes the hostile bundle inert, test (1) goes red instead of the suite
-silently passing for the wrong reason.
+never dangerous proves nothing: it passes whether or not the guard works.  The
+marker file is the witness here: if a refactor ever makes the hostile bundle
+inert, test (1) goes red instead of the suite silently passing for the wrong
+reason.
 
-Nothing here needs thermal-mesh-calculators or a corpus, so unlike the rest of
-this directory's tests these always run.
+Nothing here needs thermal-mesh-calculators or a corpus; the estimators in the
+legitimate bundle come from the ``[gate]`` extra, which ``[dev]`` installs.
 """
 
 from __future__ import annotations

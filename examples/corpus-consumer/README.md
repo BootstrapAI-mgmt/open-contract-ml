@@ -79,9 +79,13 @@ set covering the hull expanded by 10 % per axis; conservation and symmetry
 are *declared* applicable-or-not in every rules file so they are never
 skipped silently -- but see the known defect below.
 
-**V3.** The rung-4 anchor, inference target and Stage-8 status must be
-present; the model card records a use statement (extrapolation-tolerant on
-the corner axis, or interpolation-only) from the V1.2 outcome.
+**V3.** The rules file's `v3` block must declare the validation anchor (the
+independent evidence the model is to be validated against, such as physical
+test data), the inference target, and whether the anchor's data is available
+yet: `validation_anchor`, `inference_target` and `validation_anchor_status`;
+a declaration made under any other name is not read. The model card records a
+use statement (extrapolation-tolerant on the corner axis, or interpolation-only)
+from the V1.2 outcome.
 
 ## Known defect: V2.3 / V2.4 declarations pass unchecked
 

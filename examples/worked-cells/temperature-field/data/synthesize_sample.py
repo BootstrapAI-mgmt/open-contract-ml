@@ -14,7 +14,7 @@ example.
 
 Source-of-truth note (ASCII-only by discipline). This file deliberately
 uses ASCII-only source (words like "alpha", "theta", "->", "deg" rather
-than the Unicode glyphs) per the project's synthesizer-source rule: a
+than the Unicode glyphs) per this example's synthesizer-source rule: a
 non-ASCII run that crosses an internal write boundary can deterministically
 truncate the written file.
 

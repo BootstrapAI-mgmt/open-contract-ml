@@ -94,8 +94,8 @@ def test_out_of_range_peak_temp_returns_error() -> None:
 # Wire format — robustness (subprocess)
 # --------------------------------------------------------------------------- #
 def test_batch_reports_partial_results_for_mixed_rows() -> None:
-    # Design "validation as surface, not gate": one bad row errors in place; the
-    # rest still succeed (the partial-results behaviour a dispatcher relies on).
+    # One bad row errors in place and the rest still succeed, so a batch caller
+    # gets partial results instead of losing the whole batch to one row.
     rows = [SINGLE_INPUTS, {"peak_temp": 9999.0, "cycle_count": 5000, "material": "GG25"}]
     proc = _run({"run_id": "b", "mode": "batch", "inputs": rows})
     results = [json.loads(line) for line in proc.stdout.splitlines() if line.strip()]

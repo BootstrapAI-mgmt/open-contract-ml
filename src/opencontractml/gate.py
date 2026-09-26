@@ -11,7 +11,8 @@ Validates the artifacts produced by train_b1.py:
   V2.1 monotonicity           declared (feature, target, direction) pairs on probe lines
   V2.2 bounds                 declared bounds on a probe set covering the hull expanded by 10 %
   V2.3 / V2.4                 conservation / symmetry: declared applicable or not, never skipped silently
-  V3                          rung-4 anchor, inference target, Stage-8 status, use statement
+  V3                          deployment declarations (validation anchor, inference target, anchor
+                              status), and a use statement per model from the V1.2 outcome
 
 Usage:
   python -m opencontractml.gate --corpus <dir>/training_corpus.parquet --gate-report out/corpus_gate_report.json
@@ -229,6 +230,33 @@ def v2_checks(key: str, entry: Dict[str, Any], dt: pd.DataFrame, rules: Dict[str
     return checks
 
 
+#: V3's declarations, by the names a rules file's ``v3`` block gives them:
+#:
+#: ``validation_anchor``         the independent evidence the model is to be validated against
+#:                               beyond its training corpus, such as physical test data; the
+#:                               reference package's ``C4_deployment_readiness`` check declares
+#:                               it under the same name
+#: ``inference_target``          what the model is meant to run on, and how it is called
+#: ``validation_anchor_status``  whether that evidence is available yet
+V3_FIELDS = ("validation_anchor", "inference_target", "validation_anchor_status")
+
+
+def v3_declarations(v3: Dict[str, Any]) -> Dict[str, Any]:
+    """Read V3's declarations from a rules file's ``v3`` block, keyed by their names.
+
+    Only the names in ``V3_FIELDS`` are read. A rules file written for 0.1.0 declared two of
+    them under other names; those are not read, so such a file fails V3 until it is updated.
+    """
+    return {name: v3.get(name) for name in V3_FIELDS}
+
+
+def v3_card_block(fields: Dict[str, Any]) -> Dict[str, Any]:
+    """The model card's ``V3`` block: the declarations and whether all of them are present."""
+    block = {name: fields.get(name) for name in V3_FIELDS}
+    block["fields_present"] = all(bool(fields.get(name)) for name in V3_FIELDS)
+    return block
+
+
 def run_gate(corpus_path: Path, gate_report: Dict[str, Any], rules: Dict[str, Any], model_dir: Path) -> Dict[str, Any]:
     df = load_corpus(corpus_path)
     adm = np.array(gate_report["admissible_index"], dtype=int)
@@ -254,18 +282,15 @@ def run_gate(corpus_path: Path, gate_report: Dict[str, Any], rules: Dict[str, An
               "V2.4 symmetry": rules.get("v2", {}).get("symmetry", "not declared")}
     declared_ok = all(v not in ("not declared", None, "") for v in v2decl.values())
     all_ok = all_ok and declared_ok
-    v3 = rules.get("v3", {})
-    v3_fields = {"rung4_anchor": v3.get("rung4_anchor"), "inference_target": v3.get("inference_target"),
-                 "stage8_status": v3.get("stage8_status")}
-    v3_ok = all(bool(v) for v in v3_fields.values())
-    all_ok = all_ok and v3_ok
+    v3_block = v3_card_block(v3_declarations(rules.get("v3", {})))
+    all_ok = all_ok and v3_block["fields_present"]
     card = {
         "gate": "V1/V2/V3 model validation", "passed": all_ok, "timestamp_utc": utc_now(),
         "rules_vertical": rules.get("vertical"), "corpus": meta.get("corpus"), "model_meta": {
             "features": meta.get("features"), "targets": meta.get("targets"), "components": meta.get("components"),
             "versions": meta.get("versions"), "ensemble_seeds": meta.get("ensemble_seeds"), "split_spec": meta.get("split_spec")},
         "models": per_model, "V1.5": v15, "V2_declarations": v2decl,
-        "V2_declarations_complete": declared_ok, "V3": {**v3_fields, "fields_present": v3_ok},
+        "V2_declarations_complete": declared_ok, "V3": v3_block,
         "threshold_provenance": "PROVISIONAL: the defaults in opencontractml.gate apply wherever the rules file sets no threshold",
     }
     return card

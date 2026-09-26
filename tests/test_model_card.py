@@ -85,14 +85,14 @@ def test_out_of_order_sections_rejected() -> None:
     assert any("section #1" in e and "TL;DR" in e for e in errors)
 
 
-def test_extra_h2_before_the_nine_rejected() -> None:
+def test_extra_h2_before_the_mandatory_sections_rejected() -> None:
     # An interloping H2 pushes the mandatory order off by one.
     sections = ["TL;DR", "Surprise", *MANDATORY_SECTIONS[1:]]
     errors = collect_model_card_errors(_card(sections=sections))
     assert errors  # the second heading is "Surprise", not "Intended use"
 
 
-def test_extra_h2_after_the_nine_allowed() -> None:
+def test_extra_h2_after_the_mandatory_sections_allowed() -> None:
     assert collect_model_card_errors(_card(extra_after=["References", "Appendix"])) == []
 
 
