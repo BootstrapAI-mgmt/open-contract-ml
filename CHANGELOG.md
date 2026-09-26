@@ -5,7 +5,7 @@ format. The package version and the version of the Contract a release
 implements are separate numbers: `opencontractml.__version__` is the first,
 `opencontractml.verify.CONTRACT_VERSION` the second.
 
-## [Unreleased]
+## [0.1.1]
 
 ### Added
 
