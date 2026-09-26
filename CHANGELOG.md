@@ -45,6 +45,10 @@ implements are separate numbers: `opencontractml.__version__` is the first,
 - The brake-disc worked example's model card (`examples/brake_disc_tmf_v1/`)
   marks its training-data source, its sampling bias and its validation-report
   reference as illustrative placeholders; none of them exists.
+- Worked cells and docs: comments that pointed at rules or notes outside this
+  repository now name what they meant, and `docs/STANDARDS-ALIGNMENT.md`
+  describes the Contract's licence in the present tense. Every generator
+  still writes byte-identical data.
 - Tests: names that still counted nine card sections, and comments that
   described an application outside this repository, are reworded. No test's
   behaviour changed.

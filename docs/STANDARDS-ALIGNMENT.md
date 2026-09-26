@@ -332,7 +332,7 @@ reject. The Contract exits 1 and names the rule.
 
 **What the Contract lacks:** any notion of openness or licensing. The manifest
 has no licence field for the model, the weights or the training corpus — a real
-omission for a standard that is about to be published under Apache-2.0, and a
+omission for a standard published under Apache-2.0, and a
 candidate for v1.1. MOF's component checklist is also broader than the
 Contract's `provenance` block: the Contract records a dataset digest, not
 whether the dataset is released or releasable.

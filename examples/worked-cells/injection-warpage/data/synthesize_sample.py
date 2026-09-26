@@ -55,8 +55,8 @@ response surface so the example is honest:
     categorical the surrogate must respect (documented in the contract).
 
 Both mechanisms make the response a *deterministic* function of the
-input vector — there is no per-row hidden random knob. (Per the
-project's synthesizer-determinism discipline: every per-row stochastic
+input vector — there is no per-row hidden random knob. (Per this
+example's synthesizer-determinism discipline: every per-row stochastic
 term in the generator becomes irreducible noise the surrogate cannot
 learn and shows up as low held-out R². The only randomness here is the
 small multiplicative scatter added at the end to mimic mesh /

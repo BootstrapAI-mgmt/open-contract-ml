@@ -24,7 +24,7 @@ authored:
   sha256: 38c5a9d7013ee239145bf21a49ac5006eb48f7f5b2f1057a5e6aef6a44fbd44a
 - path: CHANGELOG.md
   why: what changed in each release, newest first; the sdist carries it
-  sha256: fa3a3aa0da8e743772cdbe303e1bac4e7d2bf6983c1a98bd701af31217b475b2
+  sha256: aaa50b48e6625af74414cbe6fe843571b2d14d34aedf2c14e3ed6759e8760c1c
 - path: CLAUDE.md
   why: notes for coding agents - the commands, what the tests enforce and what never to do here
   sha256: 90262dea80820941e9528a43f499fad3443fb12b94028325584addc5727277a1
@@ -59,7 +59,7 @@ authored:
 - path: docs/STANDARDS-ALIGNMENT.md
   why: where the Contract sits relative to the ASME VVUQ standards and the nearest related work, and where
     it does not reach
-  sha256: effffa8243e8468db68e6e681be1d578cb2bda597a578c901700ac57b2f08f61
+  sha256: cda8789541b42ea3577677fb818bd189862acabe8e8cfcbf4dd599b9dca2e087
 - path: docs/spec/PROVENANCE-SIGNING.md
   why: design for an optional OpenSSF Model Signing sidecar at contract 1.1; design only, nothing implemented
     and no dependency proposed
@@ -231,7 +231,7 @@ extracted:
 - path: examples/worked-cells/injection-warpage/data/synthesize_sample.py
   transformed: true
   why: the generator of the injection-warpage worked cell's sample dataset
-  sha256: 89216b25310b48918425dd084e6300e0a857928144cd546e454b2005729bce8c
+  sha256: f981ca65691032e498bf97894cc41845678f525aab9e73818fa8c4801e13083e
 - path: examples/worked-cells/injection-warpage/data/template.csv
   transformed: false
   why: the empty column template of the injection-warpage worked cell
@@ -247,7 +247,7 @@ extracted:
 - path: examples/worked-cells/motor-torque-efficiency/data/synthesize_sample.py
   transformed: true
   why: the generator of the motor-torque-efficiency worked cell's sample dataset
-  sha256: ed0c85753094bbb85dde57b16e29c54f9f406b267f07fc564e28eb37b3ca76b9
+  sha256: 163d8fd100c908b40d6724fb7b6b81a79432ac9295f36d38cb5d963acbb94921
 - path: examples/worked-cells/motor-torque-efficiency/data/template.csv
   transformed: false
   why: the empty column template of the motor-torque-efficiency worked cell
@@ -299,7 +299,7 @@ extracted:
 - path: examples/worked-cells/plate-temperature-field/data/synthesize_sample.py
   transformed: true
   why: the generator of the plate-temperature-field worked cell's sample dataset
-  sha256: e011fb0b5e94d66a378b9874ef6ed2bc59b10984b75cef4f41b89381e92b5d3f
+  sha256: 205774f7b5294ae5004e7e99741a6cd6d1279560dd7f08bbd3013103ca1fe27e
 - path: examples/worked-cells/plate-temperature-field/data/template.csv
   transformed: false
   why: the empty column template of the plate-temperature-field worked cell
@@ -319,7 +319,7 @@ extracted:
 - path: examples/worked-cells/temperature-field/data/synthesize_sample.py
   transformed: true
   why: the generator of the temperature-field worked cell's sample dataset
-  sha256: 93c316d0008ec2403e78f636297992662d6a6c688b84a69815b68bd3c556301e
+  sha256: 2aab8a3293b5093894b8f35278f384b7f819f0f4b6fd0577bb1c43a6985b9461
 - path: examples/worked-cells/temperature-field/data/template.csv
   transformed: false
   why: the empty column template of the temperature-field worked cell
@@ -327,7 +327,7 @@ extracted:
 - path: examples/worked-cells/thermal-doe-worked-instance/WALKTHROUGH.md
   transformed: true
   why: the walkthrough of the thermal-doe-worked-instance worked cell
-  sha256: ce1f0a689418a9070e6f3097572faa212635a3a81151fda6f20ed32d1275946e
+  sha256: b9a8cd1f07b9555f900fe032b564667c8105fd70143028fa1b3ee16035cbfd97
 - path: examples/worked-cells/thermal-doe-worked-instance/data/data-contract.md
   transformed: true
   why: the data contract of the thermal-doe-worked-instance worked cell

@@ -41,8 +41,8 @@ is honest about them:
     temperatures.
 
 Both mechanisms make the response a *deterministic* function of the
-input vector — there is no per-row hidden random knob. (Per the
-project's synthesizer-determinism discipline: every per-row stochastic
+input vector — there is no per-row hidden random knob. (Per this
+example's synthesizer-determinism discipline: every per-row stochastic
 term in the generator becomes irreducible noise the surrogate cannot
 learn and shows up as low held-out R². The only randomness here is the
 small multiplicative scatter added at the end to mimic mesh /
@@ -94,7 +94,7 @@ def _sample_design(rng):
                       temperature
     Ranges are chosen to span a small-EV / e-mobility traction-motor
     design space without straying into the deep-fault corners the
-    contract excludes (see data-contract.md Rule 5 and Pitfall (ii)).
+    contract excludes (see data-contract.md Rule 5: no demagnetisation event).
     """
     stator_od_mm    = rng.uniform(80.0, 260.0)    # mm
     stack_length_mm = rng.uniform(40.0, 180.0)    # mm
@@ -122,7 +122,7 @@ def _eval_response(x):
     mthk_m = mthk / 1000.0
 
     # --- rotor flux linkage (deterministic in geometry, magnet, temperature) ---
-    # remanence derate with temperature (Pitfall (ii) — PM demagnetisation);
+    # remanence derate with temperature (PM demagnetisation, data-contract.md Rule 9);
     # clamped at 0.45 so a hot magnet never goes unphysically negative.
     br_factor = max(0.45, 1.0 - BR_TEMPCO * (temp - TEMP_REF_C))
     # air-gap flux concentration: thicker magnet and smaller gap -> more flux
@@ -131,7 +131,7 @@ def _eval_response(x):
     flux = KE_BASE * turns * (od_m ** 2) * L_m * gap_term * br_factor * 1.0e3
 
     # --- electromagnetic torque with magnetic-saturation rolloff ---
-    # (Pitfall (i) — the DOMINANT low-frequency-EM surrogate-failure mode)
+    # (saturation: the dominant low-frequency-EM surrogate-failure mode, Rule 9)
     # The saturation knee I_sat scales with iron cross-section (D·L): bigger
     # iron carries more flux before saturating, so it saturates at higher
     # current. tanh() gives the soft below-knee / knee / deep-saturation
