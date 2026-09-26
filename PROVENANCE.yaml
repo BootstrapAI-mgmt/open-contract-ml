@@ -24,7 +24,7 @@ authored:
   sha256: 38c5a9d7013ee239145bf21a49ac5006eb48f7f5b2f1057a5e6aef6a44fbd44a
 - path: CHANGELOG.md
   why: what changed in each release, newest first; the sdist carries it
-  sha256: 10d9196b265b213bc8c666565a8a4bf1578ab35953717b5e9c07b8c4d9e5c346
+  sha256: 9e7f4269c4a53f09963bf8be8b323789b06ea8c1767b619bced30cb751649ba7
 - path: CLAUDE.md
   why: notes for coding agents - the commands, what the tests enforce and what never to do here
   sha256: 90262dea80820941e9528a43f499fad3443fb12b94028325584addc5727277a1
@@ -388,7 +388,7 @@ extracted:
 - path: src/opencontractml/schemas/package-v1/manifest.schema.json
   transformed: true
   why: the JSON Schema of the package-v1 manifest
-  sha256: 1b16f65709f8c1f4a5dbdf47fc700ba52d87722b848dcdede84dbf8c34635348
+  sha256: 1dd8649fcd486ef2838fb44a9d0ff620812f46873a965de975ba3e112978d413
 - path: src/opencontractml/synth_corpus.py
   transformed: true
   why: a synthetic heat-shield corpus generator with defect modes for the G1 fail demonstrations

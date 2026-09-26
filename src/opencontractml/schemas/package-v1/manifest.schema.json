@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/BootstrapAI-mgmt/open-contract-ml/schemas/package-v1/manifest.schema.json",
   "title": "Model Manifest",
-  "description": "Per-model manifest declaring identity, inputs, outputs, UQ contract, invocation, lineage, and discoverability metadata. Co-located with the model executable and a sibling model_card.md. Validated at server registry-load.",
+  "description": "Per-model manifest declaring identity, inputs, outputs, UQ contract, invocation, lineage, and discoverability metadata. Co-located with the model executable and a sibling model_card.md. Validated when the package is loaded (opencontractml.manifest).",
   "type": "object",
   "required": [
     "id",
@@ -29,7 +29,7 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 100,
-      "description": "Human-readable name shown in catalog cards and reports."
+      "description": "Human-readable name, for display in listings and reports."
     },
     "version": {
       "type": "string",
@@ -57,7 +57,7 @@
     },
     "domain": {
       "type": "string",
-      "description": "Engineering domain (e.g., thermomechanical_fatigue, vibration, flow). Drives faceted catalog browse."
+      "description": "Engineering domain (e.g., thermomechanical_fatigue, vibration, flow). Usable as a browse or filter facet."
     },
     "modality": {
       "type": "string",
@@ -70,16 +70,16 @@
         "geometry_in_field_out",
         "field_in_field_out"
       ],
-      "description": "Coarse input-to-output shape, for catalog facets."
+      "description": "Coarse input-to-output shape. Usable as a browse or filter facet."
     },
     "tags": {
       "type": "array",
       "items": { "type": "string" },
-      "description": "Free-form tags for catalog facets and search."
+      "description": "Free-form tags, for filtering and search."
     },
     "analysis_type": {
       "type": "string",
-      "description": "Plain-language analysis category for non-expert discovery (e.g. \"fatigue life\", \"vibration response\", \"flow rate\"). Optional and additive. Populated dynamically into the catalog's primary browse axis exactly like `domain`/`tags` — NOT a hardcoded vocabulary. Phrase it the way a non-CAE/ML user with an analysis in mind would."
+      "description": "Plain-language analysis category for non-expert discovery (e.g. \"fatigue life\", \"vibration response\", \"flow rate\"). Optional and additive. Free text, like `domain` and `tags` — NOT a fixed vocabulary. Phrase it the way a non-CAE/ML user with an analysis in mind would."
     },
     "purpose": {
       "type": "string",
@@ -88,7 +88,7 @@
     },
     "when_to_use": {
       "type": "string",
-      "description": "Plain-language guidance on appropriate use cases, written for a non-expert who has an analysis in mind. Drives non-expert discovery; an empty value draws an advisory warn at load (never a rejection)."
+      "description": "Plain-language guidance on appropriate use cases, written for a non-expert who has an analysis in mind. An empty value draws an advisory warning from the package validator (never a rejection)."
     },
     "when_not_to_use": {
       "type": "string",
@@ -107,12 +107,12 @@
     "primary_inputs": {
       "type": "array",
       "items": { "type": "string" },
-      "description": "Input names shown as default columns in the history table."
+      "description": "Input names to show first wherever runs of this model are listed (for example, as default columns)."
     },
     "primary_outputs": {
       "type": "array",
       "items": { "type": "string" },
-      "description": "Output names shown as default columns in the history table."
+      "description": "Output names to show first wherever runs of this model are listed (for example, as default columns)."
     },
     "uncertainty": { "$ref": "#/$defs/uncertainty" },
     "invocation": {
@@ -130,17 +130,17 @@
         "timeout_s": {
           "type": "integer",
           "minimum": 1,
-          "description": "Hard timeout after which the server kills the .exe and records an error."
+          "description": "Hard timeout, in seconds, after which the consumer stops the executable and records an error."
         },
         "expected_runtime_s": {
           "type": "number",
           "minimum": 0,
-          "description": "Informational estimate shown in the UI."
+          "description": "Informational runtime estimate, in seconds."
         },
         "batch_supported": {
           "type": "boolean",
           "default": false,
-          "description": "If true, the .exe accepts mode=batch and emits one JSON output per input row."
+          "description": "If true, the executable accepts mode=batch and emits one JSON output per input row."
         }
       }
     },
@@ -170,12 +170,12 @@
     },
     "model_card": {
       "type": "string",
-      "description": "Path to the model card markdown file, relative to the manifest file. Required, validated at registry load (front-matter + 9 mandatory H2 sections)."
+      "description": "Path to the model card markdown file, relative to the manifest file. Required; validated when the package is loaded (front-matter plus the 11 mandatory H2 sections, in order)."
     },
     "examples": {
       "type": "array",
       "items": { "$ref": "#/$defs/example" },
-      "description": "Pre-filled input sets for the model detail page 'Try this' buttons."
+      "description": "Ready-made input sets a consumer can offer as examples to run."
     }
   },
   "$defs": {
@@ -193,18 +193,18 @@
         },
         "units": {
           "type": "string",
-          "description": "Display units. The GUI lets the user pick a compatible display unit."
+          "description": "Display units: the units a person enters and reads the value in. A consumer may offer compatible alternatives."
         },
         "canonical_units": {
           "type": "string",
-          "description": "Units the .exe expects. The GUI converts user input from display units to canonical before sending."
+          "description": "Units the executable expects. A consumer converts a value from display units to canonical units before sending it."
         },
         "range": {
           "type": "array",
           "items": { "type": "number" },
           "minItems": 2,
           "maxItems": 2,
-          "description": "[min, max] in canonical units. Values outside warn the user but do not block submission."
+          "description": "[min, max] in canonical units. A value outside the range is a warning, not a refusal."
         },
         "choices": {
           "type": "array",
@@ -213,11 +213,11 @@
         },
         "file_kind": {
           "enum": ["stl", "step", "csv", "vtk", "npz"],
-          "description": "Required for type=file. Filters the file picker."
+          "description": "Required for type=file: the file format the input accepts."
         },
         "required": { "type": "boolean" },
         "default": {
-          "description": "Pre-filled in the auto-form when present."
+          "description": "A suggested value a consumer may pre-fill."
         },
         "description": { "type": "string" }
       }
@@ -244,7 +244,7 @@
             "field_contour",
             "histogram"
           ],
-          "description": "Selects the React viewer component. field_contour is reserved for a downstream phase."
+          "description": "How a consumer should present this output. field_contour is accepted but deferred: opencontractml.manifest.deferred_viewer_outputs lists the outputs that use it, so a consumer can flag them instead of rendering them wrongly."
         }
       }
     },
@@ -278,7 +278,7 @@
               "type": "number",
               "minimum": 0,
               "maximum": 1,
-              "description": "Achieved coverage on the holdout set. Drives the trust badge."
+              "description": "Achieved coverage on the holdout set."
             },
             "method": { "type": "string" }
           }
@@ -293,7 +293,7 @@
         "inputs": { "type": "object" },
         "expected_hint": {
           "type": "string",
-          "description": "Optional plain-language hint shown next to the Try this button."
+          "description": "Optional plain-language hint about the result the example should give."
         }
       }
     }

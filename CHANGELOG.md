@@ -27,6 +27,10 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   one entry whose value is a JSON object with `format`, `state_key` and
   `payload` fields) and write the rebuilt checkpoint back with
   `save_checkpoint`. No compatibility alias is provided.
+- The package-v1 manifest schema's descriptions say what each field means
+  rather than how one particular application displays it, and the
+  `model_card` description names the eleven sections the card validators
+  require; it said nine. No key, type or constraint changed.
 
 ## [0.1.0] - 2026-09-17
 
