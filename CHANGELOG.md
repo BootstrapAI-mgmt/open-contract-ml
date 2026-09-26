@@ -31,6 +31,20 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   rather than how one particular application displays it, and the
   `model_card` description names the eleven sections the card validators
   require; it said nine. No key, type or constraint changed.
+- `opencontractml.gate`: two V3 declarations are renamed to say what they hold.
+  `validation_anchor` (formerly `rung4_anchor`) is the independent evidence the
+  model is to be validated against beyond its training corpus, such as physical
+  test data, and matches the declaration of that name in a contract package's
+  `C4_deployment_readiness` check. `validation_anchor_status` (formerly
+  `stage8_status`) says whether that evidence is available yet.
+  `inference_target` is unchanged. The model card's `V3` block carries the new
+  names and, until 0.2.0, the former names beside them.
+
+### Deprecated
+
+- `rung4_anchor` and `stage8_status` in the `v3` block of a gate rules file,
+  and the same keys in the model card's `V3` block. A rules file that uses them
+  is still read, with a `DeprecationWarning`; both are removed in 0.2.0.
 
 ## [0.1.0] - 2026-09-17
 

@@ -59,8 +59,9 @@ Stated plainly rather than left to be discovered.
 5. **The corpus gate engine's checks have no tests here.** `corpus_gate.py`
    and `gate.py` read a physics rules file, and no example rules file ships
    yet (`examples/corpus-consumer/` documents the engine and records the runs
-   it was developed on). The engine imports cleanly, and its bundle loading is covered by
-   `tests/test_safe_artifact.py`; tests of the checks themselves can follow a
+   it was developed on). The engine imports cleanly, its bundle loading is covered by
+   `tests/test_safe_artifact.py`, and its reading of the V3 declarations by
+   `tests/test_gate.py`; tests of the checks themselves can follow a
    rules-file schema and a synthetic example pack.
 
 ## Citations

@@ -24,7 +24,7 @@ authored:
   sha256: 38c5a9d7013ee239145bf21a49ac5006eb48f7f5b2f1057a5e6aef6a44fbd44a
 - path: CHANGELOG.md
   why: what changed in each release, newest first; the sdist carries it
-  sha256: 9e7f4269c4a53f09963bf8be8b323789b06ea8c1767b619bced30cb751649ba7
+  sha256: e95f06d09ed78d5307ce5f3aee4daa2c980cb3714e345224b6327f1d57ebe161
 - path: CLAUDE.md
   why: notes for coding agents - the commands, what the tests enforce and what never to do here
   sha256: 90262dea80820941e9528a43f499fad3443fb12b94028325584addc5727277a1
@@ -52,7 +52,7 @@ authored:
   sha256: 251451df7a88dee10a2bca04fcd98f5731df566e1226875b1607f57d254433e5
 - path: docs/EXTRACTION.md
   why: where the files came from, and the known gaps in what is here
-  sha256: 5931344f40caf037b0454e7cb968df1105d2ed051c59383f79ed0b374fe51ef3
+  sha256: 98dde71c776b98f893995478dc963186b9f03fc819472d350df5e916d9998573
 - path: docs/REFERENCES.md
   why: the repository's bibliography; every [Key] citation resolves to an entry here
   sha256: 0c6b2be66e8a7b83a76c09ee0ed53909e7aa69fd9b335a90f4a1b8be1005f087
@@ -90,6 +90,9 @@ authored:
   why: 'provenance of the fixture package plate_heat_fno: the digest of each file in the copy and what
     the copy changed'
   sha256: 61a7fadf54b46c4141bf18a1ed22b278ad4099d595a71250d8476cfb717533c1
+- path: tests/test_gate.py
+  why: tests of the V3 declarations of the gate engine, under their current and former names
+  sha256: 7f23819f2288fdf21f378f1ef7e6a64f5dc1ca5acbf19d9d0e0c8f11670d8f34
 - path: tests/test_link_integrity.py
   why: the dangling-pointer gate; no markdown link may resolve outside the shipped tree
   sha256: 3befb774def7b5a5c8b7411c6124167208bd78bde8536e64997b9554f3512fc4
@@ -128,7 +131,7 @@ extracted:
 - path: examples/corpus-consumer/README.md
   transformed: true
   why: what the corpus consumer is and how its gates are run
-  sha256: e9bfc6974efdd3070f74bb5dfcbc48630084fa70ebb42bc2a6fa181e4128eb57
+  sha256: 7ad9c460364c63e054c92f7773b7734f7015eb1df02fea80e58685e1f7f8f327
 - path: examples/corpus-consumer/WALKTHROUGH.md
   transformed: true
   why: a walkthrough of the corpus consumer
@@ -360,7 +363,7 @@ extracted:
 - path: src/opencontractml/gate.py
   transformed: true
   why: the scalar gate engine's V1/V2/V3 model validation gate
-  sha256: de851a25ffd62a9dd929dd08d0e3ef05615dc7ba469741255bff407018f35b26
+  sha256: 358996710f96c18ecf254d5a408989029d39523b5ece6cced3d9e0648ae640d4
 - path: src/opencontractml/manifest.py
   transformed: true
   why: 'package-v1 manifest validation: JSON Schema, typed model and semantic checks'
