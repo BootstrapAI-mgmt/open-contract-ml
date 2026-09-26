@@ -230,13 +230,13 @@ def test_fg11_is_the_cloud_integrated_quantities_check_and_cloud_fg7_is_retired(
     assert vocab["legacy_aliases_retired"] == {"FG7": {"cloud": "FG11"}}
 
 
-def test_card_section_set_preserves_the_gui_nine_in_order():
-    """The GUI's adoption diff must be two insertions, not a re-ordering."""
-    gui_nine = ["TL;DR", "Intended use", "Out of scope", "Training data", "Architecture",
-                "Performance", "Uncertainty quantification", "Known failure modes", "Version history"]
-    kept = [s for s in vs.CARD_SECTIONS if s in gui_nine]
-    assert kept == gui_nine
-    assert set(vs.CARD_SECTIONS) - set(gui_nine) == {"Training configuration", "Provenance"}
+def test_card_section_set_keeps_the_nine_package_v1_sections_in_order():
+    """A card written to the nine package-v1 sections conforms after two insertions, no re-ordering."""
+    package_v1_nine = ["TL;DR", "Intended use", "Out of scope", "Training data", "Architecture",
+                       "Performance", "Uncertainty quantification", "Known failure modes", "Version history"]
+    kept = [s for s in vs.CARD_SECTIONS if s in package_v1_nine]
+    assert kept == package_v1_nine
+    assert set(vs.CARD_SECTIONS) - set(package_v1_nine) == {"Training configuration", "Provenance"}
 
 
 def test_headings_inside_code_fences_are_ignored():

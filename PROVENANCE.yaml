@@ -24,7 +24,7 @@ authored:
   sha256: 38c5a9d7013ee239145bf21a49ac5006eb48f7f5b2f1057a5e6aef6a44fbd44a
 - path: CHANGELOG.md
   why: what changed in each release, newest first; the sdist carries it
-  sha256: 70f3aa18e36deaa4db6a1041d7ee37da7fb8cd97829cd1e7a0cbaa0af17ee1ad
+  sha256: 92bcd07488cc963c9a7ec50d4b10fb0fb22bc11e8d9ff8fa6699327c9d27a077
 - path: CLAUDE.md
   why: notes for coding agents - the commands, what the tests enforce and what never to do here
   sha256: 90262dea80820941e9528a43f499fad3443fb12b94028325584addc5727277a1
@@ -427,7 +427,7 @@ extracted:
 - path: tests/test_fake_model.py
   transformed: true
   why: tests of the brake-disc stub model's wire format
-  sha256: b9ee62c69af254eb078b84cdeb7aca94e1c4422e257fff74bc9cd4356d1cebbf
+  sha256: a261b0c3a4758bf959f821fd2af3e7825bcd67abd54dbcd7062fe98757de8641
 - path: tests/test_manifest.py
   transformed: true
   why: tests of manifest validation and the pre-publish gate
@@ -435,15 +435,15 @@ extracted:
 - path: tests/test_model_card.py
   transformed: true
   why: tests of model-card validation
-  sha256: 8fdc72e6d56f56a2cc62a9a6e81855ef10ac0eb54032773ed7832ed7c363cfcf
+  sha256: a648a48298a6ef0a08ad9ab8c1db5eca9cbd40bd849e69a5987bb8330f893d81
 - path: tests/test_safe_artifact.py
   transformed: true
   why: fail-demos for the safe-load policy
-  sha256: 40e60d19ff4fba8947a9ae16eb58b28c3798e63f5533f94690ded84f95ce176e
+  sha256: e4b977a4d1807efc52101385dc9c2557511da7a145e3d7a73d9acec43498280b
 - path: tests/test_verify.py
   transformed: true
   why: tests of the conformance checker, one planted defect per ERROR rule
-  sha256: 2e94ebd334a2596f98bf390271e8e61328b56356556c2c5c55d94f409bb3dfaf
+  sha256: bc959422cf9fd2f62bccdaef28c1f7e8bbfc6973faa6c46b4dd94e242fd6904d
 modified_copies:
 - path: tests/fixtures/producer_packages/brake_disc_link1_thermal_fno/manifest.yaml
   copy_of: brake_disc_link1_thermal_fno

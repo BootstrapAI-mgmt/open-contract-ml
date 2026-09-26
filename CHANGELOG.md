@@ -42,6 +42,9 @@ implements are separate numbers: `opencontractml.__version__` is the first,
 - `open-contract-ml check`: the `V011` message says the two validation
   ladders' reproducibility tolerances are four orders of magnitude apart, as
   the specification does (1e-6 against 2e-2); it said three.
+- Tests: names that still counted nine card sections, and comments that
+  described an application outside this repository, are reworded. No test's
+  behaviour changed.
 
 ### Deprecated
 
