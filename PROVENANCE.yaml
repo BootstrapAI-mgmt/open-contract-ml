@@ -24,7 +24,7 @@ authored:
   sha256: 38c5a9d7013ee239145bf21a49ac5006eb48f7f5b2f1057a5e6aef6a44fbd44a
 - path: CHANGELOG.md
   why: what changed in each release, newest first; the sdist carries it
-  sha256: 92bcd07488cc963c9a7ec50d4b10fb0fb22bc11e8d9ff8fa6699327c9d27a077
+  sha256: fa3a3aa0da8e743772cdbe303e1bac4e7d2bf6983c1a98bd701af31217b475b2
 - path: CLAUDE.md
   why: notes for coding agents - the commands, what the tests enforce and what never to do here
   sha256: 90262dea80820941e9528a43f499fad3443fb12b94028325584addc5727277a1
@@ -127,7 +127,7 @@ extracted:
 - path: examples/brake_disc_tmf_v1/model_card.md
   transformed: true
   why: the package-v1 worked example's model card (illustrative)
-  sha256: c09eb0eda02ab019607d936e584fea98ee0a6a22616ebcefc652f9fb5132ff98
+  sha256: c1b782fe5e221fd615ead678c2c77369af1517039a876c6a36477626f8efcb7e
 - path: examples/corpus-consumer/README.md
   transformed: true
   why: what the corpus consumer is and how its gates are run

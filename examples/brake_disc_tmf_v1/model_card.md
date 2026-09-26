@@ -40,12 +40,12 @@ not as a replacement for full TMF simulation or physical testing.
 
 ## Training data
 
-- **Source:** Internal FEA TMF suite (ABAQUS + thermal-mechanical
-  coupled solve), 2024-2026 program
+- **Source:** illustrative — a fictional in-house FEA TMF suite (ABAQUS +
+  thermal-mechanical coupled solve); no such dataset exists
 - **Size:** 1,200 simulations, 4 input features
 - **Time period:** Q1 2024 through Q4 2025
 - **Known biases:**
-  - GGG70 over-represented (~40% of samples) due to active program work
+  - GGG70 over-represented (~40% of samples), an illustrative sampling bias
   - Peak temperatures below 300°C under-represented (only 8% of samples)
   - All training data uses the same vent topology family — novel vent
     geometries should be treated cautiously even when within input ranges
@@ -142,5 +142,5 @@ entrypoint, weights and dataset are all pinned by sha256.
 - Angelopoulos, A. & Bates, S. (2021). *A Gentle Introduction to
   Conformal Prediction and Distribution-Free Uncertainty
   Quantification.* https://arxiv.org/abs/2107.07511
-- (Internal) TMG-2026-Q1 validation report (Thermal Mech Group,
-  March 2026)
+- (Illustrative placeholder) the validation report a real card would cite
+  here; this example has none.
