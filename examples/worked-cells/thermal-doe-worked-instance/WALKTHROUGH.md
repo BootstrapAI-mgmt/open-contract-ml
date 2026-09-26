@@ -247,7 +247,7 @@ into it.
 This is recorded here rather than smoothed over because a worked
 instance that only ever confirms its document is not evidence of
 anything. The follow-on — a falsifier cell that varies design structure
-at fixed N — is left as future work.
+at fixed N — was queued at the time and has since been run (below).
 
 One further result the taxonomy does not predict: **the network fails 15 of 40
 inverses on a 0.40 °C held-out error.** The inverse requirement is

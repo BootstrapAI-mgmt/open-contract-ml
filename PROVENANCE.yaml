@@ -327,7 +327,7 @@ extracted:
 - path: examples/worked-cells/thermal-doe-worked-instance/WALKTHROUGH.md
   transformed: true
   why: the walkthrough of the thermal-doe-worked-instance worked cell
-  sha256: b9a8cd1f07b9555f900fe032b564667c8105fd70143028fa1b3ee16035cbfd97
+  sha256: 59eb98eafb1652d98b4ab0bd60b28b75660a220a9b92bcc2e84caa42f04e9802
 - path: examples/worked-cells/thermal-doe-worked-instance/data/data-contract.md
   transformed: true
   why: the data contract of the thermal-doe-worked-instance worked cell
