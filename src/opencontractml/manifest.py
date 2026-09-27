@@ -366,7 +366,7 @@ def semantic_errors(manifest: Manifest) -> list[str]:
     """Cross-field checks beyond the JSON Schema. Empty == semantically ok.
 
     The keystone is per_output coverage; the rest
-    protect downstream surfaces (auto-form, viewers, history, runner) from
+    protect a consumer's form, viewers, run history and runner from
     manifests the schema accepts but that cannot be rendered or dispatched.
     """
     errors: list[str] = []
@@ -406,7 +406,8 @@ def semantic_errors(manifest: Manifest) -> list[str]:
         if out.type is OutputType.categorical and not out.choices:
             errors.append(f"output {out.name!r} is categorical but declares no choices")
 
-    # primary_inputs / primary_outputs must name real fields (history columns).
+    # primary_inputs / primary_outputs must name real fields: a consumer shows
+    # them first wherever runs of the model are listed.
     for name in manifest.primary_inputs or []:
         if name not in declared and name not in set(input_names):
             errors.append(f"primary_inputs names {name!r}, which is not a declared input")

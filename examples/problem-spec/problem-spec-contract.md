@@ -48,10 +48,14 @@ not declare.
 
 ## 2. The sixteen fields
 
-`reads` names the Stage-1 hard filters (R1–R9) and Stage-2 preference rules
-(P1–P6) that branch on the field. Three fields are carried by the schema and
-read by no rule; they are recorded on the verdict sheet so the assumption is
-stated aloud rather than hidden.
+`reads` names the rules that branch on the field. The selector applies its
+nine hard filters first, each of which removes families, and then its six
+preference rules, which rank the families that survive. R1–R9 and P1–P6 are
+this sheet's own numbering of the two lists: the selector's rule table is not
+part of this repository, and each rule's inputs are the fields whose `reads`
+column names it. Three fields are carried by the schema and read by no rule;
+they are recorded on the verdict sheet so the assumption is stated aloud
+rather than hidden.
 
 ### 2.1 How the response behaves
 

@@ -86,7 +86,22 @@ Five of its tests are fail demonstrations: shuffled targets fail V1.1
 and V1.4; a zero-width interval fails V1.3; an inverted feature fails
 V2.1; a linear target makes the linear model the honest champion; and the
 mesh-only corpus fails G1.3 with and without the `solver_input_hash`
-column. Step 1's second command is the one you can reproduce from here.
+column. Step 1's second command is the one you can reproduce from here,
+and it needs no rules content: G1 falls back to its defaults for every rule
+the file does not state, so an empty rules file will do.
+
+```
+python -c "open('out/empty_rules.json', 'w').write('{}')"
+python -m opencontractml.corpus_gate --corpus out/meshonly/training_corpus.parquet --rules out/empty_rules.json --report out/meshonly_G1.json
+```
+
+G1.3 fails on its structural test (`SWEEP_AXIS_UNREACHED(structural): 60
+distinct parameter points map to only 1 distinct solver inputs`) and the
+command exits 1. Step 1's `SWEEP_AXIS_NOT_A_PHYSICS_INPUT` line needs the
+rules file's `physics_inputs`, and the number of `MESH_DOMINANT` lines
+follows its `targets`: with none declared, G1 checks `T_max_K` and prints
+six. Step 2's refusal reproduces the same way: given this report and the
+same rules file, the trainer exits 2.
 
 ## Things worth knowing
 

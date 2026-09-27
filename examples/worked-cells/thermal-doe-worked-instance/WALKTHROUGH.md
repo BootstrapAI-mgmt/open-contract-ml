@@ -137,6 +137,8 @@ worse at all. Same features, same rows; only one family has a way of
 using them. That is the whole reason for grouping models by
 *estimation principle* rather than by what they are called, and it is
 the taxonomy's P1 preference rule demonstrated rather than asserted.
+(P1, and R1 below, are the selector's rules as numbered in section 2 of
+`examples/problem-spec/problem-spec-contract.md`.)
 
 > **Worth sitting with:** on the raw inputs, with no physics basis, the
 > network is *better* than the quadratic. The quadratic's accuracy

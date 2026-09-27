@@ -2,7 +2,7 @@
 
 The Contract is the single model-card / manifest / provenance / validation
 standard shared by scalar-surrogate pipelines, field-surrogate libraries and
-the GUIs that dispatch their models.  The normative text is
+the applications that dispatch their models.  The normative text is
 ``docs/spec/CONTRACT-v1.md``; the machine-readable structure lives under
 ``schemas/contract-v1/``.  This module is the executable half: it decides whether a
 given artifact complies, and it says exactly which rule failed and why.

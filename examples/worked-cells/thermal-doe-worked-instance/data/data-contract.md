@@ -138,9 +138,11 @@ estimation principle rather than by function class.
 A surrogate-family selector that reads the problem-spec format in
 `examples/problem-spec/` returns, for this instance, top-1 **B1**,
 admissible **{B1, B2, B4, B3}**, with **B6 / B8 / B10 excluded by R1**
-— the rule that reads `needs_inverse`, `needs_gradients` and
-`needs_smooth_sweeps`. (The selector and its filled spec for this case
-are not included in this repository.)
+— the hard filter, numbered as in section 2 of
+`examples/problem-spec/problem-spec-contract.md`, that reads
+`needs_inverse`, `needs_gradients` and `needs_smooth_sweeps`. (The
+selector and its filled spec for this case are not included in this
+repository.)
 
 The three requirements R1 reads are all true of this dataset by
 construction, and all three are properties of the *question*, not of the

@@ -5,6 +5,24 @@ format. The package version and the version of the Contract a release
 implements are separate numbers: `opencontractml.__version__` is the first,
 `opencontractml.verify.CONTRACT_VERSION` the second.
 
+## [Unreleased]
+
+### Changed
+
+- The falsifier benchmark (`examples/falsifier-benchmark/`) names its d=5
+  verdict values for the quantities they hold and prints the `[V12]` verdict
+  classes as explains, other way and neither; no number it computes changed.
+  Its captured output stays the original run's, with a dated note at the top
+  that maps the labels it still carries.
+- Examples and docs: the problem-spec contract defines the rule ids of its
+  `reads` column where they first appear, and the other files that use them
+  point there; the corpus-consumer walkthrough reproduces the mesh-only
+  corpus failure with an empty rules file; the corpus-consumer README no
+  longer qualifies field targets with labels it never defines.
+- Wording in the package: the checker's module docstring, a docstring and a
+  comment of the manifest validator, and the model-card template describe
+  the applications that use a package without naming one.
+
 ## [0.1.1]
 
 ### Added
@@ -13,6 +31,13 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   (setting up, running the checks, amending the Contract); `SECURITY.md`
   (reporting a vulnerability, and the safe-loading policy); and `CLAUDE.md`,
   working notes for coding agents.
+- `FG11` resolves to `B6_integrated_quantities` in
+  `opencontractml.verify.LEGACY_ALIASES` and in the vocabulary that
+  `open-contract-ml vocabulary` emits. It is the cloud ladder's
+  integrated-quantities check, which that ladder used to call `FG7`. A new
+  map, `RETIRED_ALIASES` (vocabulary key `legacy_aliases_retired`), records
+  the rename, and `legacy_key("cloud", "FG7")` still returns
+  `B6_integrated_quantities`, so a report written before it stays readable.
 
 ### Changed
 
@@ -30,7 +55,7 @@ implements are separate numbers: `opencontractml.__version__` is the first,
 - The package-v1 manifest schema's descriptions say what each field means
   rather than how one particular application displays it, and the
   `model_card` description names the eleven sections the card validators
-  require; it said nine. No key, type or constraint changed.
+  require; it said nine. The rewording changed no key, type or constraint.
 - `opencontractml.gate`: two V3 declarations are renamed to say what they hold.
   `validation_anchor` is the independent evidence the model is to be validated
   against beyond its training corpus, such as physical test data; the reference
@@ -42,6 +67,30 @@ implements are separate numbers: `opencontractml.__version__` is the first,
 - `open-contract-ml check`: the `V011` message says the two validation
   ladders' reproducibility tolerances are four orders of magnitude apart, as
   the specification does (1e-6 against 2e-2); it said three.
+- `opencontractml.model_card` requires the same eleven H2 sections as
+  `open-contract-ml check` (rule `C003`): it reads them from
+  `opencontractml.verify.CARD_SECTIONS`. 0.1.0 required nine, so a card that
+  passed `load_model_card`, `opencontractml.manifest.load_model` or
+  `python -m opencontractml.manifest` now also needs
+  `## Training configuration` after `## Architecture` and `## Provenance`
+  after `## Known failure modes`. The package's model-card template carries
+  both sections.
+- `open-contract-ml check`: rules `V010` (the A3 UQ-calibration check) and
+  `V011` (the A5 reproducibility check) grade only a check that ran. A check
+  reported as `NOT_RUN` is skipped by both, as `NOT_APPLICABLE` already was;
+  in 0.1.0 both rejected it for lacking measurements that a check which did
+  not run cannot have. `NOT_RUN` still blocks: the recomputed `overall` is
+  `FAIL`, and `V008` rejects a report that declares otherwise.
+- The package-v1 manifest schema accepts letters of either case after the
+  first character of an input name: `inputs[].name` matches
+  `^[a-z][A-Za-z0-9_]*$`, where 0.1.0 required `^[a-z][a-z0-9_]*$`. A unit
+  suffix can keep its case (`peak_temp_K` for kelvin, rather than
+  `peak_temp_k`, which reads as kilo). Every name 0.1.0 accepted is still
+  accepted.
+- `opencontractml.cc_common` names its tuple of the five corpus target
+  columns (`T_max_K`, `T_min_K`, `T_mean_K`, `pass_fail_status`,
+  `margin_K`) `CORPUS_TARGETS`. 0.1.0 exported the same tuple under a
+  different name, which this release does not provide.
 - The brake-disc worked example's model card (`examples/brake_disc_tmf_v1/`)
   marks its training-data source, its sampling bias and its cited validation
   report as illustrative; no such dataset or report exists.
@@ -52,6 +101,14 @@ implements are separate numbers: `opencontractml.__version__` is the first,
 - Tests: names that still counted nine card sections, and comments that
   described an application outside this repository, are reworded. No test's
   behaviour changed.
+
+### Removed
+
+- The `gap` subcommand: `open-contract-ml gap`, also run as
+  `python -m opencontractml.verify gap`. It compared the Contract's
+  requirements with other producers' source checkouts at machine-specific
+  default paths, which an installed package does not have. `check`, `rules`
+  and `vocabulary` remain.
 
 ## [0.1.0] - 2026-09-17
 
