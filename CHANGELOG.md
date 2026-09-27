@@ -5,6 +5,24 @@ format. The package version and the version of the Contract a release
 implements are separate numbers: `opencontractml.__version__` is the first,
 `opencontractml.verify.CONTRACT_VERSION` the second.
 
+## [Unreleased]
+
+### Changed
+
+- The falsifier benchmark (`examples/falsifier-benchmark/`) names its d=5
+  verdict values for the quantities they hold and prints the `[V12]` verdict
+  classes as explains, other way and neither; no number it computes changed.
+  Its captured output stays the original run's, with a dated note at the top
+  that maps the labels it still carries.
+- Examples and docs: the problem-spec contract defines the rule ids of its
+  `reads` column where they first appear, and the other files that use them
+  point there; the corpus-consumer walkthrough reproduces the mesh-only
+  corpus failure with an empty rules file; the corpus-consumer README no
+  longer qualifies field targets with labels it never defines.
+- Wording in the package: the checker's module docstring, a docstring and a
+  comment of the manifest validator, and the model-card template describe
+  the applications that use a package without naming one.
+
 ## [0.1.1]
 
 ### Added
