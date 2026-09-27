@@ -53,6 +53,11 @@ FAMILIES (bucket ids from the taxonomy; <=3 configs each, 5-fold CV pick)
   MARS omitted (no maintained lib in the pinned numpy/scipy/sklearn set);
   B9 symbolic and B10 TabPFN are outside the pinned dependency set.
 
+RULE IDS. R1-R9 (hard filters) and P1-P6 (preference rules) are numbered as
+in section 2 of examples/problem-spec/problem-spec-contract.md, which lists
+the problem-spec fields each rule reads; "the R1 cell" is the cell of the
+selection matrix that rule R1 rules on.
+
 SURFACES (analytic, with analytic gradients where they exist)
 -------------------------------------------------------------
   linear    3*x0 - 2*x1 + 1

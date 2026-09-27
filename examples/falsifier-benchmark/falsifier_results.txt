@@ -12,6 +12,9 @@
   Where [V12] cites a specification for its three conditions and its
   probe, read: written down before the run. The C1, C10 and C100 in
   the B5 SVR-RBF rows are the SVR penalty parameter C, not verdicts.
+  R1-R9 and P1-P6 are the selector's hard filters and preference
+  rules, numbered as in section 2 of
+  examples/problem-spec/problem-spec-contract.md.
 
 ==============================================================================
 FALSIFIER BENCHMARK - scalar-surrogate taxonomy
