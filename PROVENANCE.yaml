@@ -131,7 +131,7 @@ extracted:
 - path: examples/corpus-consumer/README.md
   transformed: true
   why: what the corpus consumer is and how its gates are run
-  sha256: 070f5fcc1a6871b996fca2a2a7c45754bb83a16f84b0d977d28c7a1024563c55
+  sha256: 99dd25521a0593208f2732c3f1c0e444c761d4390c6a0b54482cf7fc09834175
 - path: examples/corpus-consumer/WALKTHROUGH.md
   transformed: true
   why: a walkthrough of the corpus consumer

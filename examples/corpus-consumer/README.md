@@ -224,7 +224,7 @@ with several names; corpora with more than one row per (case, component).
 
 ## What this is not, yet
 
-Field targets (B2/B3) -- the gates are scalar-row gates, and the
+Field targets -- the gates are scalar-row gates, and the
 corpus-consumer schema is scalar. V2.3 conservation checks are declared,
 not implemented -- and the gate currently lets that declaration pass (the
 known defect above). The thresholds are provisional until pinned. And a
