@@ -1,3 +1,18 @@
+[NOTE 2026-09-27: labels renamed; the benchmark was not re-run]
+  This file is the output of the original run and is kept as that
+  record: every number in it is that run's. Since then
+  falsifier_benchmark.py prints the [V12] verdict under names that say
+  what each condition is, and changes nothing it computes. Read these
+  labels in the [V12] block as:
+    C1 explains    ->  explains
+    C2 other way   ->  other way
+    C3 neither     ->  neither
+    C2 MET         ->  OTHER WAY
+    C2 above       ->  Verdict above
+  Where [V12] cites a specification for its three conditions and its
+  probe, read: written down before the run. The C1, C10 and C100 in
+  the B5 SVR-RBF rows are the SVR penalty parameter C, not verdicts.
+
 ==============================================================================
 FALSIFIER BENCHMARK - scalar-surrogate taxonomy
 ==============================================================================

@@ -236,8 +236,8 @@ SMOOTH_SURFS = ("linear", "quad-int", "sin-exp", "smooth5")
 # isotropic branch is untouched.
 ANISO_LEVELS = {5: (6, 5, 4, 3, 2)}
 
-# Cross-references. Values owned by ANOTHER program or fixed by the
-# specification of this run, named here with their provenance so that no
+# Cross-references. Values owned by ANOTHER program or fixed before the
+# [V12] measurement was run, named here with their provenance so that no
 # verdict emitter below contains a bare literal. The thermal DOE worked
 # instance's head-to-head script uses the same convention to carry this
 # file's [V10] numbers - each script keeps the other's numbers as declared
@@ -245,11 +245,14 @@ ANISO_LEVELS = {5: (6, 5, 4, 3, 2)}
 HT_INSTANCE_BIS = 0.075        # thermal DOE worked instance, partition-family
                                # bisection success; its own section 7
                                # output, checked 2026-08-21
-E2_C1_CEILING = 0.10           # the run specification's falsification condition C1
-E2_IC1_CELLS_BEFORE = 20       # IC-1 cell count in the results file before this run
-E2_PROBE = {                   # the run specification's authoring probe: PREDICTIONS to
-    ("lattice", 243): 0.000,   # be refuted, from a scratch harness, NOT
-    ("lhs", 720): 0.050,       # from this code path. Printed beside the
+ANISO_EXPLAINS_CEILING = 0.10  # [V12]'s "explains" verdict: the highest partition
+                               # bisection success at which the anisotropic d=5
+                               # cell still counts as reproducing HT_INSTANCE_BIS
+IC1_CELLS_BEFORE = 20          # IC-1 cell count in the results file before the
+                               # four d=5 design cells of [V12] were added
+DESIGN_AXIS_PROBE = {          # partition bisection success PREDICTED for those
+    ("lattice", 243): 0.000,   # four cells before the run, by a scratch harness,
+    ("lhs", 720): 0.050,       # NOT this code path - to be refuted. Printed beside the
     ("lattice", 1024): 0.100,  # measurement so a disagreement is visible
     ("lat-aniso", 720): 0.317, # rather than quietly reconciled.
 }
@@ -1469,29 +1472,29 @@ def run(smoke=False):
     # was never asked about; [V12] measures the design axis at d=5, including
     # the level anisotropy that was not expressible before this run.
     # ======================================================================
-    part9e = [f for f in ("B6a", "B6b", "B8") if f in FAM_LABEL]
-    sm2_9e = [nm for nm in SMOOTH_SURFS if nm in SURFS and SURFS[nm].d == 2]
-    res9e = 1.0 / cfg["n_slices"]
+    part_fams = [f for f in ("B6a", "B6b", "B8") if f in FAM_LABEL]
+    smooth_d2 = [nm for nm in SMOOTH_SURFS if nm in SURFS and SURFS[nm].d == 2]
+    slice_width = 1.0 / cfg["n_slices"]
 
     def _b1(key, fam):
         r = results.get(key, {}).get(fam)
         return float("nan") if r is None else r["bis"] / float(r["n_slices"])
 
     def _bm(key):
-        v = [x for x in (_b1(key, f) for f in part9e) if not np.isnan(x)]
+        v = [x for x in (_b1(key, f) for f in part_fams) if not np.isnan(x)]
         return float(np.mean(v)) if v else float("nan")
 
     def _bsurf(doe, n, fam=None):
         """Partition bisection over the smooth d=2 surfaces, one family or all."""
         v = [(_b1((nm, doe, 2, n, 0.0), fam) if fam else _bm((nm, doe, 2, n, 0.0)))
-             for nm in sm2_9e if (nm, doe, 2, n, 0.0) in results]
+             for nm in smooth_d2 if (nm, doe, 2, n, 0.0) in results]
         v = [x for x in v if not np.isnan(x)]
         return float(np.mean(v)) if v else float("nan")
 
     def _axis_tab(key):
         """{axis: (hits, slices)} pooled over the partition families."""
         agg = {}
-        for f in part9e:
+        for f in part_fams:
             r = results.get(key, {}).get(f)
             if r is None or "bis_detail" not in r:
                 continue
@@ -1506,7 +1509,7 @@ def run(smoke=False):
         return (h / float(t) if t else float("nan")), h, t
 
     def _slices(v):
-        return abs(v) / res9e
+        return abs(v) / slice_width
 
     def _wrap(text, width=66, lead="  "):
         out, cur = [], ""
@@ -1523,14 +1526,14 @@ def run(smoke=False):
     e1 = {}
 
     # ---------------- [V10-A1] annotation beside [V10] --------------------
-    if leg_tab and part9e:
+    if leg_tab and part_fams:
         _nhi, _lhi = leg_meta["n_hi"], leg_meta["l_hi"]
         fam_legs = [_bsurf("lattice", _lhi, f) - _bsurf("lhs", _nhi, f)
-                    for f in part9e]
+                    for f in part_fams]
         f_sm, f_mm, f_sp = leg_stats(fam_legs)
         surf_legs = [(nm, _bm((nm, "lattice", 2, _lhi, 0.0))
                       - _bm((nm, "lhs", 2, _nhi, 0.0)))
-                     for nm in sm2_9e
+                     for nm in smooth_d2
                      if (nm, "lattice", 2, _lhi, 0.0) in results
                      and (nm, "lhs", 2, _nhi, 0.0) in results]
         s_sm, s_mm, s_sp = leg_stats([v for _, v in surf_legs])
@@ -1548,7 +1551,7 @@ def run(smoke=False):
               "the ABSOLUTE VALUE OF A MEAN, not the mean of absolute values.",
               "Bisection structure legs by family: %s."
               % ", ".join("%s %+.3f" % (FAM_LABEL[f], v)
-                          for f, v in zip(part9e, fam_legs)),
+                          for f, v in zip(part_fams, fam_legs)),
               "Signed mean %+.3f, mean magnitude %.3f - %.1fx larger. On the"
               % (f_sm, f_mm, (f_mm / abs(f_sm)) if f_sm else float("nan")),
               "dN line the same error is invisible: those legs share a sign.",
@@ -1578,7 +1581,7 @@ def run(smoke=False):
     k_d2 = ("sin-exp", "lhs", 2, 800, 0.0)
     k_d5a = ("smooth5", "lhs", 5, 200, 0.0)
     k_d5b = ("smooth5", "lhs", 5, 800, 0.0)
-    if part9e and k_d2 in results and k_d5b in results:
+    if part_fams and k_d2 in results and k_d5b in results:
         rows11 = [("sin-exp  lhs  d=2", k_d2), ("smooth5  lhs  d=5", k_d5a),
                   ("smooth5  lhs  d=5", k_d5b)]
         rows11 = [(lb, k) for lb, k in rows11 if k in results]
@@ -1591,18 +1594,18 @@ def run(smoke=False):
                "where the thermal DOE worked instance's open disagreement lives. No cell",
                "was added or re-run for this block.",
                "RESOLUTION: bisection is k/%d slices, so ONE SLICE = %.3f. No leg"
-               % (cfg["n_slices"], res9e),
+               % (cfg["n_slices"], slice_width),
                "narrower than that is reported below as a direction.",
                "",
                "(a) THE DIMENSIONALITY LEG. Partition bisection success, noise 0:",
                "    %-20s %6s %8s %8s %8s %8s"
-               % ("cell", "N", FAM_LABEL[part9e[0]].split()[0],
-                  FAM_LABEL[part9e[1]].split()[0],
-                  FAM_LABEL[part9e[2]].split()[0], "mean")]
+               % ("cell", "N", FAM_LABEL[part_fams[0]].split()[0],
+                  FAM_LABEL[part_fams[1]].split()[0],
+                  FAM_LABEL[part_fams[2]].split()[0], "mean")]
         for lb, k in rows11:
             v11.append("    %-20s %6d %8.3f %8.3f %8.3f %8.3f"
-                       % (lb, k[3], _b1(k, part9e[0]), _b1(k, part9e[1]),
-                          _b1(k, part9e[2]), _bm(k)))
+                       % (lb, k[3], _b1(k, part_fams[0]), _b1(k, part_fams[1]),
+                          _b1(k, part_fams[2]), _bm(k)))
         v11 += ["dDIM = d=5 N=%d minus d=2 N=%d = %+.3f  (%.1f slices)"
                 % (k_d5b[3], k_d2[3], d_dim, _slices(d_dim)),
                 "The thermal DOE instance's partition family sits at %.3f (cross-"
@@ -1670,7 +1673,7 @@ def run(smoke=False):
             e1["d_shared"] = d_shared
             v11 += ["SHARED-AXIS LEG = %+.3f (%.1f slices at this cell's width)."
                     % (d_shared, _slices(d_shared))]
-            if abs(d_shared) >= res9e:
+            if abs(d_shared) >= slice_width:
                 v11 += ["That is at or above the resolution, and it carries the",
                         "same sign as the pooled leg: the drop is NOT an artifact",
                         "of which axes got slices. Dimensionality survives the",
@@ -1691,18 +1694,18 @@ def run(smoke=False):
         if leg_tab:
             _nhi, _lhi = leg_meta["n_hi"], leg_meta["l_hi"]
             fam_legs = [_bsurf("lattice", _lhi, f) - _bsurf("lhs", _nhi, f)
-                        for f in part9e]
+                        for f in part_fams]
             f_sm, f_mm, f_sp = leg_stats(fam_legs)
             surf_legs = [(nm, _bm((nm, "lattice", 2, _lhi, 0.0))
                           - _bm((nm, "lhs", 2, _nhi, 0.0)))
-                         for nm in sm2_9e
+                         for nm in smooth_d2
                          if (nm, "lattice", 2, _lhi, 0.0) in results
                          and (nm, "lhs", 2, _nhi, 0.0) in results]
             s_sm, s_mm, s_sp = leg_stats([v for _, v in surf_legs])
             v11 += ["(d) THE STRUCTURE LEG, SPLIT BOTH WAYS (corrects [V10]).",
                     "    by family : %s"
                     % ", ".join("%s %+.3f" % (FAM_LABEL[f], v)
-                                for f, v in zip(part9e, fam_legs)),
+                                for f, v in zip(part_fams, fam_legs)),
                     "    by surface: %s"
                     % ", ".join("%s %+.3f" % (nm, v) for nm, v in surf_legs),
                     "    family legs : signed mean %+.3f | mean magnitude %.3f"
@@ -1732,11 +1735,11 @@ def run(smoke=False):
         vd("V11 d5-readout", v11)
 
     # ---------------- [V12] the d=5 design axis ---------------------------
-    new9e = [("lattice", 243), ("lhs", 720), ("lattice", 1024),
-             ("lat-aniso", 720)]
-    new9e = [(doe, n) for doe, n in new9e
-             if ("smooth5", doe, 5, n, 0.0) in results]
-    if part9e and len(new9e) == 4:
+    d5_cells = [("lattice", 243), ("lhs", 720), ("lattice", 1024),
+                ("lat-aniso", 720)]
+    d5_cells = [(doe, n) for doe, n in d5_cells
+                if ("smooth5", doe, 5, n, 0.0) in results]
+    if part_fams and len(d5_cells) == 4:
         def _k(doe, n):
             return ("smooth5", doe, 5, n, 0.0)
 
@@ -1757,27 +1760,27 @@ def run(smoke=False):
                "for every axis, so the thermal DOE instance's 6x5x4x3x2 = 720 could not be",
                "written down at all. Surface smooth5, noise 0, d=5 throughout.",
                "RESOLUTION: one slice = %.3f. Legs narrower than that are not"
-               % res9e,
+               % slice_width,
                "reported as directions.",
                "",
                "    %-28s %6s %8s %8s %8s %8s"
-               % ("cell", "N", FAM_LABEL[part9e[0]].split()[0],
-                  FAM_LABEL[part9e[1]].split()[0],
-                  FAM_LABEL[part9e[2]].split()[0], "mean")]
-        for doe, n in new9e:
+               % ("cell", "N", FAM_LABEL[part_fams[0]].split()[0],
+                  FAM_LABEL[part_fams[1]].split()[0],
+                  FAM_LABEL[part_fams[2]].split()[0], "mean")]
+        for doe, n in d5_cells:
             k = _k(doe, n)
             v12.append("    %-28s %6d %8.3f %8.3f %8.3f %8.3f"
-                       % (_lbl(doe, n), n, _b1(k, part9e[0]), _b1(k, part9e[1]),
-                          _b1(k, part9e[2]), _bm(k)))
+                       % (_lbl(doe, n), n, _b1(k, part_fams[0]), _b1(k, part_fams[1]),
+                          _b1(k, part_fams[2]), _bm(k)))
         v12 += ["",
                 "ANISOTROPY LEG at matched N=%d: %s minus %s = %+.3f (%.1f slices)"
                 % (720, "lattice 6x5x4x3x2", "LHS control", d_aniso,
                    _slices(d_aniso))]
-        fam_a = [_b1(aniso, f) - _b1(ctrl, f) for f in part9e]
+        fam_a = [_b1(aniso, f) - _b1(ctrl, f) for f in part_fams]
         a_sm, a_mm, a_sp = leg_stats(fam_a)
         v12 += ["    by family: %s"
                 % ", ".join("%s %+.3f" % (FAM_LABEL[f], v)
-                            for f, v in zip(part9e, fam_a)),
+                            for f, v in zip(part_fams, fam_a)),
                 "    signed mean %+.3f | mean magnitude %.3f | b_split guard: %s"
                 % (a_sm, a_mm, "SIGN SPLIT - do not pool" if a_sp
                    else "no sign split, pooling is safe"),
@@ -1785,49 +1788,49 @@ def run(smoke=False):
                 "    this benchmark carries. Single-surface, and said so.",
                 ""]
         # falsification verdict, computed
-        if _bm(aniso) <= E2_C1_CEILING and _bm(aniso) < _bm(ctrl):
-            verdict = ("C1 MET - ANISOTROPY EXPLAINS THE MISS: the anisotropic "
+        if _bm(aniso) <= ANISO_EXPLAINS_CEILING and _bm(aniso) < _bm(ctrl):
+            verdict = ("EXPLAINS - ANISOTROPY EXPLAINS THE MISS: the anisotropic "
                        "cell lands at or below %.3f AND below its own control."
-                       % E2_C1_CEILING)
+                       % ANISO_EXPLAINS_CEILING)
         elif _bm(aniso) > _bm(ctrl):
-            verdict = ("C2 MET - ANISOTROPY POINTS THE OTHER WAY: the "
+            verdict = ("OTHER WAY - ANISOTROPY POINTS THE OTHER WAY: the "
                        "anisotropic cell lands ABOVE its LHS control at matched "
                        "N, so anisotropy is the WRONG SIGN, not merely "
                        "insufficient.")
         else:
-            verdict = ("C3 MET - NEITHER: the anisotropic cell is at or below "
+            verdict = ("NEITHER - the anisotropic cell is at or below "
                        "its control but above %.3f, so anisotropy moves the "
-                       "right way and does not arrive." % E2_C1_CEILING)
-        v12 += ["FALSIFICATION VERDICT. The three conditions were fixed in",
-                "the run's specification BEFORE this run, so the result cannot be read after",
+                       "right way and does not arrive." % ANISO_EXPLAINS_CEILING)
+        v12 += ["FALSIFICATION VERDICT. The three conditions were written",
+                "down BEFORE this run, so the result cannot be read after",
                 "the fact as whatever was hoped for:",
-                "  C1 explains  : aniso <= %.3f AND aniso < LHS control"
-                % E2_C1_CEILING,
-                "  C2 other way : aniso > LHS control",
-                "  C3 neither   : aniso <= control but above %.3f"
-                % E2_C1_CEILING,
+                "  explains     : aniso <= %.3f AND aniso < LHS control"
+                % ANISO_EXPLAINS_CEILING,
+                "  other way    : aniso > LHS control",
+                "  neither      : aniso <= control but above %.3f"
+                % ANISO_EXPLAINS_CEILING,
                 "  measured     : aniso %.3f, control %.3f, instance %.3f"
                 % (_bm(aniso), _bm(ctrl), HT_INSTANCE_BIS)]
         v12 += _wrap(verdict, 66, "  ")
         # probe comparison, computed
         v12 += ["",
-                "PROBE CHECK. The run's specification carried an authoring probe from a scratch",
-                "harness - PREDICTIONS, explicitly to be refuted, never targets.",
+                "PROBE CHECK. Before the run, a scratch harness wrote down",
+                "PREDICTIONS - explicitly to be refuted, never targets.",
                 "    %-28s %8s %8s %8s" % ("cell", "predict", "measured", "delta")]
         worst = 0.0
-        for doe, n in new9e:
-            pred = E2_PROBE.get((doe, n))
+        for doe, n in d5_cells:
+            pred = DESIGN_AXIS_PROBE.get((doe, n))
             if pred is None:
                 continue
             got = _bm(_k(doe, n))
             worst = max(worst, abs(got - pred))
             v12.append("    %-28s %8.3f %8.3f %+8.3f"
                        % (_lbl(doe, n), pred, got, got - pred))
-        if worst > res9e:
+        if worst > slice_width:
             v12 += ["Largest disagreement %.3f exceeds the metric's own resolution"
                     % worst,
-                    "of %.3f. THE PROBE WAS WRONG, and by the run's own rules that is a"
-                    % res9e,
+                    "of %.3f. THE PROBE WAS WRONG, and that is a"
+                    % slice_width,
                     "reportable finding in its own right, not something to",
                     "reconcile toward. The measurement above stands; the probe",
                     "does not."]
@@ -1835,10 +1838,10 @@ def run(smoke=False):
             v12 += ["Largest disagreement %.3f is within the metric's resolution"
                     % worst,
                     "of %.3f. The probe reproduced through the shipped code path."
-                    % res9e]
+                    % slice_width]
         # IC-1 side effect, predicted then reported
         n_new_ic1 = sum(1 for k in ic1_cells if k[0] == "smooth5" and k[2] == 5
-                        and (k[1], k[3]) in new9e)
+                        and (k[1], k[3]) in d5_cells)
         n_lat_any = sum(1 for k, _, _, _ in ic1_stats
                         if k[1] in ("lattice", "lat-aniso"))
         v12 += ["",
@@ -1847,7 +1850,7 @@ def run(smoke=False):
                 "never on dimension - so all four new noise-0 smooth5 cells enter",
                 "the IC-1 check and move [V1]'s denominators, exactly as [V10]'s",
                 "lattice cells did. Predicted %d -> %d cells; observed %d."
-                % (E2_IC1_CELLS_BEFORE, E2_IC1_CELLS_BEFORE + 4, len(ic1_stats)),
+                % (IC1_CELLS_BEFORE, IC1_CELLS_BEFORE + 4, len(ic1_stats)),
                 "%d of the new cells landed in IC-1." % n_new_ic1,
                 "[V10]'s own counter tests doe == \"lattice\" and so does not see",
                 "the anisotropic cell; counting every gridded design, %d of %d"
@@ -1871,7 +1874,7 @@ def run(smoke=False):
             v12.append("                   [V10-A1], [V11] (d)")
         v12 += ["  ANISOTROPY       %+.3f at matched N - AWAY from the instance,"
                 % d_aniso,
-                "                   not toward it.  C2 above",
+                "                   not toward it.  Verdict above",
                 "The LHS control at d=5 N=%d - matched N, matched dimension, no"
                 % ctrl[3],
                 "grid structure at all - lands at %.3f against the instance's"
