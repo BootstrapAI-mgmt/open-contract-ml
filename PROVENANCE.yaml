@@ -135,7 +135,7 @@ extracted:
 - path: examples/corpus-consumer/WALKTHROUGH.md
   transformed: true
   why: a walkthrough of the corpus consumer
-  sha256: 09d08a8023385462309d5d276d239ac699033cb46d2e14319a1fe32374a3af13
+  sha256: e97aa512eeecddd9593f01ec794d6294ec009773e8b3b298b830ed19efe551a5
 - path: examples/falsifier-benchmark/Run-Falsifier.bat
   transformed: true
   why: a Windows launcher for the falsifier benchmark
@@ -367,7 +367,7 @@ extracted:
 - path: src/opencontractml/manifest.py
   transformed: true
   why: 'package-v1 manifest validation: JSON Schema, typed model and semantic checks'
-  sha256: 7e76f85768a192f561f04c721e53409743a2fee94a58da12242c2c9f0e80505a
+  sha256: 09667c76022670f83f8980e24bcf7016f2ffc6a4afe1547585eeeddf49b082e2
 - path: src/opencontractml/model_card.py
   transformed: true
   why: 'model-card validation: front-matter and the required H2 sections'
@@ -399,7 +399,7 @@ extracted:
 - path: src/opencontractml/templates/model_card.template.md
   transformed: true
   why: the model-card template with the eleven required sections
-  sha256: eb29186300889582c0e64445d5e41f990996cb933425b775a5e484fe97dc5495
+  sha256: bd2ec565669e6d312a89d1b2e2ee3ab615b74e34718e4a6bf9abb25f59b466d2
 - path: src/opencontractml/train_b1.py
   transformed: true
   why: the M1 corpus-native trainer whose artifacts the model gate validates
@@ -407,7 +407,7 @@ extracted:
 - path: src/opencontractml/verify.py
   transformed: true
   why: the conformance checker and the machine-readable contract vocabulary
-  sha256: 059fb7aedb83475bd3ef602802e7a7ecc59eed93ca90fff16c5e87547e91de5e
+  sha256: 3e6a363e2f8aecbd6b51b9bc952976ce1be771511a406d25b54279863ab6fa5e
 - path: tests/fixtures/model_packages/conformant/manifest.yaml
   transformed: true
   why: 'a conformant package-v1 fixture: its manifest'

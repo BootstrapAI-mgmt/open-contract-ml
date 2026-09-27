@@ -25,7 +25,7 @@ who knows the analysis they need but not the modeling. No jargon, no
 equations. Three or four sentences maximum. State the input it expects,
 the prediction it produces, and the regime it's valid in. (Mirror this
 plain-language framing in the manifest's `purpose`, `when_to_use`, and
-`analysis_type` — those drive non-expert catalog discovery.)
+`analysis_type` — those drive discovery.)
 
 ## Intended use
 
