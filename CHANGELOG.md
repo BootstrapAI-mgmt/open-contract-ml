@@ -14,6 +14,11 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   classes as explains, other way and neither; no number it computes changed.
   Its captured output stays the original run's, with a dated note at the top
   that maps the labels it still carries.
+- The falsifier benchmark states the tolerance unit of its IC-1 check, one
+  standard deviation of the chosen configuration's five CV-fold NRMSEs, as
+  its own, both above that check's table and in its how-to-read block. Its
+  captured output carries the same two lines, edited by hand rather than
+  re-run, so every number in it is still the original run's.
 - Examples and docs: the problem-spec contract defines the rule ids of its
   `reads` column where they first appear, and the other files that use them
   point there; the corpus-consumer walkthrough reproduces the mesh-only

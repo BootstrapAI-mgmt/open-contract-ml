@@ -944,7 +944,7 @@ def run(smoke=False):
                  if k[0] in SMOOTH_SURFS and k[4] == 0.0]
     emit("=" * 78)
     emit("IC-1 CHECK - {B1,B2,B3,B4} on smooth deterministic cells")
-    emit("tolerance = 1 CV-fold std of the best family's NRMSE (the spec's")
+    emit("tolerance = 1 CV-fold std of the best family's NRMSE (this benchmark's")
     emit("operationalization); Dmax = worst member's NRMSE gap to the best")
     emit("=" * 78)
     emit("  %-34s %-10s %s %s  %-6s %-6s %s" % (
@@ -1166,7 +1166,7 @@ def run(smoke=False):
   sec     : fit incl. CV + fold-std pass + interp predict (retrain-cost axis
             at these tiny N; not a deployment benchmark).
   fold-std (IC-1 tol column): std of the chosen config's 5 CV-fold NRMSEs -
-            the spec's IC-1 tolerance unit ('within 1 CV-fold std').
+            the benchmark's own IC-1 tolerance unit (one CV-fold std).
   Noise is added to TRAIN y only; all metrics score against the true surface.
   Every family in a cell sees the same design, test points, slices, gradient
   points, sweeps, and rays (seed=0).""")

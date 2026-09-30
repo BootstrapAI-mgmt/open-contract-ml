@@ -24,7 +24,7 @@ authored:
   sha256: 38c5a9d7013ee239145bf21a49ac5006eb48f7f5b2f1057a5e6aef6a44fbd44a
 - path: CHANGELOG.md
   why: what changed in each release, newest first; the sdist carries it
-  sha256: f3ad9ad5e6026fe5173b67bcabfa1b1d8dc49ddba081276d9a7d08a173e420fc
+  sha256: 91fbe719e3df846ce3c8eb0c5c69727d2127b9188fab2b0c062651127b9eec6e
 - path: CLAUDE.md
   why: notes for coding agents - the commands, what the tests enforce and what never to do here
   sha256: 5697bac445b96f180f1c542d7ffccd389e0e5f60e58e7ffe83aa88923958f6c5
@@ -143,11 +143,11 @@ extracted:
 - path: examples/falsifier-benchmark/falsifier_benchmark.py
   transformed: true
   why: the adversarial falsifier benchmark
-  sha256: 7c3cc7145d01b7bb920ad77cbd31e4bab8557e7e25d03f884d0991aa2582d8cc
+  sha256: e4b7db390a3d7e8b69ae2fb30ed449e24062a125d2534c0448b2aa4a1ca6ab98
 - path: examples/falsifier-benchmark/falsifier_results.txt
   transformed: true
   why: the falsifier benchmark's captured output
-  sha256: 91dbc108f1e7fe105cf925b53fad8d297fab2fa1cc3b75a7572a543e12f10196
+  sha256: d8a25fcb914197105ce1795fae7e6620c27e1d07159251f2a4eb7cb58afddee5
 - path: examples/problem-spec/problem-spec-contract.md
   transformed: true
   why: the problem-spec contract for describing a surrogate-selection problem
