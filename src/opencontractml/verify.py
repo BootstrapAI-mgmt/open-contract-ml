@@ -37,6 +37,9 @@ Design rules this checker holds itself to (see the spec, section 9):
 Standard library only, so the checker runs from a bare Python.  YAML is read through
 PyYAML when it is importable and is a hard ERROR when it is not (rule E002);
 ``manifest.json`` is an accepted dependency-free equivalent of ``manifest.yaml``.
+The manifest is also held to the contract-v1 JSON Schema this package ships,
+applied by a standard-library walker (rule M018); a schema the walker cannot
+apply in full is likewise an ERROR, never a skip (rule E003).
 """
 
 from __future__ import annotations
@@ -206,6 +209,7 @@ class Rule:
 RULES: Tuple[Rule, ...] = (
     Rule("E001", "ERROR", "package directory exists and is readable"),
     Rule("E002", "ERROR", "a YAML parser is available for a .yaml artifact"),
+    Rule("E003", "ERROR", "the contract-v1 manifest schema loads and the checker applies every keyword it uses"),
     Rule("M001", "ERROR", "manifest present and parses to a mapping"),
     Rule("M002", "ERROR", "spec_version present, MAJOR.MINOR, major supported"),
     Rule("M003", "ERROR", "identity block complete (id, name, version, owner, domain, modality, purpose)"),
@@ -222,6 +226,9 @@ RULES: Tuple[Rule, ...] = (
     Rule("M014", "ERROR", "provenance.dataset carries a well formed sha256"),
     Rule("M015", "ERROR", "provenance.code carries repo and commit"),
     Rule("M016", "WARN", "provenance.environment names the interpreter"),
+    # M017 is reserved for the signature warning designed in docs/spec/PROVENANCE-SIGNING.md.
+    Rule("M018", "ERROR", "the manifest conforms to the contract-v1 manifest schema "
+                          "(required keys, types, enumerations, patterns, bounds)"),
     Rule("C001", "ERROR", "model card parses with a flat scalar front-matter"),
     Rule("C002", "ERROR", "card front-matter identity matches the manifest"),
     Rule("C003", "ERROR", "the eleven required card sections are present, first, in order"),
@@ -402,6 +409,233 @@ def numeric_leaves(obj: Any) -> List[float]:
 
 
 # --------------------------------------------------------------------------- #
+# The contract-v1 manifest schema, applied with the standard library.
+#
+# The schema ships inside this package (``schemas/contract-v1/manifest.schema.json``)
+# and states the manifest's structure: required keys, types, enumerations,
+# patterns and bounds.  The checker applies it itself (rule M018) with the small
+# walker below, which implements the part of JSON Schema 2020-12 the schema uses,
+# so that ``verify`` still needs nothing beyond the standard library.
+#
+# A schema the walker cannot apply in full -- missing, unreadable, malformed, or
+# using a keyword outside that part -- is an ERROR (rule E003), never a skip.  It
+# is the same rule E002 applies to a missing YAML parser: a checker that quietly
+# ignored a constraint would call a manifest conformant that is not.
+# --------------------------------------------------------------------------- #
+#: The keywords the walker applies.
+SCHEMA_ASSERTIONS: Tuple[str, ...] = (
+    "type", "enum", "const", "pattern", "minLength", "minimum", "maximum",
+    "exclusiveMinimum", "exclusiveMaximum", "required", "properties",
+    "additionalProperties", "minProperties", "items", "minItems", "maxItems",
+)
+#: Keywords that describe and constrain nothing.  JSON Schema 2020-12 treats
+#: ``format`` as an annotation unless a validator opts into asserting it.
+SCHEMA_ANNOTATIONS: Tuple[str, ...] = (
+    "$schema", "$id", "$comment", "title", "description", "default", "examples",
+    "format", "deprecated", "readOnly", "writeOnly",
+)
+#: Where the manifest schema lives inside this package.
+MANIFEST_SCHEMA_PATH: Tuple[str, ...] = ("schemas", "contract-v1", "manifest.schema.json")
+
+_JSON_TYPES = ("object", "array", "string", "integer", "number", "boolean", "null")
+
+
+def _is_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _is_json_type(value: Any, name: str) -> bool:
+    if name == "object":
+        return isinstance(value, dict)
+    if name == "array":
+        return isinstance(value, list)
+    if name == "string":
+        return isinstance(value, str)
+    if name == "boolean":
+        return isinstance(value, bool)
+    if name == "null":
+        return value is None
+    if name == "number":
+        return _is_number(value)
+    # "integer": JSON Schema counts a number with no fractional part, 2.0 included
+    return (isinstance(value, int) and not isinstance(value, bool)) or (
+        isinstance(value, float) and value.is_integer())
+
+
+def _json_equal(a: Any, b: Any) -> bool:
+    """Equality as JSON means it: true is not 1, and 1 equals 1.0."""
+    if isinstance(a, bool) or isinstance(b, bool):
+        return isinstance(a, bool) and isinstance(b, bool) and a == b
+    if _is_number(a) and _is_number(b):
+        return a == b
+    if isinstance(a, list) and isinstance(b, list):
+        return len(a) == len(b) and all(_json_equal(x, y) for x, y in zip(a, b))
+    if isinstance(a, dict) and isinstance(b, dict):
+        return a.keys() == b.keys() and all(_json_equal(a[k], b[k]) for k in a)
+    return type(a) is type(b) and a == b
+
+
+def _child(at: str, key: str) -> str:
+    return "%s.%s" % (at, key) if at else key
+
+
+def _is_count(value: Any) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and value >= 0
+
+
+def schema_unsupported(schema: Any, at: str = "#") -> List[str]:
+    """Every place in ``schema`` that :func:`schema_errors` could not apply faithfully.
+
+    Returns JSON-pointer-like locations, each with what is wrong: a keyword the
+    walker does not implement, or a keyword whose value is malformed (an unknown
+    type name, a pattern that does not compile, a bound that is not a number).
+    An empty list means the walker applies every constraint the schema states.
+    """
+    if isinstance(schema, bool):
+        return []
+    if not isinstance(schema, dict):
+        return ["%s (a schema must be an object or a boolean)" % at]
+    out: List[str] = []
+    for key, value in schema.items():
+        here = "%s/%s" % (at, key)
+        if key in SCHEMA_ANNOTATIONS:
+            continue
+        if key not in SCHEMA_ASSERTIONS:
+            out.append("%s (keyword not applied by this checker)" % here)
+        elif key == "type":
+            names = [value] if isinstance(value, str) else value
+            if not isinstance(names, list) or not names or any(n not in _JSON_TYPES for n in names):
+                out.append("%s (unknown type %r)" % (here, value))
+        elif key == "enum":
+            if not isinstance(value, list) or not value:
+                out.append("%s (enum must be a non-empty array)" % here)
+        elif key == "pattern":
+            try:
+                re.compile(value)
+            except (re.error, TypeError):
+                out.append("%s (pattern %r does not compile)" % (here, value))
+        elif key in ("minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum"):
+            if not _is_number(value):
+                out.append("%s (bound %r is not a number)" % (here, value))
+        elif key in ("minLength", "minProperties", "minItems", "maxItems"):
+            if not _is_count(value):
+                out.append("%s (%r is not a non-negative integer)" % (here, value))
+        elif key == "required":
+            if not isinstance(value, list) or not all(isinstance(k, str) for k in value):
+                out.append("%s (required must be an array of key names)" % here)
+        elif key == "properties":
+            if not isinstance(value, dict):
+                out.append("%s (properties must be an object)" % here)
+            else:
+                for name, sub in value.items():
+                    out.extend(schema_unsupported(sub, "%s/%s" % (here, name)))
+        elif key in ("items", "additionalProperties"):
+            out.extend(schema_unsupported(value, here))
+    return out
+
+
+def schema_errors(instance: Any, schema: Any, at: str = "") -> List[Tuple[str, str]]:
+    """``(location, message)`` for every way ``instance`` breaks ``schema``.
+
+    Applies the keywords in :data:`SCHEMA_ASSERTIONS`, each to the JSON type it
+    governs (``pattern`` reads only a string, ``required`` only an object), as
+    JSON Schema 2020-12 does.  A location reads like ``inputs[3].file_kind``; the
+    manifest's root is the empty string.  Run :func:`schema_unsupported` on the
+    schema first: a keyword this function does not know is not applied.
+    """
+    if schema is True:
+        return []
+    if schema is False or not isinstance(schema, dict):
+        return [(at, "no value is allowed here")]
+    errors: List[Tuple[str, str]] = []
+    if "type" in schema:
+        names = [schema["type"]] if isinstance(schema["type"], str) else list(schema["type"])
+        if not any(_is_json_type(instance, n) for n in names):
+            errors.append((at, "%r is not of type %s" % (instance, " or ".join(repr(n) for n in names))))
+    if "enum" in schema and not any(_json_equal(instance, v) for v in schema["enum"]):
+        errors.append((at, "%r is not one of %r" % (instance, schema["enum"])))
+    if "const" in schema and not _json_equal(instance, schema["const"]):
+        errors.append((at, "%r is not %r" % (instance, schema["const"])))
+    if isinstance(instance, str):
+        if "pattern" in schema and re.search(schema["pattern"], instance) is None:
+            errors.append((at, "%r does not match %r" % (instance, schema["pattern"])))
+        if "minLength" in schema and len(instance) < schema["minLength"]:
+            errors.append((at, "%r is shorter than %d character(s)" % (instance, schema["minLength"])))
+    if _is_number(instance):
+        if "minimum" in schema and instance < schema["minimum"]:
+            errors.append((at, "%r is less than the minimum %r" % (instance, schema["minimum"])))
+        if "maximum" in schema and instance > schema["maximum"]:
+            errors.append((at, "%r is greater than the maximum %r" % (instance, schema["maximum"])))
+        if "exclusiveMinimum" in schema and instance <= schema["exclusiveMinimum"]:
+            errors.append((at, "%r must be greater than %r" % (instance, schema["exclusiveMinimum"])))
+        if "exclusiveMaximum" in schema and instance >= schema["exclusiveMaximum"]:
+            errors.append((at, "%r must be less than %r" % (instance, schema["exclusiveMaximum"])))
+    if isinstance(instance, dict):
+        for key in schema.get("required", ()):
+            if key not in instance:
+                errors.append((at, "missing required key %r" % key))
+        if "minProperties" in schema and len(instance) < schema["minProperties"]:
+            errors.append((at, "has %d key(s), fewer than the minimum %d" % (len(instance), schema["minProperties"])))
+        properties = schema.get("properties", {})
+        for key, sub in properties.items():
+            if key in instance:
+                errors.extend(schema_errors(instance[key], sub, _child(at, key)))
+        if "additionalProperties" in schema:
+            for key in instance:
+                if key not in properties:
+                    errors.extend(schema_errors(instance[key], schema["additionalProperties"], _child(at, key)))
+    if isinstance(instance, list):
+        if "minItems" in schema and len(instance) < schema["minItems"]:
+            errors.append((at, "has %d item(s), fewer than the minimum %d" % (len(instance), schema["minItems"])))
+        if "maxItems" in schema and len(instance) > schema["maxItems"]:
+            errors.append((at, "has %d item(s), more than the maximum %d" % (len(instance), schema["maxItems"])))
+        if "items" in schema:
+            for i, item in enumerate(instance):
+                errors.extend(schema_errors(item, schema["items"], "%s[%d]" % (at, i)))
+    return errors
+
+
+def _manifest_schema_text() -> str:
+    package = __package__ or ""
+    if package:
+        from importlib import resources  # noqa: PLC0415 -- standard library; works from a wheel and a zip
+        node = resources.files(package)
+        for part in MANIFEST_SCHEMA_PATH:
+            node = node / part
+        return node.read_text(encoding="utf-8")
+    # run as a loose file rather than as part of the package
+    return Path(__file__).resolve().parent.joinpath(*MANIFEST_SCHEMA_PATH).read_text(encoding="utf-8")
+
+
+def load_manifest_schema() -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+    """``(schema, None)``, or ``(None, why it cannot be applied)``."""
+    try:
+        text = _manifest_schema_text()
+    except (OSError, ImportError, TypeError, ValueError) as exc:
+        return None, "cannot read the contract-v1 manifest schema this checker ships (%s: %s)" % (
+            type(exc).__name__, exc)
+    try:
+        schema = json.loads(text)
+    except ValueError as exc:
+        return None, "the contract-v1 manifest schema is not valid JSON: %s" % exc
+    problems = schema_unsupported(schema)
+    if problems:
+        return None, "the contract-v1 manifest schema cannot be applied in full: %s" % "; ".join(problems)
+    return schema, None
+
+
+def check_manifest_schema(man: Dict[str, Any], where: str, findings: List[Finding]) -> None:
+    """M018: the manifest against the contract-v1 schema; E003 when the schema cannot be applied."""
+    schema, problem = load_manifest_schema()
+    if schema is None:
+        findings.append(Finding("E003", where, "%s -- the manifest's structure is unchecked, which is an error, "
+                                               "never a skip" % problem))
+        return
+    for location, message in schema_errors(man, schema):
+        findings.append(Finding("M018", "%s %s" % (where, location) if location else where, message))
+
+
+# --------------------------------------------------------------------------- #
 # Manifest checks.
 # --------------------------------------------------------------------------- #
 _INPUT_TYPES = {"float", "integer", "categorical", "boolean", "file", "string"}
@@ -411,6 +645,7 @@ _IDENTITY = ("id", "name", "version", "domain", "modality", "purpose")
 
 
 def check_manifest(man: Dict[str, Any], pkg: Path, where: str, findings: List[Finding]) -> None:
+    check_manifest_schema(man, where, findings)
     spec_version = man.get("spec_version")
     if not isinstance(spec_version, str) or not _MAJOR_MINOR.match(spec_version):
         findings.append(Finding("M002", where, "spec_version must be a MAJOR.MINOR string, got %r" % (spec_version,)))

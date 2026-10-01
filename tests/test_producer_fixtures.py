@@ -1,4 +1,4 @@
-"""Pinned producer packages must keep passing the checker.
+"""Pinned producer packages must pass the checker, or fail exactly as recorded.
 
 ``tests/fixtures/producer_packages/`` holds contract packages copied from the
 producers that emit them (its README lists, per package, what the copy changed
@@ -7,10 +7,16 @@ ship, so a change to ``opencontractml.verify`` that would reject real producer
 output fails here -- and in the CI ``package`` job, which checks the same
 directories with the installed wheel -- instead of failing a producer.
 
-Every one of these packages is conformant and every one reports
-``overall: FAIL``. Both halves are asserted: a checker that stopped accepting an
-honest FAIL, and a copy whose blocking check had quietly been promoted to PASS,
-are the two ways this fixture set could stop meaning anything.
+A copy the checker rejects for a reason that is the producer's to fix is not
+edited to pass. Its findings are recorded in ``known-findings.json`` instead, and
+the copy must produce exactly those: a recorded finding that stops firing fails
+here until its entry is deleted, and an unrecorded one fails at once, so the
+record can only shrink. A package with no entry must be conformant.
+
+Every one of these packages reports ``overall: FAIL``, and that is asserted too:
+a checker that stopped accepting an honest FAIL, and a copy whose blocking check
+had quietly been promoted to PASS, are the two ways this fixture set could stop
+meaning anything.
 """
 
 from __future__ import annotations
@@ -30,6 +36,7 @@ EXPECTED = (
     "plate_heat_fno",
 )
 PACKAGES = sorted(p for p in FIXTURES.iterdir() if p.is_dir())
+KNOWN_FINDINGS = json.loads((FIXTURES / "known-findings.json").read_text(encoding="utf-8"))["packages"]
 
 
 def _report(pkg: Path) -> dict:
@@ -42,10 +49,22 @@ def test_the_pinned_set_is_complete():
 
 
 @pytest.mark.parametrize("pkg", PACKAGES, ids=lambda p: p.name)
-def test_each_pinned_producer_package_passes_the_checker(pkg: Path):
+def test_each_pinned_producer_package_passes_or_fails_exactly_as_recorded(pkg: Path):
     pytest.importorskip("yaml", reason="the fixture packages ship manifest.yaml")
-    findings = vs.check_package(pkg)
-    assert findings == [], "%s is no longer conformant: %r" % (pkg.name, findings)
+    found = sorted((f.rule, f.where, f.message) for f in vs.check_package(pkg))
+    recorded = sorted((f["rule"], f["where"], f["message"])
+                      for f in KNOWN_FINDINGS.get(pkg.name, {}).get("findings", []))
+    assert found == recorded, (
+        "%s: the checker's findings differ from known-findings.json\n  only found: %s\n  only recorded: %s"
+        % (pkg.name, sorted(set(found) - set(recorded)), sorted(set(recorded) - set(found))))
+
+
+def test_the_known_findings_record_names_only_pinned_packages_and_says_why():
+    """An entry for a package that is not here, or one without a reason, is a stale record."""
+    assert set(KNOWN_FINDINGS) <= set(EXPECTED)
+    for name, entry in KNOWN_FINDINGS.items():
+        assert str(entry.get("why", "")).strip(), name
+        assert entry.get("findings"), "%s: an entry with no findings belongs deleted" % name
 
 
 @pytest.mark.parametrize("pkg", PACKAGES, ids=lambda p: p.name)

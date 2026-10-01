@@ -124,6 +124,11 @@
       "title": "a YAML parser is available for a .yaml artifact"
     },
     {
+      "id": "E003",
+      "severity": "ERROR",
+      "title": "the contract-v1 manifest schema loads and the checker applies every keyword it uses"
+    },
+    {
       "id": "M001",
       "severity": "ERROR",
       "title": "manifest present and parses to a mapping"
@@ -202,6 +207,11 @@
       "id": "M016",
       "severity": "WARN",
       "title": "provenance.environment names the interpreter"
+    },
+    {
+      "id": "M018",
+      "severity": "ERROR",
+      "title": "the manifest conforms to the contract-v1 manifest schema (required keys, types, enumerations, patterns, bounds)"
     },
     {
       "id": "C001",

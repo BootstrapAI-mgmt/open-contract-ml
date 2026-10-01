@@ -9,6 +9,18 @@ implements are separate numbers: `opencontractml.__version__` is the first,
 
 ### Changed
 
+- `open-contract-ml check` holds every manifest to the contract-v1 manifest
+  schema this package ships, `schemas/contract-v1/manifest.schema.json`, which
+  it did not read before. A manifest the schema rejects is no longer
+  conformant (new rule `M018`): a missing required key such as `lineage`, an
+  `id` that breaks the id pattern, an `invocation.timeout_s` of zero, or an
+  `uncertainty.form`, input `file_kind` or `modality` outside its enumeration.
+  The checker applies the schema with its own standard-library walker, so it
+  still needs nothing beyond the standard library; a schema it cannot apply in
+  full is an error (new rule `E003`), never a skip. Three of the producer
+  fixture copies fail `M018` and are kept as they are, with their findings
+  recorded in `tests/fixtures/producer_packages/known-findings.json`, which
+  the suite and the CI `package` job hold each copy to exactly.
 - The falsifier benchmark (`examples/falsifier-benchmark/`) names its d=5
   verdict values for the quantities they hold and prints the `[V12]` verdict
   classes as explains, other way and neither; no number it computes changed.

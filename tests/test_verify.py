@@ -282,6 +282,57 @@ def _missing_card_file(root: Path):
     (root / "model_card.md").unlink()
 
 
+# Mutations of the committed reference package. Each replaces the synthetic
+# package in the test's directory with a copy of examples/reference-package and
+# changes one thing in it, so the defect sits in a package that is otherwise
+# exactly what this repository ships. Its manifest is YAML, rewritten through
+# PyYAML, which is a dependency of this package.
+REFERENCE_PACKAGE = Path(__file__).resolve().parents[1] / "examples" / "reference-package"
+
+
+def _reference_package(change):
+    def apply(root: Path):
+        import shutil
+        shutil.rmtree(root)
+        shutil.copytree(REFERENCE_PACKAGE, root)
+        change(root)
+    return apply
+
+
+def _rewrite_yaml_manifest(root: Path, fn) -> None:
+    import yaml
+    path = root / "manifest.yaml"
+    man = yaml.safe_load(path.read_text(encoding="utf-8"))
+    fn(man)
+    path.write_text(yaml.safe_dump(man, sort_keys=False), encoding="utf-8", newline=LF)
+
+
+def _rewrite_json_report(root: Path, fn) -> None:
+    path = root / "validation_report.json"
+    rep = json.loads(path.read_text(encoding="utf-8"))
+    fn(rep)
+    path.write_text(json.dumps(rep, indent=2) + LF, encoding="utf-8", newline=LF)
+
+
+def _reference_manifest(fn):
+    return _reference_package(lambda root: _rewrite_yaml_manifest(root, fn))
+
+
+def _reference_report(fn):
+    return _reference_package(lambda root: _rewrite_json_report(root, fn))
+
+
+def _rename_reference_id(new_id: str):
+    """Rename the package everywhere its id appears, so only the id's form is wrong."""
+    def change(root: Path):
+        card = root / "model_card.md"
+        card.write_text(card.read_text(encoding="utf-8").replace(
+            "model_id: contract_reference_tmf_v1", "model_id: " + new_id), encoding="utf-8", newline=LF)
+        _rewrite_json_report(root, lambda r: r.__setitem__("model_id", new_id))
+        _rewrite_yaml_manifest(root, lambda m: m.__setitem__("id", new_id))
+    return _reference_package(change)
+
+
 MUTATIONS = [
     ("M001", _no_manifest),
     ("M002", _mutate_manifest(lambda m: m.__setitem__("spec_version", "9.0"))),
@@ -338,6 +389,19 @@ MUTATIONS = [
     # FAIL is a measured verdict, so its instrument is graded exactly like a PASS's.
     ("V010", _mutate_report(lambda r: r["checks"]["A3_uq_calibration"].update(status="FAIL", metrics={}))),
     ("V011", _mutate_report(lambda r: r["checks"]["A5_reproducibility"].update(status="FAIL", thresholds={}))),
+    # M018 holds the manifest to the contract-v1 schema. One mutation of the
+    # synthetic package, then six manifests the checker accepted before it applied
+    # the schema, each planted in a copy of the reference package: a missing
+    # required block, an id that breaks the id pattern, a timeout of zero, and an
+    # uncertainty form, a file kind and a modality outside their enumerations.
+    ("M018", _mutate_manifest(lambda m: m.__setitem__("modality", "not_a_modality"))),
+    ("M018", _reference_manifest(lambda m: m.pop("lineage"))),
+    ("M018", _rename_reference_id("Bad-ID")),
+    ("M018", _reference_manifest(lambda m: m["invocation"].__setitem__("timeout_s", 0))),
+    ("M018", _reference_manifest(lambda m: m["uncertainty"].__setitem__("form", "vibes"))),
+    ("M018", _reference_manifest(lambda m: m["inputs"].append(
+        {"name": "geom", "type": "file", "file_kind": "exe", "required": False}))),
+    ("M018", _reference_manifest(lambda m: m.__setitem__("modality", "anything_goes"))),
 ]
 
 
@@ -354,8 +418,8 @@ def test_each_rule_can_fail(tmp_path: Path, rule: str, mutate):
 def test_every_error_rule_has_a_negative_test():
     """A rule with no demonstrated failure is an unproven rule."""
     covered = {rule for rule, _ in MUTATIONS}
-    # E001 and E002 are environment rules with their own dedicated tests below.
-    environment_rules = {"E001", "E002"}
+    # E001, E002 and E003 are environment rules with their own dedicated tests below.
+    environment_rules = {"E001", "E002", "E003"}
     declared = {r.id for r in vs.RULES}
     uncovered = declared - covered - environment_rules
     assert uncovered == set(), "rules with no negative test: %s" % sorted(uncovered)
@@ -374,6 +438,24 @@ def test_e002_missing_yaml_parser_is_an_error_not_a_skip(tmp_path: Path, monkeyp
     findings = vs.check_package(pkg)
     assert "E002" in rules_fired(findings)
     assert not vs.summarize(findings)["conformant"]
+
+
+def test_e003_a_missing_manifest_schema_is_an_error_not_a_skip(good: Path, monkeypatch):
+    """A checker that cannot read the schema it applies must say so, never pass the manifest."""
+    monkeypatch.setattr(vs, "MANIFEST_SCHEMA_PATH", ("schemas", "contract-v1", "no-such-schema.json"))
+    findings = vs.check_package(good)
+    assert rules_fired(findings) == {"E003"}
+    assert not vs.summarize(findings)["conformant"]
+
+
+def test_e003_a_schema_keyword_the_checker_cannot_apply_is_an_error(good: Path, monkeypatch):
+    schema, problem = vs.load_manifest_schema()
+    assert problem is None
+    schema["properties"]["modality"]["oneOf"] = [{"const": "scalar_in_scalar_out"}]
+    monkeypatch.setattr(vs, "_manifest_schema_text", lambda: json.dumps(schema))
+    findings = vs.check_package(good)
+    assert rules_fired(findings) == {"E003"}
+    assert any("oneOf" in f.message for f in findings if f.rule == "E003")
 
 
 # --------------------------------------------------------------------------- #
@@ -444,7 +526,6 @@ def test_not_applicable_with_a_reason_does_not_block(tmp_path: Path):
 # NOT_RUN on A3 and A5: an honest status, graded by the rollup (V008) rather
 # than by the legibility rules V010 and V011, which read only a check that ran.
 # --------------------------------------------------------------------------- #
-REFERENCE_PACKAGE = Path(__file__).resolve().parents[1] / "examples" / "reference-package"
 NOT_RUN_REASON = "no model has been trained, so nothing was measured"
 
 

@@ -1,0 +1,65 @@
+{
+  "about": "Findings `open-contract-ml check` reports on the producer fixture packages in this directory. Each copy must produce exactly the findings recorded for it here, and a package with no entry must be conformant. The record is a ratchet, not an amnesty: tests/test_producer_fixtures.py and the CI package job fail when a recorded finding stops firing, until its entry is deleted, and when an unrecorded one appears. README.md says why a copy is never edited to make it pass.",
+  "packages": {
+    "brake_disc_link1_thermal_fno": {
+      "why": "The manifest, as its producer emits it, breaks the contract-v1 manifest schema in three places: uncertainty.form 'ensemble_spread' is not one of the schema's forms ('ensemble' is), and the lineage block of this untrained package has no metrics and a null training_date where the schema requires an object and a string. The package-v1 schema a consumer validates against has the same three constraints. The fix is the producer's; the copy stays as it is.",
+      "findings": [
+        {
+          "rule": "M018",
+          "where": "manifest.yaml uncertainty.form",
+          "message": "'ensemble_spread' is not one of ['class_probabilities', 'ensemble', 'monte_carlo', 'predictive_interval', 'quantiles']"
+        },
+        {
+          "rule": "M018",
+          "where": "manifest.yaml lineage",
+          "message": "missing required key 'metrics'"
+        },
+        {
+          "rule": "M018",
+          "where": "manifest.yaml lineage.training_date",
+          "message": "None is not of type 'string'"
+        }
+      ]
+    },
+    "brake_disc_link2_thermo_mech_rom": {
+      "why": "The same three schema findings as link 1, for the same reasons: uncertainty.form 'ensemble_spread' is outside the schema's enumeration, and the untrained package's lineage has no metrics and a null training_date. The fix is the producer's; the copy stays as it is.",
+      "findings": [
+        {
+          "rule": "M018",
+          "where": "manifest.yaml uncertainty.form",
+          "message": "'ensemble_spread' is not one of ['class_probabilities', 'ensemble', 'monte_carlo', 'predictive_interval', 'quantiles']"
+        },
+        {
+          "rule": "M018",
+          "where": "manifest.yaml lineage",
+          "message": "missing required key 'metrics'"
+        },
+        {
+          "rule": "M018",
+          "where": "manifest.yaml lineage.training_date",
+          "message": "None is not of type 'string'"
+        }
+      ]
+    },
+    "brake_disc_link3_fatigue_gbm_gp": {
+      "why": "The input eps_p_eq_hotspots declares file_kind 'json', which is not one of the schema's file kinds (csv, npz, step, stl, vtk), and the untrained package's lineage has no metrics and a null training_date. The lineage findings are the producer's to fix. A JSON input file has no file kind in either schema, so that finding needs the producer to use a listed kind or an amendment that adds one; until then the copy stays as it is.",
+      "findings": [
+        {
+          "rule": "M018",
+          "where": "manifest.yaml inputs[0].file_kind",
+          "message": "'json' is not one of ['csv', 'npz', 'step', 'stl', 'vtk']"
+        },
+        {
+          "rule": "M018",
+          "where": "manifest.yaml lineage",
+          "message": "missing required key 'metrics'"
+        },
+        {
+          "rule": "M018",
+          "where": "manifest.yaml lineage.training_date",
+          "message": "None is not of type 'string'"
+        }
+      ]
+    }
+  }
+}

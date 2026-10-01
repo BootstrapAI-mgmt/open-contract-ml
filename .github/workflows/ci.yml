@@ -232,11 +232,55 @@ jobs:
       # producers emit (its README says what each copy changed). Checking them
       # with the installed wheel, from outside the checkout, makes a checker
       # change that would reject real producer output a red build here, instead
-      # of a failure discovered by the producer. `check` exits 1 if any fails.
-      - name: Every pinned producer fixture package passes, checked from outside the checkout
+      # of a failure discovered by the producer.
+      #
+      # A copy the checker rejects for a reason that is the producer's to fix is
+      # not edited to pass: its findings are recorded in known-findings.json
+      # beside the copies. Every copy must produce exactly the findings recorded
+      # for it -- none, for a package with no entry -- so a recorded finding that
+      # stops firing is as red as a new one, and the record can only shrink.
+      - name: Every pinned producer fixture package passes, or fails exactly as recorded, checked from outside the checkout
         working-directory: ${{ runner.temp }}
         run: |
-          "$RUNNER_TEMP/clean/bin/open-contract-ml" check "$GITHUB_WORKSPACE"/tests/fixtures/producer_packages/*/
+          FIXTURES="$GITHUB_WORKSPACE/tests/fixtures/producer_packages"
+          mkdir -p "$RUNNER_TEMP/records"
+          for pkg in "$FIXTURES"/*/; do
+            name=$(basename "$pkg")
+            # exit 1 is a finding, which the comparison below judges; a crash
+            # writes no record, which it reports as one
+            "$RUNNER_TEMP/clean/bin/open-contract-ml" check "$pkg" --json "$RUNNER_TEMP/records/$name.json" || true
+          done
+          "$RUNNER_TEMP/clean/bin/python" - "$FIXTURES" "$RUNNER_TEMP/records" <<'EOF'
+          import json
+          import sys
+          from pathlib import Path
+
+          fixtures, records = Path(sys.argv[1]), Path(sys.argv[2])
+          known = json.loads((fixtures / "known-findings.json").read_text(encoding="utf-8"))["packages"]
+          failed = 0
+          for pkg in sorted(p for p in fixtures.iterdir() if p.is_dir()):
+              record = records / (pkg.name + ".json")
+              if not record.is_file():
+                  print("::error::%s: the check wrote no record" % pkg.name)
+                  failed += 1
+                  continue
+              found = sorted((f["rule"], f["where"], f["message"])
+                             for f in json.loads(record.read_text(encoding="utf-8"))["findings"])
+              recorded = sorted((f["rule"], f["where"], f["message"])
+                                for f in known.get(pkg.name, {}).get("findings", []))
+              if found != recorded:
+                  print("::error::%s: findings differ from known-findings.json" % pkg.name)
+                  print("  only found:    %s" % sorted(set(found) - set(recorded)))
+                  print("  only recorded: %s" % sorted(set(recorded) - set(found)))
+                  failed += 1
+              else:
+                  print("%s: %s" % (pkg.name, "%d recorded finding(s), as recorded" % len(found) if found
+                                    else "conformant"))
+          for name in sorted(set(known) - {p.name for p in fixtures.iterdir() if p.is_dir()}):
+              print("::error::known-findings.json records %s, which is not a fixture here" % name)
+              failed += 1
+          sys.exit(1 if failed else 0)
+          EOF
 
       # The README documents this exact demonstration. If it ever stopped being
       # true, the first thing a reader tries would fail in front of them -- so it
