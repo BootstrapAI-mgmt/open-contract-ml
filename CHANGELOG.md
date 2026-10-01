@@ -21,6 +21,12 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   fixture copies fail `M018` and are kept as they are, with their findings
   recorded in `tests/fixtures/producer_packages/known-findings.json`, which
   the suite and the CI `package` job hold each copy to exactly.
+- Every file a manifest names must be inside the package directory: an
+  artifact path, the `model_card` and the `validation.report` that is
+  absolute, or that resolves outside the package through `..` or a symbolic
+  link, is a finding (`M012`, `M009`, `M010`), and the checker neither hashes
+  nor reads it. An artifact's `bytes` must be a non-negative integer (`M012`);
+  before, any other value silently skipped the byte-count comparison.
 - The falsifier benchmark (`examples/falsifier-benchmark/`) names its d=5
   verdict values for the quantities they hold and prints the `[V12]` verdict
   classes as explains, other way and neither; no number it computes changed.

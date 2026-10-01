@@ -49,7 +49,7 @@ import hashlib
 import json
 import re
 import sys
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 CONTRACT_VERSION = "1.0"
@@ -218,10 +218,11 @@ RULES: Tuple[Rule, ...] = (
     Rule("M006", "ERROR", "no duplicate input or output names"),
     Rule("M007", "ERROR", "every output is covered by an uncertainty.per_output block"),
     Rule("M008", "ERROR", "invocation block complete and protocol is supported"),
-    Rule("M009", "ERROR", "model_card path declared and the file exists"),
-    Rule("M010", "ERROR", "validation.report path declared and the file exists"),
+    Rule("M009", "ERROR", "model_card path declared, inside the package, and the file exists"),
+    Rule("M010", "ERROR", "validation.report path declared, inside the package, and the file exists"),
     Rule("M011", "ERROR", "provenance block present"),
-    Rule("M012", "ERROR", "provenance.artifacts entries well formed (path, role, sha256, bytes)"),
+    Rule("M012", "ERROR", "provenance.artifacts entries well formed (a path inside the package, a role, "
+                          "a sha256, an integer byte count)"),
     Rule("M013", "ERROR", "every declared artifact exists and its sha256 matches the file on disk"),
     Rule("M014", "ERROR", "provenance.dataset carries a well formed sha256"),
     Rule("M015", "ERROR", "provenance.code carries repo and commit"),
@@ -288,6 +289,25 @@ def write_lf(path: Path, text: str) -> None:
     problem itself.
     """
     path.write_text(text, encoding="utf-8", newline="\n")
+
+
+def outside_package(pkg: Path, rel: str) -> Optional[str]:
+    """Why ``rel`` does not name a path inside the package directory, or None when it does.
+
+    A package is a directory (spec section 3): every file the manifest names lives
+    in it.  A path that is absolute, or that resolves -- through ``..`` or a
+    symbolic link -- to somewhere outside the directory, names a file the package
+    does not carry, so the checker neither hashes nor reads it.
+    """
+    if not rel.strip():
+        return "is empty"
+    if Path(rel).is_absolute() or PureWindowsPath(rel).is_absolute() or PureWindowsPath(rel).drive:
+        return "is absolute"
+    root = pkg.resolve()
+    target = (pkg / rel).resolve()
+    if target != root and root not in target.parents:
+        return "resolves outside the package directory"
+    return None
 
 
 def load_mapping(path: Path, findings: List[Finding]) -> Optional[Dict[str, Any]]:
@@ -737,6 +757,9 @@ def check_manifest(man: Dict[str, Any], pkg: Path, where: str, findings: List[Fi
     card_ref = man.get("model_card")
     if not isinstance(card_ref, str) or not card_ref.strip():
         findings.append(Finding("M009", where, "model_card path is missing"))
+    elif outside_package(pkg, card_ref):
+        findings.append(Finding("M009", where, "model_card path %r %s -- the card must be a file inside the package"
+                                % (card_ref, outside_package(pkg, card_ref))))
     elif not (pkg / card_ref).exists():
         findings.append(Finding("M009", where, "model_card path %r does not exist" % card_ref))
 
@@ -744,6 +767,9 @@ def check_manifest(man: Dict[str, Any], pkg: Path, where: str, findings: List[Fi
     report_ref = val.get("report") if isinstance(val, dict) else None
     if not isinstance(report_ref, str) or not report_ref.strip():
         findings.append(Finding("M010", where, "validation.report path is missing"))
+    elif outside_package(pkg, report_ref):
+        findings.append(Finding("M010", where, "validation.report path %r %s -- the report must be a file inside "
+                                               "the package" % (report_ref, outside_package(pkg, report_ref))))
     elif not (pkg / report_ref).exists():
         findings.append(Finding("M010", where, "validation.report path %r does not exist" % report_ref))
 
@@ -778,12 +804,21 @@ def check_provenance(prov: Any, man: Dict[str, Any], pkg: Path, where: str, find
             findings.append(Finding("M012", at, "role %r not in %s" % (art.get("role"), sorted(_ARTIFACT_ROLES))))
         elif art.get("role") == "entrypoint":
             entrypoints.append(str(art.get("path")))
+        size = art.get("bytes")
+        if "bytes" in art and (not isinstance(size, int) or isinstance(size, bool) or size < 0):
+            findings.append(Finding("M012", at, "bytes %r is not a non-negative integer -- a byte count the "
+                                                "checker cannot compare is a pin that is never checked" % (size,)))
         digest = art.get("sha256")
         if not isinstance(digest, str) or not _HEX64.match(digest):
             findings.append(Finding("M012", at, "sha256 %r is not 64 lowercase hex characters" % (digest,)))
             continue
         rel = art.get("path")
         if not isinstance(rel, str):
+            continue
+        outside = outside_package(pkg, rel)
+        if outside:
+            findings.append(Finding("M012", at, "path %r %s -- an artifact must be a file inside the package, and "
+                                                "the checker hashes nothing outside it" % (rel, outside)))
             continue
         target = pkg / rel
         if not target.is_file():
@@ -793,7 +828,6 @@ def check_provenance(prov: Any, man: Dict[str, Any], pkg: Path, where: str, find
         if actual != digest:
             findings.append(Finding("M013", at, "sha256 mismatch for %r: declared %s, on disk %s"
                                     % (rel, digest, actual)))
-        size = art.get("bytes")
         real_size = target.stat().st_size
         if isinstance(size, int) and not isinstance(size, bool) and size != real_size:
             findings.append(Finding("M013", at, "bytes mismatch for %r: declared %d, on disk %d"
@@ -1080,7 +1114,7 @@ def check_package(pkg: Path) -> List[Finding]:
     check_manifest(man, pkg, manifest_path.name, findings)
 
     card_ref = man.get("model_card")
-    if isinstance(card_ref, str) and (pkg / card_ref).is_file():
+    if isinstance(card_ref, str) and not outside_package(pkg, card_ref) and (pkg / card_ref).is_file():
         try:
             text = (pkg / card_ref).read_text(encoding="utf-8")
         except OSError as exc:
@@ -1090,7 +1124,7 @@ def check_package(pkg: Path) -> List[Finding]:
 
     val = man.get("validation")
     report_ref = val.get("report") if isinstance(val, dict) else None
-    if isinstance(report_ref, str) and (pkg / report_ref).is_file():
+    if isinstance(report_ref, str) and not outside_package(pkg, report_ref) and (pkg / report_ref).is_file():
         rep = load_mapping(pkg / report_ref, findings)
         if rep is not None:
             check_report(rep, man, report_ref, findings)

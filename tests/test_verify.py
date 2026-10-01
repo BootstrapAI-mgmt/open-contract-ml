@@ -322,6 +322,39 @@ def _reference_report(fn):
     return _reference_package(lambda root: _rewrite_json_report(root, fn))
 
 
+def _move_entrypoint_outside(root: Path):
+    """The entrypoint moved next to the package rather than into it, its hash still right."""
+    outside = root.parent / "outside"
+    outside.mkdir()
+    (root / "predict.py").rename(outside / "predict.py")
+
+    def point_outside(m):
+        m["provenance"]["artifacts"][0]["path"] = "../outside/predict.py"
+        m["invocation"]["executable"] = "../outside/predict.py"
+    _rewrite_yaml_manifest(root, point_outside)
+
+
+def _weights_beside_the_package(root: Path):
+    (root.parent / "model_weights.json").write_text(WEIGHTS_SRC, encoding="utf-8", newline=LF)
+    _mutate_manifest(lambda m: m["provenance"]["artifacts"][1].__setitem__("path", "../model_weights.json"))(root)
+
+
+def _weights_by_absolute_path(root: Path):
+    absolute = str((root / "model_weights.json").resolve())
+    _mutate_manifest(lambda m: m["provenance"]["artifacts"][1].__setitem__("path", absolute))(root)
+
+
+def _card_beside_the_package(root: Path):
+    (root.parent / "model_card.md").write_text(base_card(), encoding="utf-8", newline=LF)
+    _mutate_manifest(lambda m: m.__setitem__("model_card", "../model_card.md"))(root)
+
+
+def _report_beside_the_package(root: Path):
+    (root.parent / "validation_report.json").write_text(json.dumps(base_report(), indent=2), encoding="utf-8",
+                                                        newline=LF)
+    _mutate_manifest(lambda m: m["validation"].__setitem__("report", "../validation_report.json"))(root)
+
+
 def _rename_reference_id(new_id: str):
     """Rename the package everywhere its id appears, so only the id's form is wrong."""
     def change(root: Path):
@@ -402,6 +435,17 @@ MUTATIONS = [
     ("M018", _reference_manifest(lambda m: m["inputs"].append(
         {"name": "geom", "type": "file", "file_kind": "exe", "required": False}))),
     ("M018", _reference_manifest(lambda m: m.__setitem__("modality", "anything_goes"))),
+    # Every file the manifest names is inside the package, and a byte count is a
+    # non-negative integer. The first two are defects the checker accepted before:
+    # the entrypoint moved to ../outside/ with its hash still right, and a byte
+    # count of 'not-a-number', which skipped the size comparison altogether.
+    ("M012", _reference_package(_move_entrypoint_outside)),
+    ("M012", _reference_manifest(lambda m: m["provenance"]["artifacts"][0].__setitem__("bytes", "not-a-number"))),
+    ("M012", _weights_beside_the_package),
+    ("M012", _weights_by_absolute_path),
+    ("M012", _mutate_manifest(lambda m: m["provenance"]["artifacts"][1].__setitem__("bytes", -1))),
+    ("M009", _card_beside_the_package),
+    ("M010", _report_beside_the_package),
 ]
 
 
@@ -616,6 +660,35 @@ def test_unhashed_entrypoint_is_rejected(tmp_path: Path):
     findings = vs.check_package(pkg)
     assert "M013" in rules_fired(findings)
     assert any("unverifiable" in f.message for f in findings)
+
+
+def test_a_symbolic_link_out_of_the_package_is_outside_it(tmp_path: Path):
+    """A link inside the directory that resolves outside it names a file the package does not carry."""
+    pkg = write_package(tmp_path / "pkg")
+    elsewhere = tmp_path / "elsewhere.json"
+    elsewhere.write_text(WEIGHTS_SRC, encoding="utf-8", newline=LF)
+    (pkg / "model_weights.json").unlink()
+    try:
+        (pkg / "model_weights.json").symlink_to(elsewhere)
+    except (OSError, NotImplementedError) as exc:
+        pytest.skip("this host cannot create a symbolic link here: %s" % exc)
+    findings = vs.check_package(pkg)
+    assert any(f.rule == "M012" and "outside the package" in f.message for f in findings), findings
+
+
+@pytest.mark.parametrize("rel,reason", [
+    ("model.bin", None),
+    ("./sub/model.bin", None),
+    ("sub/../model.bin", None),
+    ("../model.bin", "resolves outside the package directory"),
+    ("sub/../../model.bin", "resolves outside the package directory"),
+    ("/etc/hosts", "is absolute"),
+    ("C:/models/model.bin", "is absolute"),
+    ("C:model.bin", "is absolute"),
+    ("   ", "is empty"),
+])
+def test_outside_package_names_what_is_wrong(tmp_path: Path, rel: str, reason):
+    assert vs.outside_package(tmp_path, rel) == reason
 
 
 def test_numeric_leaves_ignores_booleans():

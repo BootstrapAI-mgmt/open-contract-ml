@@ -171,12 +171,12 @@
     {
       "id": "M009",
       "severity": "ERROR",
-      "title": "model_card path declared and the file exists"
+      "title": "model_card path declared, inside the package, and the file exists"
     },
     {
       "id": "M010",
       "severity": "ERROR",
-      "title": "validation.report path declared and the file exists"
+      "title": "validation.report path declared, inside the package, and the file exists"
     },
     {
       "id": "M011",
@@ -186,7 +186,7 @@
     {
       "id": "M012",
       "severity": "ERROR",
-      "title": "provenance.artifacts entries well formed (path, role, sha256, bytes)"
+      "title": "provenance.artifacts entries well formed (a path inside the package, a role, a sha256, an integer byte count)"
     },
     {
       "id": "M013",
