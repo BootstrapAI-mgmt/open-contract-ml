@@ -27,6 +27,10 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   link, is a finding (`M012`, `M009`, `M010`), and the checker neither hashes
   nor reads it. An artifact's `bytes` must be a non-negative integer (`M012`);
   before, any other value silently skipped the byte-count comparison.
+- A `float` input or output must state its `units` (`M004`, `M005`); a
+  dimensionless quantity says so, for example `units: dimensionless`. An
+  input's `range` must run from a smaller to a larger bound (`M004`): a
+  reversed or zero-width range was accepted before.
 - The falsifier benchmark (`examples/falsifier-benchmark/`) names its d=5
   verdict values for the quantities they hold and prints the `[V12]` verdict
   classes as explains, other way and neither; no number it computes changed.

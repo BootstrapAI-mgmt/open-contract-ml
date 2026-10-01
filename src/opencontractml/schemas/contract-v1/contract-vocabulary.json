@@ -146,12 +146,12 @@
     {
       "id": "M004",
       "severity": "ERROR",
-      "title": "inputs declared and well formed"
+      "title": "inputs declared and well formed (float inputs state units; a range is [min, max], min < max)"
     },
     {
       "id": "M005",
       "severity": "ERROR",
-      "title": "outputs declared and well formed"
+      "title": "outputs declared and well formed (float outputs state units)"
     },
     {
       "id": "M006",

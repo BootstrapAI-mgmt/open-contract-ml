@@ -213,8 +213,9 @@ RULES: Tuple[Rule, ...] = (
     Rule("M001", "ERROR", "manifest present and parses to a mapping"),
     Rule("M002", "ERROR", "spec_version present, MAJOR.MINOR, major supported"),
     Rule("M003", "ERROR", "identity block complete (id, name, version, owner, domain, modality, purpose)"),
-    Rule("M004", "ERROR", "inputs declared and well formed"),
-    Rule("M005", "ERROR", "outputs declared and well formed"),
+    Rule("M004", "ERROR", "inputs declared and well formed (float inputs state units; a range is [min, max], "
+                          "min < max)"),
+    Rule("M005", "ERROR", "outputs declared and well formed (float outputs state units)"),
     Rule("M006", "ERROR", "no duplicate input or output names"),
     Rule("M007", "ERROR", "every output is covered by an uncertainty.per_output block"),
     Rule("M008", "ERROR", "invocation block complete and protocol is supported"),
@@ -702,6 +703,14 @@ def check_manifest(man: Dict[str, Any], pkg: Path, where: str, findings: List[Fi
             findings.append(Finding("M004", at, "categorical input declares no choices"))
         if field.get("type") == "file" and not field.get("file_kind"):
             findings.append(Finding("M004", at, "file input declares no file_kind"))
+        if field.get("type") == "float" and not str(field.get("units") or "").strip():
+            findings.append(Finding("M004", at, "float input %r declares no units -- a number without units is not "
+                                                "an input a consumer can supply (a dimensionless one says so)"
+                                    % (field.get("name"),)))
+        bounds = field.get("range")
+        if (isinstance(bounds, list) and len(bounds) == 2 and all(_is_number(b) for b in bounds)
+                and not bounds[0] < bounds[1]):
+            findings.append(Finding("M004", at, "range %r is not [min, max] with min < max" % (bounds,)))
 
     outputs = man.get("outputs")
     if not isinstance(outputs, list) or not outputs:
@@ -720,6 +729,10 @@ def check_manifest(man: Dict[str, Any], pkg: Path, where: str, findings: List[Fi
             findings.append(Finding("M005", at, "output declares no viewer"))
         if field.get("type") == "categorical" and not field.get("choices"):
             findings.append(Finding("M005", at, "categorical output declares no choices"))
+        if field.get("type") == "float" and not str(field.get("units") or "").strip():
+            findings.append(Finding("M005", at, "float output %r declares no units -- a number without units is not "
+                                                "a result anyone can read (a dimensionless one says so)"
+                                    % (field.get("name"),)))
 
     in_names = [f.get("name") for f in inputs if isinstance(f, dict)]
     out_names = [f.get("name") for f in outputs if isinstance(f, dict)]

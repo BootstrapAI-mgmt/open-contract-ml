@@ -355,6 +355,12 @@ def _report_beside_the_package(root: Path):
     _mutate_manifest(lambda m: m["validation"].__setitem__("report", "../validation_report.json"))(root)
 
 
+def _strip_units(m) -> None:
+    for field in m["inputs"] + m["outputs"]:
+        field.pop("units", None)
+        field.pop("canonical_units", None)
+
+
 def _rename_reference_id(new_id: str):
     """Rename the package everywhere its id appears, so only the id's form is wrong."""
     def change(root: Path):
@@ -446,6 +452,16 @@ MUTATIONS = [
     ("M012", _mutate_manifest(lambda m: m["provenance"]["artifacts"][1].__setitem__("bytes", -1))),
     ("M009", _card_beside_the_package),
     ("M010", _report_beside_the_package),
+    # A float input or output states its units, and a declared range runs from a
+    # smaller to a larger bound. The first two are defects the checker accepted
+    # before, planted in the reference package: an inverted input range, and every
+    # input and output stripped of its units.
+    ("M004", _reference_manifest(lambda m: m["inputs"][0].__setitem__("range", [1123.15, 473.15]))),
+    ("M004", _reference_manifest(_strip_units)),
+    ("M005", _reference_manifest(_strip_units)),
+    ("M004", _mutate_manifest(lambda m: m["inputs"][0].pop("units"))),
+    ("M004", _mutate_manifest(lambda m: m["inputs"][0].__setitem__("range", [500.0, 500.0]))),
+    ("M005", _mutate_manifest(lambda m: m["outputs"][0].__setitem__("units", " "))),
 ]
 
 
