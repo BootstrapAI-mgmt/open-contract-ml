@@ -424,7 +424,7 @@ extracted:
 - path: src/opencontractml/verify.py
   transformed: true
   why: the conformance checker and the machine-readable contract vocabulary
-  sha256: 54df3cc5ff1df5e6b2ee475ea55f8d44977e607bb873d5f749bee5f084518702
+  sha256: 58ce20c0b54aed52baf2c0051cbfe7189912dc315e09cf3b0d7540a7a10bf604
 - path: tests/fixtures/model_packages/conformant/manifest.yaml
   transformed: true
   why: 'a conformant package-v1 fixture: its manifest'
@@ -460,7 +460,7 @@ extracted:
 - path: tests/test_verify.py
   transformed: true
   why: tests of the conformance checker, one planted defect per ERROR rule
-  sha256: dc7c3214078e4bf30cdf95f386cf9b4dfd6af6ab69dcdbab0f8402ecb592ea0a
+  sha256: b1c8255e6ca58b3432ab86067a0404ef7c693d96f9706c184de6d6f6a72291f2
 modified_copies:
 - path: tests/fixtures/producer_packages/brake_disc_link1_thermal_fno/manifest.yaml
   copy_of: brake_disc_link1_thermal_fno

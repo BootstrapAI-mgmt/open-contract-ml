@@ -845,6 +845,8 @@ def test_a_symbolic_link_out_of_the_package_is_outside_it(tmp_path: Path):
     ("../model.bin", "resolves outside the package directory"),
     ("sub/../../model.bin", "resolves outside the package directory"),
     ("/etc/hosts", "is absolute"),
+    ("\\model.bin", "is absolute"),
+    ("\\\\server\\share\\model.bin", "is absolute"),
     ("C:/models/model.bin", "is absolute"),
     ("C:model.bin", "is absolute"),
     ("   ", "is empty"),

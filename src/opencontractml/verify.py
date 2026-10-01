@@ -357,7 +357,9 @@ def outside_package(pkg: Path, rel: str) -> Optional[str]:
     """
     if not rel.strip():
         return "is empty"
-    if Path(rel).is_absolute() or PureWindowsPath(rel).is_absolute() or PureWindowsPath(rel).drive:
+    # absolute on either platform: rooted at / or \, or carrying a drive (C:/x, C:x, \\server\share)
+    if (rel.startswith(("/", "\\")) or Path(rel).is_absolute() or PureWindowsPath(rel).is_absolute()
+            or PureWindowsPath(rel).drive):
         return "is absolute"
     root = pkg.resolve()
     target = (pkg / rel).resolve()
