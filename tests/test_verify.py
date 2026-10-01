@@ -489,6 +489,41 @@ MALFORMED_SIGNATURES = [
 ]
 
 
+#: An entrypoint in the shape a grid field producer documents: a field and its band by reference.
+GRID_FIELD_ENTRYPOINT = Path(__file__).resolve().parent / "fixtures" / "stdio_frame" / "grid_field_predict.py"
+
+
+def grid_field_manifest(entrypoint_src: str) -> dict:
+    """A 1.1 manifest around the grid-field fixture entrypoint, its source pinned."""
+    man = base_manifest()
+    man["modality"] = "field_in_field_out"
+    man["inputs"] = [
+        {"name": "source_P_W", "type": "float", "units": "W", "range": [1.0, 25.0], "required": True},
+        {"name": "h_W_m2K", "type": "float", "units": "W/(m^2 K)", "range": [10.0, 300.0], "required": True},
+    ]
+    man["outputs"] = [{"name": "dT", "type": "field", "units": "K", "viewer": "field_contour",
+                       "field": {"kind": "scalar", "units": "K", "support": "node",
+                                 "media_type": "application/vnd.vtk.vtp+xml", "shape": [4, 4],
+                                 "coordinate_ref": "nodes of a regular 4 x 4 grid, row-major, axis order (y, x)"}}]
+    man["uncertainty"] = {"form": "predictive_interval",
+                          "per_output": {"dT": {"lower_field": "dT_lower", "upper_field": "dT_upper", "level": 0.9}}}
+    man["invocation"]["batch_supported"] = True
+    man["provenance"]["artifacts"][0].update(sha256=_sha(entrypoint_src), bytes=len(entrypoint_src.encode("utf-8")))
+    man["examples"] = [{"label": "a mid-range source", "inputs": {"source_P_W": 12.0, "h_W_m2K": 60.0}},
+                       {"label": "a strong source, weak cooling", "inputs": {"source_P_W": 25.0, "h_W_m2K": 10.0}}]
+    return man
+
+
+def _grid_field_package(defect: str = "none"):
+    """The synthetic package rebuilt around the grid-field entrypoint, with one protocol defect planted."""
+    def apply(root: Path) -> None:
+        source = GRID_FIELD_ENTRYPOINT.read_text(encoding="utf-8")
+        assert source.count('DEFECT = "none"') == 1
+        source = source.replace('DEFECT = "none"', 'DEFECT = "%s"' % defect)
+        write_package(root, manifest=grid_field_manifest(source), entrypoint=source)
+    return apply
+
+
 def _strip_units(m) -> None:
     for field in m["inputs"] + m["outputs"]:
         field.pop("units", None)
@@ -680,6 +715,17 @@ MUTATIONS = [
     *[("M017", _with_signature(signature, sidecar)) for signature, sidecar in MALFORMED_SIGNATURES],
     # A package targeting a contract major this checker does not support is refused.
     ("M002", _mutate_manifest(lambda m: m.__setitem__("spec_version", "2.0"))),
+    # The stdio_json frame under check --smoke (spec section 12), planted in an
+    # entrypoint that answers a field and its band by reference. S003: a reference
+    # whose file has another digest or size, is absent or outside the run's working
+    # directory, states another media type or units or no descriptor, and a declared
+    # field answered in band. S001: a declared output omitted, no status, another
+    # run_id, a line on stdout that is not a frame, one frame too many, a non-zero exit.
+    *[("S003", _grid_field_package(defect)) for defect in (
+        "wrong_digest", "wrong_size", "missing_file", "outside_path", "wrong_media", "wrong_units",
+        "no_field_descriptor", "inline_field")],
+    *[("S001", _grid_field_package(defect)) for defect in (
+        "missing_output", "no_status", "wrong_run_id", "banner", "extra_frame", "nonzero_exit")],
 ]
 
 
@@ -1086,6 +1132,31 @@ def test_every_release_in_the_changelog_has_a_row_in_the_version_map():
     assert spec.startswith("# The Contract, version %s\n" % vs.CONTRACT_VERSION)
 
 
+def test_a_field_package_answering_by_reference_passes_the_smoke_test(tmp_path: Path):
+    """Single and batch requests, each frame's references verified against the files the entrypoint wrote."""
+    root = tmp_path / "pkg"
+    write_package(root)
+    _grid_field_package()(root)
+    assert vs.check_package(root) == []
+    assert vs.check_package(root, smoke=True) == []
+    record = vs.conformance_record(root, smoke=True)
+    assert record["rules"]["S003"]["state"] == "evaluated"
+
+
+def test_the_smoke_test_runs_outside_the_package_directory(tmp_path: Path):
+    """An entrypoint that reads its files from the working directory, not from beside itself, fails --smoke."""
+    import shutil
+    pkg = tmp_path / "pkg"
+    shutil.copytree(REFERENCE_PACKAGE, pkg)
+    source = (pkg / "predict.py").read_text(encoding="utf-8").replace(
+        'WEIGHTS_PATH = Path(__file__).resolve().parent / "model_weights.json"',
+        'WEIGHTS_PATH = Path("model_weights.json")')
+    _reference_entrypoint(source)(pkg)
+    findings = vs.check_package(pkg, smoke=True)
+    assert rules_fired(findings) == {"S001"}
+    assert all("exited with code 1" in f.message for f in findings), findings
+
+
 def test_only_the_two_unmeasured_statuses_are_exempt():
     """Pins the split: exempting FAIL or PASS would make a measured verdict unreadable."""
     assert set(vs._UNMEASURED_STATUSES) == {"NOT_RUN", "NOT_APPLICABLE"}
@@ -1210,7 +1281,7 @@ def test_smoke_passes_the_reference_package():
 
 
 def test_smoke_runs_from_a_relative_package_path(monkeypatch):
-    """The entrypoint is launched by absolute path, because it runs in the package directory."""
+    """The entrypoint is launched by absolute path, because it runs in a working directory of its own."""
     monkeypatch.chdir(REFERENCE_PACKAGE.parents[1])
     assert vs.main(["check", "--smoke", "examples/reference-package"]) == 0
 

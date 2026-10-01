@@ -90,9 +90,41 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   deprecation. Section 7 also maps each release to the contract version it
   implements: 0.1.0 and 0.1.1 implement 1.0, and the unreleased line 1.1,
   proposed. `CONTRIBUTING.md` says how a change is recorded here.
+- The normative `stdio_json` frame, as an amendment proposed for the
+  maintainer's ratification (section 12): the request `{run_id, mode,
+  inputs}` on stdin, then end of file; one `ok` or `error` frame per row on
+  stdout, in order; exit 0 for every answer, a refusal included, so that a
+  non-zero exit, a timeout or stdout without frames is a crash and not a
+  result; a working directory of its own for every request, never the
+  package directory; and the artifact reference a field travels in,
+  `{kind: artifact, path, media_type, sha256, bytes, field: {name, units,
+  range, n_nodes}}`, whose file is inside the working directory and exactly
+  its declared size and digest. `check --smoke` holds an entrypoint to it:
+  the frame under `S001`, and every reference, verified against the file the
+  entrypoint wrote, under the new rule `S003`.
+  `opencontractml.verify.stdio_request()`, `read_frames()`,
+  `frame_problems()` and `reference_problems()` are the same checks, callable
+  on their own.
 
 ### Changed
 
+- `check --smoke` sends each example as `{run_id, mode, inputs}`, runs every
+  request in a fresh working directory rather than in the package directory,
+  and, for a package that declares `invocation.batch_supported: true`, also
+  sends the examples as one batch, which owes one frame per row. From
+  contract 1.1 a frame must carry `status` and the request's `run_id`, and
+  stdout must carry frames alone; a 1.0 package's answer without them is read
+  as before. An output or uncertainty key answered as `null` counts as
+  missing.
+- The reference package's entrypoint answers in the frame: `{run_id, status:
+  ok, outputs}`, a frame per row in batch mode, and an in-band error frame
+  with exit 0 for a request it will not take, where it used to exit 1 with
+  `{"error": ...}`. Its outputs are bitwise those of the earlier entrypoint on
+  90 inputs across its ranges. The manifest re-pins the entrypoint and
+  declares `batch_supported: true`, and the report's `C2_serve_parity`,
+  `C3_provenance_integrity` and `C4_deployment_readiness` were re-measured
+  against it: serve parity and the hashes are unchanged, and the single-call
+  runtime is now the median of five calls on the machine that measured it.
 - `B4_conservation` may report `NOT_RUN` with `applicable: true`, as an
   amendment proposed for the maintainer's ratification (sections 5.3 and 5.4):
   a conservation check that applies and was not run carries no measurement and

@@ -82,8 +82,8 @@ invocation:
   executable: ./predict.py
   protocol: stdio_json
   timeout_s: 60
-  expected_runtime_s: 0.154
-  batch_supported: false
+  expected_runtime_s: 0.035
+  batch_supported: true
 
 lineage:
   training_data_version: "contract-reference-corpus-1.0"
@@ -100,8 +100,8 @@ provenance:
   artifacts:
     - path: ./predict.py
       role: entrypoint
-      sha256: a196f1cb68586f1e8ccedc2164700331541584063b3559bb9bfbc142707071bd
-      bytes: 2418
+      sha256: b88997634053fed8990a5044d61c9729bbcedf735d7ee08adb2f11e41b580c8a
+      bytes: 5141
     - path: ./model_weights.json
       role: weights
       sha256: d2f233407ff908a709cf7abd434d45e3283ad104d4f15070d71a4e590aaac813

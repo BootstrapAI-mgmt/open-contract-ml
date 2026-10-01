@@ -163,7 +163,8 @@
             "V012",
             "V013",
             "S001",
-            "S002"
+            "S002",
+            "S003"
           ],
           "additionalProperties": {
             "$ref": "#/$defs/rule_state"

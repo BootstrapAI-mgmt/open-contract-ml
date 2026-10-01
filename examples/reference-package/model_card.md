@@ -130,7 +130,7 @@ optimistic one.
 
 | Item | Value |
 |---|---|
-| Entrypoint | `./predict.py` sha256 `a196f1cb68586f1e8ccedc2164700331541584063b3559bb9bfbc142707071bd` (2418 bytes) |
+| Entrypoint | `./predict.py` sha256 `b88997634053fed8990a5044d61c9729bbcedf735d7ee08adb2f11e41b580c8a` (5141 bytes) |
 | Weights | `./model_weights.json` sha256 `d2f233407ff908a709cf7abd434d45e3283ad104d4f15070d71a4e590aaac813` (328 bytes) |
 | Dataset | sha256 `7bd50c57ac6251e6011f4612ba75da49d4e48d320afbcb923f1aa94b6f140d64` (600 samples) |
 | Code | not recorded: built before this repository's public history began |

@@ -13,18 +13,18 @@ what_this_is: 'One record per tracked file, in one of three classes. `authored`:
 authored:
 - path: .gitattributes
   why: eol=lf, without which a Windows clone breaks the M013 sha256 pins
-  sha256: 69f4a71f0665a3131efe42d7b1b63f0ada5a00d0890f513644a90917199de097
+  sha256: b087f8e29332f1371182545c688f6933da61beaf32d3e2588c4b36f8294c29e0
 - path: .github/workflows/ci.yml
   why: the build gate; runs the suite (one Linux interpreter per pull request, the full interpreter matrix
     weekly and on demand), then builds the wheel and drives the installed checker from outside the checkout
     so that a packaging fault cannot hide behind a green source-tree run
-  sha256: 4d9785efa9dfa5c63e3da46ee47bda84dd5adf6a0ee414cee7fabe3b04d686d8
+  sha256: 0d182eed138b7e980d023a5a8b106031a0e4a8f083e3c2652a0cbb02d1d00f43
 - path: .gitignore
   why: build/venv/cache exclusions
   sha256: 38c5a9d7013ee239145bf21a49ac5006eb48f7f5b2f1057a5e6aef6a44fbd44a
 - path: CHANGELOG.md
   why: what changed in each release, newest first; the sdist carries it
-  sha256: 14fa0b8df27769609d05f20ea2bd6ad340ddbd63852c2fccac18d4f17518a2e5
+  sha256: 6df549e662cad47ac9f9f304f00269ded69a08e2a601dcdde6ed2d291268100c
 - path: CLAUDE.md
   why: notes for coding agents - the commands, what the tests enforce and what never to do here
   sha256: 291cadcd097d64e170116f1bc5e91d410f08e6955d32e277953431fa70c8a698
@@ -46,13 +46,13 @@ authored:
   sha256: null
 - path: README.md
   why: what the Contract is and how to verify a package
-  sha256: 95888c256d349f75f207c05f408ee954d1dfe25efe3e4319dae919c0cc56fc0f
+  sha256: d3686d6665a71108ed455dd1c4e5dfed268bbfc747396a4c4359491d1b4d1f60
 - path: SECURITY.md
   why: how to report a vulnerability, and the safe-loading policy
   sha256: 37760f352de77e945dcc3ceb8a4320edaa7f1989cb75d85e35c0e13a7a473af7
 - path: docs/EXTRACTION.md
   why: where the files came from, and the known gaps in what is here
-  sha256: 647523051337ca26c93d8b1ac245151b20a5dd9da11f6f2b4b1eb2d268c470e9
+  sha256: f757b589295943a151206169c88db5aafc87fd3963e4e04705dfc24518db2508
 - path: docs/REFERENCES.md
   why: the repository's bibliography; every [Key] citation resolves to an entry here
   sha256: 0c6b2be66e8a7b83a76c09ee0ed53909e7aa69fd9b335a90f4a1b8be1005f087
@@ -73,7 +73,7 @@ authored:
 - path: src/opencontractml/schemas/contract-v1/conformance-record.schema.json
   why: the JSON Schema of the conformance record that open-contract-ml check --json writes, every rule id
     of the checker required
-  sha256: 6fa78a57e2dd278401104c5fc4708f502ffb728f5763046e0b0237d64abe7128
+  sha256: 61d4f016af147f6f123eceab4e98fdf200e50dec350a87f27bdb3ecbe4c2431e
 - path: tests/fixtures/producer_packages/README.md
   why: what the producer fixture packages are, how CI checks them, and how a copy differs from what its
     producer shipped
@@ -98,10 +98,14 @@ authored:
   why: 'provenance of the fixture package plate_heat_fno: the digest of each file in the copy and what
     the copy changed'
   sha256: 61a7fadf54b46c4141bf18a1ed22b278ad4099d595a71250d8476cfb717533c1
+- path: tests/fixtures/stdio_frame/grid_field_predict.py
+  why: a standard-library entrypoint in the shape a grid field producer documents, answering a field and
+    its band by reference, with a switch that plants one protocol defect for the negative tests
+  sha256: 3bd561e0955ee2e4bc454be6f9be5287a24bb43b2bb7a5871c110aea336e14bd
 - path: tests/test_conformance_record.py
   why: holds the conformance record to its schema and to its own findings, pins the rule states the checker
     reports where a rule cannot apply, and plants defects the schema must reject
-  sha256: ca96b43be1fa325a454647d43fc395416d02f0ecb2296f1b2e624b1778b50ed3
+  sha256: a780123ec7f6ac2cfb62a38cd9f4dda5e96ce698040d53201b1f1a746987923f
 - path: tests/test_contract_schema.py
   why: holds the standard-library schema walker of the checker to the published contract-v1 manifest schema
     - every keyword applied, every constraint rejected where an independent validator rejects it, and an
@@ -116,10 +120,14 @@ authored:
 - path: tests/test_producer_fixtures.py
   why: 'the producer-fixture gate: every pinned producer package must pass the checker or fail exactly as
     known-findings.json records, and keep its honest FAIL'
-  sha256: 38076e203207158d31e9ac219ab2355897d19c822b2b7e5c5a484acef57a0933
+  sha256: 7434359d668cef0bfda9de40099abd4aa1d77fe362d5635d849ef568d0d1336a
 - path: tests/test_provenance.py
   why: the provenance falsifier
   sha256: 915c90b323009413f03184b858167fa1b2821ccc5d75daece18c56278ceb0968
+- path: tests/test_stdio_frame.py
+  why: the stdio_json frame held over two real entrypoints, in single and batch mode, for answers and
+    refusals, and planted defects in real frames
+  sha256: 07c03c772ed9056177d96616208bdb6f188398a30c56975e747697899726db09
 extracted:
 - path: docs/model-onboarding.md
   transformed: true
@@ -132,7 +140,7 @@ extracted:
 - path: docs/spec/CONTRACT-v1.md
   transformed: true
   why: the normative specification of the Contract, version 1.1
-  sha256: edacdd6b63baf5f78b09eea900ba6d58bf7c6e03e6245de68745ebc73b310c48
+  sha256: 8f32fa8761dc3f205a044ca1e8a96bf04e053924b725e6825019dfa7ced638bb
 - path: examples/brake_disc_tmf_v1/fake_model.py
   transformed: true
   why: a deterministic stdio_json stub model for the package-v1 worked example
@@ -176,11 +184,11 @@ extracted:
 - path: examples/reference-package/manifest.yaml
   transformed: true
   why: the reference package's manifest
-  sha256: 20c4468a2d1109351e1b6ae9e2017e0334468d376829ed433b19b404302a46c2
+  sha256: 98dcd903bd238ab9b004f8e3b1857c82eb2f8cb9ff8716cb449dd75d116f71f3
 - path: examples/reference-package/model_card.md
   transformed: true
   why: the reference package's model card
-  sha256: c334a8e6deb26efdf6642b5cbc0ebc63f55cc8fe1f0f6113f962041dfde54336
+  sha256: 5f1151060b1c97f554890e22e3ff053d492dc5bca93da850832cc47ae21113b7
 - path: examples/reference-package/model_weights.json
   transformed: false
   why: the reference package's weights
@@ -188,11 +196,11 @@ extracted:
 - path: examples/reference-package/predict.py
   transformed: true
   why: the reference package's stdio_json entrypoint
-  sha256: a196f1cb68586f1e8ccedc2164700331541584063b3559bb9bfbc142707071bd
+  sha256: b88997634053fed8990a5044d61c9729bbcedf735d7ee08adb2f11e41b580c8a
 - path: examples/reference-package/validation_report.json
   transformed: true
   why: the reference package's validation report
-  sha256: 9a0edca3897e4128c111851f106d25ea95fabf84048b276e44be04b2bb2d2ed8
+  sha256: 69dcab887d6ce46060b117cf47e8d3d83afd9b20db508073a1e95d481284ac29
 - path: examples/worked-cells/drag-from-shape/WALKTHROUGH.md
   transformed: true
   why: the walkthrough of the drag-from-shape worked cell
@@ -400,7 +408,7 @@ extracted:
 - path: src/opencontractml/schemas/contract-v1/contract-vocabulary.json
   transformed: true
   why: the machine-readable contract vocabulary, generated by verify.py
-  sha256: 7ca99c4778688b10f4d99afa6f6fc380ed4f1fdbbf7cbd0031b8bfc6e03d9620
+  sha256: 92845620fd3a6e9eb9f58c8009d58f7d0b2499f170a5d0e58ede56f4ae4c5fdd
 - path: src/opencontractml/schemas/contract-v1/manifest.schema.json
   transformed: true
   why: the JSON Schema of the Contract v1 manifest
@@ -424,7 +432,7 @@ extracted:
 - path: src/opencontractml/verify.py
   transformed: true
   why: the conformance checker and the machine-readable contract vocabulary
-  sha256: 08d984cd9ef9ceea440ec33d85fb6d168f61443e1a11731ebbbd55d853b141b3
+  sha256: 7e766a2c9b0afa743ec2bb36e4626f18351cff7884c4f0b2835360c285c05878
 - path: tests/fixtures/model_packages/conformant/manifest.yaml
   transformed: true
   why: 'a conformant package-v1 fixture: its manifest'
@@ -460,7 +468,7 @@ extracted:
 - path: tests/test_verify.py
   transformed: true
   why: tests of the conformance checker, one planted defect per ERROR rule
-  sha256: 72a0207b62140349cb66038d1150a854d12212787cd706429d32fa0b03e780b7
+  sha256: 4546c81a9fb9fa32409661ccbb7e1300eaf6895f18a18b403c71e692f68321e0
 modified_copies:
 - path: tests/fixtures/producer_packages/brake_disc_link1_thermal_fno/manifest.yaml
   copy_of: brake_disc_link1_thermal_fno

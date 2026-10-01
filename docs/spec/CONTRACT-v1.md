@@ -50,7 +50,9 @@ This document defines:
 - **2.4** the *validation report* -- one tiered ladder under which the scalar and field
   ladders are tiers;
 - **2.5** *provenance* -- built on the sha256 the two producer repos already carry;
-- **2.6** the *compatibility rule* and the conformance vocabulary.
+- **2.6** the *compatibility rule* and the conformance vocabulary;
+- **2.7** the *`stdio_json` frame* -- how a consumer asks an entrypoint for an answer,
+  and the artifact reference a field travels in (section 12).
 
 It does **not** set physics thresholds. Every numeric bar stays where it is, owned by
 the producer that sets it. The contract requires that a bar be *stated and compared against a
@@ -424,8 +426,8 @@ provenance:
   artifacts:                       # every file needed to EXECUTE the model
     - path: ./predict.py
       role: entrypoint             # entrypoint | weights | asset
-      sha256: a196f1cb...          # 64 lowercase hex
-      bytes: 2418
+      sha256: b8899763...          # 64 lowercase hex
+      bytes: 5141
   dataset:
     sha256: 7bd50c57...
     n_samples: 600
@@ -529,21 +531,23 @@ implements (`CONTRIBUTING.md`).
 
 ## 8. Conformance
 
-`python -m opencontractml.verify check <package>` -- exit 0 clean, 1 on findings. 45 rules
-(40 `ERROR`, 5 `WARN`); `python -m opencontractml.verify rules` prints the table. `M017`
+`python -m opencontractml.verify check <package>` -- exit 0 clean, 1 on findings. 46 rules
+(41 `ERROR`, 5 `WARN`); `python -m opencontractml.verify rules` prints the table. `M017`
 is the signature warning (section 6) that [PROVENANCE-SIGNING.md](PROVENANCE-SIGNING.md)
 designs.
 
 **Running the entrypoint (`check --smoke`).** The default check reads files and executes
-nothing. `check --smoke` also runs the entrypoint the way a consumer dispatches it under
-`stdio_json`: once per `examples[]` entry of the manifest, with that example's `inputs` as
-the request, in the package directory, within `invocation.timeout_s`. Each answer MUST exit
-0 with a JSON object on stdout that carries every declared output and every uncertainty
-field the manifest's `per_output` blocks name (`*_field`) (`S001`). The smoke test runs only
-an entrypoint the static check verified (no `M008`, `M012` or `M013` finding). When it cannot
-run -- the manifest declares no examples, the entrypoint is not verified, the host cannot
-launch it, or a module it imports is not installed in the checking environment -- it says
-so as a warning (`S002`), never as a pass.
+nothing. `check --smoke` also runs the entrypoint the way a consumer dispatches it, in the
+frame section 12 defines: each `examples[]` entry of the manifest as a `single` request,
+and all of them as one `batch` request when the manifest declares
+`invocation.batch_supported: true`, each in a fresh working directory the checker creates
+and removes, within `invocation.timeout_s`. An answer that breaks the frame is `S001`; an
+artifact reference that does not verify, or a declared field or `*_artifact` key answered
+without one, is `S003`. The smoke test runs only an entrypoint the static check verified
+(no `M008`, `M012` or `M013` finding). When it cannot run -- the manifest declares no
+examples, the entrypoint is not verified, the host cannot launch it, or a module it
+imports is not installed in the checking environment -- it says so as a warning (`S002`),
+never as a pass.
 
 **The conformance record (`check --json`).** `--json` writes, per package, the record
 version, the checker and its version, the contract version it implements and the
@@ -562,9 +566,10 @@ test red, and the checker was restored byte-exact afterwards.
 
 The worked conformant instance is `examples/reference-package/`. Every number in
 its `validation_report.json` was measured, every hash is real, its entrypoint really
-runs under `stdio_json` (`check --smoke` runs it on the manifest's two examples), and its
-`C2_serve_parity` check really shells out to that entrypoint and compares against the
-in-process fit. It declares 1.1 and states its comparators.
+answers in the `stdio_json` frame (`check --smoke` runs it on the manifest's two examples,
+one at a time and as a batch), and its `C2_serve_parity` check really shells out to that
+entrypoint and compares against the in-process fit. It declares 1.1 and states its
+comparators and its licences.
 
 ## 9. What this spec is careful not to do
 
@@ -630,6 +635,8 @@ otherwise:
 | A package that declares no `licence` block is warned (section 3) | `M021` (a warning) | from `spec_version` 1.1 | not warned |
 | `provenance.signature`, optional: `{format: oms, path}` naming a sidecar in the package that is not a pinned artifact; nothing is verified (section 6) | `M017` (a warning) | a signature wherever it is declared | may declare one |
 | A MINOR binds only a package that declares it; deprecation at a MINOR, removal only at a MAJOR; which release implements which version (section 7) | -- | the Contract | unaffected |
+| The `stdio_json` frame: the request `{run_id, mode, inputs}`, an `ok` or `error` frame per row, exit 0 for every answer, a working directory of its own, and the artifact reference a field travels in (section 12) | `S001`, `S003` | every package, under `check --smoke`; `status` and `run_id` from `spec_version` 1.1 | its `ok` answers may omit `status` and `run_id` |
+| `check --smoke` runs each request in a fresh working directory, and the examples as one batch where the manifest declares batch support (sections 8, 12) | `S001`, `S002`, `S003` | only when asked for | unaffected by the default check |
 
 These bind every package, because they hold it to what 1.0 already stated -- its schema,
 its package as a directory, its byte-count pins -- or to what the rules are documented to
@@ -643,4 +650,103 @@ cover:
 | The report declares the `spec_version` its manifest declares (section 7) | `V002` | none |
 
 No package starts conforming. The reference package (`examples/reference-package/`)
-declares 1.1, states its comparators, and passes `check` and `check --smoke`.
+declares 1.1, states its comparators and its licences, answers in the frame, and passes
+`check` and `check --smoke`.
+
+## 12. The `stdio_json` frame
+
+`invocation.protocol: stdio_json` names the one protocol v1 defines: how a consumer asks a
+package's entrypoint for an answer, and how the entrypoint replies. This section is that
+protocol's normative text (1.1). A consumer, and `check --smoke` (section 8), launch the
+file `invocation.executable` names -- a `.py` file with a Python interpreter, any other
+file as an executable -- once per request.
+
+**The working directory.** Each request runs in a working directory of its own, created
+for that request and empty when the entrypoint starts; it is never the package directory.
+An entrypoint reads its own files -- weights, assets -- relative to its own location, never
+relative to the working directory, and writes every file it produces into the working
+directory. Every file an answer references is there.
+
+**The request** is one JSON object on stdin, followed by end of file:
+
+```json
+{"run_id": "r-17", "mode": "single",
+ "inputs": {"peak_temp_K": 873.15, "cycle_count": 5000, "material": "GG25"}}
+```
+
+- `run_id` is a string the caller chooses for the request; every frame of the answer
+  echoes it.
+- `mode` is `single` or `batch`. A caller sends `batch` only to a package whose manifest
+  declares `invocation.batch_supported: true`.
+- `inputs` is an object in `single` mode -- one value per declared input, by name, in that
+  input's canonical units -- and an array of such objects in `batch` mode. An entrypoint
+  that receives no `mode` reads an object as `single` and an array as `batch`.
+
+**The answer** is a sequence of frames on stdout, one JSON object per line, and nothing
+else; diagnostics and progress go to stderr. A frame is one of two:
+
+- an **`ok` frame**, `{"run_id": ..., "status": "ok", "outputs": {...}}`. `outputs` carries
+  every declared output and every key the manifest's `uncertainty.per_output` blocks name
+  -- the value of each `field`, `*_field` and `*_artifact` key -- each present and not
+  `null`. Keys beyond the declaration are allowed. A value travels in band, as JSON (a
+  number, a label, a series), or as an artifact reference (below).
+- an **`error` frame**, `{"run_id": ..., "status": "error", "error": {"code": ...,
+  "message": ..., "field": ...}}`, for a request the model declines: `code` is a short
+  upper-case token such as `MISSING_INPUT`, `OUT_OF_RANGE` or `BAD_REQUEST`; `message` says
+  why, in a sentence; `field`, which is optional, names the input at fault. Declining is
+  an answer, not a failure.
+
+A `single` request is answered by exactly one frame. A `batch` request is answered by one
+frame per element of `inputs`, in the same order; a row the model declines gets its error
+frame and the other rows are still answered.
+
+**The exit code.** The entrypoint exits 0 after any answer it gave, `ok` or `error`. A
+non-zero exit, a run past `invocation.timeout_s`, stdout that is not frames, or more or
+fewer frames than the request owed is a crash: the request has no result, whatever the
+entrypoint printed, and a consumer records it as a failure of the package, not as the
+model's answer.
+
+**The artifact reference.** A value an `ok` frame cannot carry in band -- a field -- is a
+file the entrypoint wrote into the working directory, and the frame carries a reference to
+it:
+
+```json
+{"kind": "artifact", "path": "temperature.vtp", "media_type": "application/vnd.vtk.vtp+xml",
+ "sha256": "<64 lowercase hex>", "bytes": 12345,
+ "field": {"name": "temperature", "units": "K", "range": [300.0, 412.5], "n_nodes": 289}}
+```
+
+| Key | What it is |
+|---|---|
+| `kind` | the string `artifact` |
+| `path` | the file, relative to the working directory and inside it: not absolute, no drive, no `..` that leaves it, no symbolic link that leads out of it |
+| `media_type` | the file's format, a bare `type/subtype` token; for a declared field, the `media_type` its field block states (section 3) |
+| `sha256` | the file's digest, 64 lowercase hex characters, taken from the bytes on disk after the write |
+| `bytes` | the file's length, a non-negative integer |
+| `field` | what the payload holds: `name`, the name of its array in the payload; `units`, the field's units, its field block's where one is declared; `range`, `[low, high]`, two finite numbers with `low <= high` (for a `vector` field, the range of its magnitude); `n_nodes`, the payload's node count, a positive integer |
+
+The file is exactly `bytes` long and its sha256 is `sha256`. Keys beyond these are
+allowed. A reference is a top-level value of `outputs`. The value of a `type: field`
+output that declares a field block is a reference, and so is the value of every key a
+`*_artifact` declaration in its `uncertainty.per_output` block names; a `*_field` key may
+carry one too, and any value whose `kind` is `artifact` is held to the same rules. In
+`batch` mode each row's references name that row's own files, since one path cannot carry
+two digests. What the reference carries -- the node count, the value range, the digest --
+is what section 3 leaves out of the manifest: it is the run's.
+
+**What binds whom.** The frame binds every package: it is what `stdio_json` has meant to
+the consumers that dispatch it, and 1.0 left it unwritten. A checker reading a package that
+declares 1.0 accepts an `ok` answer that carries no `status` or `run_id`, and stdout lines
+that are not frames, the form 1.0 entrypoints answered in; from 1.1 every frame carries
+both, and stdout carries frames alone. An artifact reference is held to its rules in a
+package of any version.
+
+**How `check --smoke` holds it.** An answer that crashes, declines an example, omits a
+declared output or a key the `per_output` blocks name, owes another number of frames, or
+-- from 1.1 -- lacks `status`, echoes another `run_id` or puts a line that is not a frame
+on stdout, is `S001`. A reference that lacks a key, names a path outside the working
+directory or a file that is absent or not exactly `bytes` long with that `sha256`, or
+states a `media_type` or units other than the declared ones, and a declared field or
+`*_artifact` key answered without a reference, is `S003`.
+`opencontractml.verify.read_frames`, `frame_problems` and `reference_problems` are the
+same checks, callable on a frame and a working directory a consumer holds.

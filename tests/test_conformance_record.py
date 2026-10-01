@@ -124,9 +124,11 @@ def test_the_reference_package_evaluates_every_rule_but_the_smoke_ones():
     assert states["not_evaluated"] == set(vs.SMOKE_RULES) | set(NOTHING_TO_READ)
     assert all("--smoke was not requested" in record["rules"][r]["reason"] for r in vs.SMOKE_RULES)
     assert {r: record["rules"][r]["reason"] for r in NOTHING_TO_READ} == NOTHING_TO_READ
-    smoked = _states(vs.conformance_record(REFERENCE_PACKAGE, smoke=True))
-    assert smoked == {"evaluated": {r.id for r in vs.RULES} - set(NOTHING_TO_READ),
-                      "not_evaluated": set(NOTHING_TO_READ)}
+    smoked = vs.conformance_record(REFERENCE_PACKAGE, smoke=True)
+    # with --smoke the scalar package's answers carry no artifact reference for S003 to verify
+    assert _states(smoked) == {"evaluated": {r.id for r in vs.RULES} - set(NOTHING_TO_READ) - {"S003"},
+                               "not_evaluated": set(NOTHING_TO_READ) | {"S003"}}
+    assert smoked["rules"]["S003"]["reason"] == "no answer carried an artifact reference to verify"
 
 
 def test_the_record_says_which_checker_read_which_documents_and_when():

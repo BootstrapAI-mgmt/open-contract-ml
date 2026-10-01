@@ -331,12 +331,17 @@
     {
       "id": "S001",
       "severity": "ERROR",
-      "title": "check --smoke: the entrypoint answers every declared example within its timeout, with every declared output and uncertainty field"
+      "title": "check --smoke: the entrypoint answers each example, and a batch of them where batch is supported, in the stdio_json frame: exit 0 within its timeout, a frame per row, every declared output and uncertainty key (and, from contract 1.1, status and run_id)"
     },
     {
       "id": "S002",
       "severity": "WARN",
       "title": "check --smoke: the smoke test could run (examples declared, the entrypoint verified and launchable here)"
+    },
+    {
+      "id": "S003",
+      "severity": "ERROR",
+      "title": "check --smoke: every artifact reference an answer carries, and every declared field and *_artifact value, names a file in the run's working directory with its declared bytes, sha256 and media type"
     }
   ]
 }
