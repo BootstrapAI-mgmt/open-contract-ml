@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/BootstrapAI-mgmt/open-contract-ml/schemas/contract-v1/manifest.schema.json",
   "title": "Contract v1 manifest",
-  "description": "The machine contract of a contract package. A superset of the package-v1 manifest spec 1.0 (schemas/package-v1): it adds `provenance` and `validation` and changes nothing existing, so a contract-v1 manifest is a valid package-v1 manifest. Structural rules only -- the cross-field invariants (uncertainty.per_output coverage, the entrypoint/executable binding, hash verification) are in verify.py, which is the authority.",
+  "description": "The machine contract of a contract package. A superset of the package-v1 manifest spec 1.0 (schemas/package-v1): it adds `provenance` and `validation` and changes nothing existing, so a contract-v1 manifest is a valid package-v1 manifest -- except one declaring `uncertainty.form: none` (contract 1.1), a value package-v1 does not define. Contract 1.1 also adds the optional `outputs[].field`, `licence` and `provenance.signature`. Structural rules only -- the cross-field invariants (uncertainty.per_output coverage, the entrypoint/executable binding, hash verification, what 1.1 requires of a 1.1 package) are in verify.py, which is the authority.",
   "type": "object",
   "required": [
     "spec_version", "id", "name", "version", "owner", "domain", "modality", "purpose",
@@ -65,7 +65,52 @@
           "type": {"type": "string", "enum": ["categorical", "distribution", "field", "float", "integer", "timeseries"]},
           "units": {"type": "string"},
           "choices": {"type": "array", "items": {"type": "string"}},
-          "viewer": {"type": "string", "minLength": 1}
+          "viewer": {"type": "string", "minLength": 1},
+          "field": {
+            "type": "object",
+            "description": "What a type: field output holds (contract 1.1). kind, units, support and media_type are what a consumer reads before any run; shape and coordinate_ref describe a field whose node layout is fixed. A package declaring spec_version 1.1 or later gives every type: field output this block with those four keys (open-contract-ml check, rule M019). What belongs to one run -- the node count, the value range, the payload's digest -- travels in that run's answer as an artifact reference, not here.",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "scalar",
+                  "vector"
+                ],
+                "description": "scalar: one value per support point; vector: one vector per support point."
+              },
+              "units": {
+                "type": "string",
+                "description": "The field's units, the same as the output's units where both are stated; a dimensionless field says so."
+              },
+              "support": {
+                "type": "string",
+                "enum": [
+                  "cell",
+                  "node"
+                ],
+                "description": "Where the values live in the payload: on its nodes (points) or on its cells."
+              },
+              "media_type": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.+-]*/[A-Za-z0-9][A-Za-z0-9_.+-]*$",
+                "description": "The payload format the entrypoint answers with, as a bare type/subtype token, for example application/vnd.vtk.vtp+xml for VTK XML PolyData."
+              },
+              "shape": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "description": "The fixed shape of a regular-grid field, in the axis order coordinate_ref states. Absent where the node count depends on a run's input."
+              },
+              "coordinate_ref": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The coordinate convention the shape indexes, in words: axis order, node or cell centring, extent."
+              }
+            }
+          }
         }
       }
     },
@@ -75,12 +120,12 @@
       "type": "object",
       "required": ["form", "per_output"],
       "properties": {
-        "form": {"type": "string", "enum": ["class_probabilities", "ensemble", "monte_carlo",
-                                            "predictive_interval", "quantiles"]},
+        "form": {"type": "string", "enum": ["class_probabilities", "ensemble", "monte_carlo", "none",
+                                            "predictive_interval", "quantiles"],
+                 "description": "none (contract 1.1) declares a point predictor: the model reports no uncertainty, per_output is the empty mapping and there is no calibration block (verify rule M007). A consumer may refuse such a package by its own policy, and the package-v1 schema does not define the value."},
         "per_output": {
           "type": "object",
-          "minProperties": 1,
-          "description": "One block per declared output. Coverage of every output is enforced by verify rule M007, which JSON Schema cannot express.",
+          "description": "One block per declared output, and none at all under form none. Coverage of every output is enforced by verify rule M007, which JSON Schema cannot express.",
           "additionalProperties": {"type": "object"}
         },
         "calibration": {"type": "object"}
@@ -150,6 +195,9 @@
         "environment": {
           "type": "object",
           "properties": {"python": {"type": "string"}, "packages": {"type": "object"}}
+        },
+        "signature": {
+          "description": "Optional, contract 1.1: {format: oms, path} -- a detached signature over the package, at path, never listed in artifacts. open-contract-ml check warns about a malformed declaration (rule M017) and verifies no signature; this schema states no constraint on it, so a malformed one is that warning and nothing else."
         }
       }
     },
@@ -160,6 +208,87 @@
       "properties": {
         "report": {"type": "string", "minLength": 1},
         "overall": {"type": "string", "enum": ["PASS", "FAIL"]}
+      }
+    },
+    "licence": {
+      "type": "object",
+      "description": "Optional, contract 1.1: the licence the model (its code), its weights and its training data are each offered under -- an SPDX license expression with the licence's text or a URL to it, or NOASSERTION with a note. open-contract-ml check holds a declared block to that (rule M020) and warns when a package declaring 1.1 or later declares none (M021). Which licences a package carries is its publisher's policy.",
+      "properties": {
+        "model": {
+          "type": "object",
+          "properties": {
+            "spdx": {
+              "type": "string",
+              "minLength": 1,
+              "description": "An SPDX license expression, or NOASSERTION."
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The licence text: a file in the package, by its path."
+            },
+            "url": {
+              "type": "string",
+              "pattern": "^https?://\\S+$",
+              "description": "Where the licence text is published."
+            },
+            "note": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Why no licence is asserted, beside NOASSERTION."
+            }
+          }
+        },
+        "weights": {
+          "type": "object",
+          "properties": {
+            "spdx": {
+              "type": "string",
+              "minLength": 1,
+              "description": "An SPDX license expression, or NOASSERTION."
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The licence text: a file in the package, by its path."
+            },
+            "url": {
+              "type": "string",
+              "pattern": "^https?://\\S+$",
+              "description": "Where the licence text is published."
+            },
+            "note": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Why no licence is asserted, beside NOASSERTION."
+            }
+          }
+        },
+        "training_data": {
+          "type": "object",
+          "properties": {
+            "spdx": {
+              "type": "string",
+              "minLength": 1,
+              "description": "An SPDX license expression, or NOASSERTION."
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The licence text: a file in the package, by its path."
+            },
+            "url": {
+              "type": "string",
+              "pattern": "^https?://\\S+$",
+              "description": "Where the licence text is published."
+            },
+            "note": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Why no licence is asserted, beside NOASSERTION."
+            }
+          }
+        }
       }
     },
     "examples": {"type": "array", "items": {"type": "object"}}

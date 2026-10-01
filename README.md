@@ -49,8 +49,8 @@ You can see it directly. Change one byte of the pinned entrypoint:
 $ printf '# tampered\n' >> examples/reference-package/predict.py
 $ open-contract-ml check examples/reference-package
 FAIL examples/reference-package  (2 error(s), 0 warning(s))
-  [ERROR M013] manifest.yaml provenance.artifacts[0]: sha256 mismatch for './predict.py': declared a196f1cb68586f1e8ccedc2164700331541584063b3559bb9bfbc142707071bd, on disk e7fa5f6e490c9a8f166b151d8455fe6ccb595e0193515da83211c39112817744
-  [ERROR M013] manifest.yaml provenance.artifacts[0]: bytes mismatch for './predict.py': declared 2418, on disk 2429
+  [ERROR M013] manifest.yaml provenance.artifacts[0]: sha256 mismatch for './predict.py': declared b88997634053fed8990a5044d61c9729bbcedf735d7ee08adb2f11e41b580c8a, on disk d7928c126802abdda8fb9cce0cf2feda2a704beddab1c37790175398fc8c75f3
+  [ERROR M013] manifest.yaml provenance.artifacts[0]: bytes mismatch for './predict.py': declared 5141, on disk 5152
 ```
 
 (That is real output, not an illustration — restore the file with

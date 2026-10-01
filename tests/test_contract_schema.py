@@ -247,6 +247,22 @@ def _whole_manifests():
     planted["provenance"]["artifacts"][0]["bytes"] = "not-a-number"
     planted.pop("lineage")
     out.append(("several defects at once", planted))
+    with_field = _reference_manifest()
+    with_field["outputs"].append({"name": "surface_temp", "type": "field", "units": "K", "viewer": "field_contour",
+                                  "field": {"kind": "scalar", "units": "K", "support": "node",
+                                            "media_type": "application/vnd.vtk.vtp+xml", "shape": [17, 17],
+                                            "coordinate_ref": "nodes of a regular grid, row-major"}})
+    out.append(("a complete field block", with_field))
+    grid_block = _reference_manifest()
+    grid_block["outputs"].append({"name": "dT", "type": "field", "units": "K", "viewer": "field_contour",
+                                  "field": {"shape": [64, 64], "coordinate_ref": "regular_grid_cell_centred",
+                                            "units": "K"}})
+    out.append(("a grid producer's field block", grid_block))
+    broken_field = _reference_manifest()
+    broken_field["outputs"].append({"name": "dT", "type": "field", "viewer": "field_contour",
+                                    "field": {"kind": "tensor", "support": "edge", "media_type": "VTK PolyData",
+                                              "shape": [0, 64], "coordinate_ref": ""}})
+    out.append(("a field block breaking every constraint", broken_field))
     return out
 
 
@@ -254,6 +270,43 @@ def _whole_manifests():
 def test_the_walker_and_the_independent_validator_report_the_same_places(name, instance):
     schema = _published_schema()
     assert _walker_places(instance, schema) == _oracle_places(instance, schema)
+
+
+def _package_v1_schema() -> dict:
+    return json.loads((REPO / "src" / "opencontractml" / "schemas" / "package-v1" / "manifest.schema.json")
+                      .read_text(encoding="utf-8"))
+
+
+def test_the_field_block_is_one_definition_in_both_manifest_schemas():
+    """outputs[].field is defined once: the contract-v1 schema's outputs item and package-v1's $defs.output_field agree.
+
+    package-v1's ``$defs.output_field.properties.field`` is also the exact place a
+    producer probes to learn whether the installed checker knows the block.
+    """
+    contract = _shipped_schema_as_written()["properties"]["outputs"]["items"]["properties"]["field"]
+    package_v1 = _package_v1_schema()["$defs"]["output_field"]["properties"]["field"]
+    assert contract == package_v1
+    assert set(contract["properties"]) == set(vs.FIELD_BLOCK_KEYS) | {"shape", "coordinate_ref"}
+    assert contract["properties"]["kind"]["enum"] == list(vs.FIELD_KINDS)
+    assert contract["properties"]["support"]["enum"] == list(vs.FIELD_SUPPORTS)
+    assert contract["properties"]["media_type"]["pattern"] == vs.MEDIA_TYPE_PATTERN
+    assert re.match(vs.MEDIA_TYPE_PATTERN, vs.VTK_POLYDATA_MEDIA_TYPE)
+    assert "required" not in contract, "presence is M019's, from 1.1; the schema accepts an incomplete block"
+
+
+def test_the_package_v1_schema_is_valid_and_accepts_a_field_block():
+    jsonschema = pytest.importorskip("jsonschema")
+    schema = _package_v1_schema()
+    jsonschema.Draft202012Validator.check_schema(schema)
+    manifest = yaml.safe_load((REPO / "examples" / "brake_disc_tmf_v1" / "manifest.yaml").read_text(encoding="utf-8"))
+    for block in ({"shape": [64, 64], "coordinate_ref": "regular_grid_cell_centred", "units": "K"},
+                  {"kind": "scalar", "units": "K", "support": "node", "media_type": "application/vnd.vtk.vtp+xml"}):
+        manifest["outputs"] = [{"name": "dT", "type": "field", "units": "K", "viewer": "field_contour",
+                                "field": block}]
+        manifest["uncertainty"]["per_output"] = {"dT": {"lower_field": "dT_lower", "upper_field": "dT_upper"}}
+        assert list(jsonschema.Draft202012Validator(schema).iter_errors(manifest)) == [], block
+    manifest["outputs"][0]["field"]["media_type"] = "VTK PolyData"
+    assert list(jsonschema.Draft202012Validator(schema).iter_errors(manifest)) != []
 
 
 def test_the_reference_manifest_is_clean_under_both():

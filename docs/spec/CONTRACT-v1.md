@@ -50,7 +50,9 @@ This document defines:
 - **2.4** the *validation report* -- one tiered ladder under which the scalar and field
   ladders are tiers;
 - **2.5** *provenance* -- built on the sha256 the two producer repos already carry;
-- **2.6** the *compatibility rule* and the conformance vocabulary.
+- **2.6** the *compatibility rule* and the conformance vocabulary;
+- **2.7** the *`stdio_json` frame* -- how a consumer asks an entrypoint for an answer,
+  and the artifact reference a field travels in (section 12).
 
 It does **not** set physics thresholds. Every numeric bar stays where it is, owned by
 the producer that sets it. The contract requires that a bar be *stated and compared against a
@@ -97,6 +99,50 @@ checker that cannot apply the schema in full MUST report an error, never skip it
 (`E003`), as it must for a manifest it cannot parse (`E002`). Beyond the schema, a
 `float` input or output states its `units` (`M004`, `M005`), a dimensionless one
 included, and an input's `range` is `[min, max]` with `min < max` (`M004`).
+
+**Field outputs (1.1).** A `type: field` output states, in an `outputs[].field` block,
+what a consumer needs to know about it before any run: `kind`, `scalar` or `vector`;
+`units`, the field's units, a dimensionless field included, and the same as the
+output's own `units` where both are stated; `support`, `node` or `cell`, for where the
+values live in the payload; and `media_type`, the format of the payload the entrypoint
+answers with, as a bare `type/subtype` token. VTK XML PolyData,
+`application/vnd.vtk.vtp+xml`, is the format of the worked field package
+(`examples/reference-field-package/`). A field whose node layout is fixed, such as one on
+a regular grid, may also state `shape`, a list of positive integers, and
+`coordinate_ref`, the coordinate convention that shape indexes, in words. What belongs
+to one run stays out of the block: the node count, the range of the values and the
+payload itself with its digest are facts of a run, and a field whose geometry depends on
+its input has no fixed shape to declare, so the run's answer carries them in an
+artifact reference (section 12). From 1.1 every `type: field` output declares the block
+with those four keys (`M019`); a block a package of any version declares is held to the
+same rule, and its structure is the manifest schema's (`M018`). A 1.0 package's field
+output without a block keeps conforming. A tensor-valued field has no `kind` yet; adding
+one is additive.
+
+**Licences (1.1).** An optional `licence` block names the licence under which a package
+offers the model (its code), its weights and its training data, as three members:
+`model`, `weights` and `training_data`. Each states an SPDX license expression (`spdx`)
+with the licence's `text`, a file in the package named by its path, or a `url` where the
+text is published; or `spdx: NOASSERTION` with a `note` saying why no licence is
+asserted. A declared block is held to that in a package of any version (`M020`). The
+checker reads the expression's grammar -- licence identifiers, `LicenseRef-` references,
+`WITH` an exception, `AND`, `OR` and parentheses, with the operators in upper case -- and
+does not carry the SPDX licence list, so an identifier that is well formed but not on
+the list passes. A package declaring 1.1 or later that declares no block is warned
+(`M021`), never failed. Which licences a package should carry is its publisher's policy;
+the Contract asks only that they be stated, and that a licence stated be legible.
+
+**A point predictor (1.1).** `uncertainty.form: none` declares that the model reports
+no uncertainty: it answers with point predictions and no band. Such a package declares
+`per_output: {}`, a block for no output, and no `calibration` block (`M007`), and its
+card's `Uncertainty quantification` section says that the model reports no uncertainty
+where another card names a method and a number (`C005`). Its `A3_uq_calibration` check
+has no band to calibrate and reports `NOT_APPLICABLE` with that reason; the checker
+does not enforce that yet. The value is defined from 1.1, so a package declaring it
+declares `spec_version` 1.1 or later (`M007`). It is an honest declaration and not a
+pass: whether to dock a model without bars is a consumer's policy, and a consumer that
+holds every prediction to its bars refuses such a package. The package-v1 manifest
+schema does not define the value, so a package-v1 validator rejects it.
 
 ## 4. The model card
 
@@ -223,7 +269,9 @@ disagrees with the recomputation is rejected (`V008`). This catches a lying roll
 `V010` and `V011` grade the instrument of an `A3` or `A5` check that was run: `PASS`
 or `FAIL`. A `NOT_RUN` or `NOT_APPLICABLE` check carries no measurement for them to
 read, so neither rule applies to it. A `NOT_RUN` key still blocks `overall`, and `V008`
-rejects a report that claims otherwise.
+rejects a report that claims otherwise. The same holds on every key (1.1): no rule
+reads a measurement from a `NOT_RUN` check, `B4`'s `V009` included (section 5.4), and
+every `NOT_RUN` key blocks `overall`.
 
 The `NOT_RUN` / `NOT_APPLICABLE` split replaces the field producer's `allow_not_run`
 allow-list. An allow-list records *that* a skip was tolerated; it does not record *why*,
@@ -280,6 +328,15 @@ currently vacuous.
 >
 > A model that conserves nothing MUST declare `applicable: false` **with a reason**, and
 > carry status `NOT_APPLICABLE`. That is not a `PASS` and it is visible in the rollup.
+
+**A conservation check that applies and was not run (1.1)** reports `status: NOT_RUN`
+with `applicable: true` and no measurement. The model's physics conserves a quantity, so
+`NOT_APPLICABLE` would be false, and nothing was measured, so any number would be
+invented. Like every `NOT_RUN` it blocks `overall` (section 5.3). `V009` reads no
+measurement from it, and still rejects a `NOT_RUN` check that declares `applicable:
+false` or no `applicable` at all. Before 1.1, `V009` demanded a measurement here, so a
+producer whose model conserves a quantity it had not yet measured could only report the
+check as `NOT_APPLICABLE`, which is the false claim this ladder exists to refuse.
 
 Consequences, stated plainly:
 
@@ -369,8 +426,8 @@ provenance:
   artifacts:                       # every file needed to EXECUTE the model
     - path: ./predict.py
       role: entrypoint             # entrypoint | weights | asset
-      sha256: a196f1cb...          # 64 lowercase hex
-      bytes: 2418
+      sha256: b8899763...          # 64 lowercase hex
+      bytes: 5141
   dataset:
     sha256: 7bd50c57...
     n_samples: 600
@@ -406,6 +463,17 @@ CI from a tag does not have this problem; a package committed by hand always lag
 The contract does not try to resolve this by rule -- it would need a post-commit rewrite --
 and states it instead.
 
+**An optional signature (1.1).** `provenance.signature: {format: oms, path}` records that
+a detached signature over the package sits at `path`, a file inside the package. `oms` is
+the one format defined. The sidecar is never one of `provenance.artifacts`: the manifest
+would then carry the digest of the file that signs the manifest. A checker warns about a
+malformed declaration -- an unknown format, a missing path, a sidecar that is absent or
+outside the package, a sidecar pinned as an artifact (`M017`) -- and about nothing else:
+an unsigned package is not warned, and the checker verifies no signature, so a package
+that passes `M017` is not thereby signed. Verifying signatures and requiring them stay a
+v2 concern. [PROVENANCE-SIGNING.md](PROVENANCE-SIGNING.md) gives the design: what the
+signature covers and how a consumer would verify it.
+
 ## 7. Versioning and compatibility
 
 The manifest and the card both carry `spec_version` as `MAJOR.MINOR`. The field name is
@@ -418,11 +486,27 @@ deliberately the package-v1 manifest's existing one, not a third name.
 - Contract v1.0 is defined to be a **superset of the package-v1 manifest spec 1.0**: it
   adds `provenance` and `validation` and changes nothing existing. The two numbers can
   therefore stay aligned, and a contract-v1 manifest is a valid package-v1 manifest.
-- Contract 1.1 is a MINOR amendment of 1.0 (section 11). It adds no manifest key, so a 1.1
-  manifest is read by a package-v1 consumer as a higher minor within major 1. A 1.0
-  consumer reads a 1.1 report too: the comparators are an unknown additive key to it. A
-  1.1 checker accepts a 1.0 package that declares no comparators. What 1.1 requires newly
-  binds only a package that declares `spec_version` 1.1 or later.
+- Contract 1.1 is a MINOR amendment of 1.0 (section 11). It adds optional manifest keys --
+  `outputs[].field`, `licence`, `provenance.signature` -- which a package-v1 consumer
+  ignores as unknown additive keys, so a 1.1 manifest is read by such a consumer as a
+  higher minor within major 1. It adds one value, `uncertainty.form: none`, which
+  package-v1 does not define: a 1.1 manifest that declares it is the one kind a package-v1
+  validator rejects. A 1.0 consumer reads a 1.1 report too: the comparators are an
+  unknown additive key to it. A 1.1 checker accepts a 1.0 package that declares no
+  comparators, no field block and no licence block. What 1.1 requires newly binds only a
+  package that declares `spec_version` 1.1 or later.
+- **A MINOR adds; it does not oblige an older package.** A checker of a later MINOR holds
+  a package to the rules of the version it declares, and holds a key that a later MINOR
+  defined -- comparators, a field block, a licence block, a signature -- to that
+  definition wherever a package declares it. A key no version defines is ignored,
+  whatever version the package declares. A package whose `spec_version` major is greater
+  than the checker's is rejected (`M002`).
+- **Deprecation.** A MINOR version may deprecate a key or a value; only a MAJOR version
+  removes one. The amendment that deprecates says so in section 11's table, names the
+  replacement where there is one, and assigns the warning rule a checker reports when a
+  package uses what was deprecated; the package stays conformant. A deprecated key or
+  value is removed no earlier than the next MAJOR version, and not before two releases of
+  this package have carried the deprecation. Nothing is deprecated at 1.1.
 - The validation report declares the `spec_version` its manifest declares (`V002`), as the
   card does (`C002`): one package, one contract version.
 - A contract-v1 **card** was *not* a valid card for a nine-section package-v1 validator at
@@ -432,23 +516,38 @@ deliberately the package-v1 manifest's existing one, not a third name.
   `opencontractml.model_card`, has made that change: it enforces the same eleven sections
   as `open-contract-ml check` (it reads the checker's own list), so one card satisfies both.
 
+**Which release implements which version.** The package's version,
+`opencontractml.__version__`, and the Contract's, `opencontractml.verify.CONTRACT_VERSION`,
+are separate numbers:
+
+| Package release | Contract version | Notes |
+|---|---|---|
+| 0.1.0 | 1.0 | released 2026-09-17; its files are no longer on the Python Package Index, so this row is read from the first public snapshot of this repository, which declares version 0.1.0 and contract 1.0 |
+| 0.1.1 | 1.0 | released 2026-09-27 |
+| unreleased, after 0.1.1 | 1.1, proposed | `opencontractml.__version__` reads 0.1.1 until the next release; a conformance record's `contract_version` (section 8) tells it from a 0.1.1 checker |
+
+Each release adds its row here, and its `CHANGELOG.md` entry names the contract version it
+implements (`CONTRIBUTING.md`).
+
 ## 8. Conformance
 
-`python -m opencontractml.verify check <package>` -- exit 0 clean, 1 on findings. 41 rules
-(38 `ERROR`, 3 `WARN`); `python -m opencontractml.verify rules` prints the table. `M017`
-is reserved for the signature warning that [PROVENANCE-SIGNING.md](PROVENANCE-SIGNING.md)
+`python -m opencontractml.verify check <package>` -- exit 0 clean, 1 on findings. 46 rules
+(41 `ERROR`, 5 `WARN`); `python -m opencontractml.verify rules` prints the table. `M017`
+is the signature warning (section 6) that [PROVENANCE-SIGNING.md](PROVENANCE-SIGNING.md)
 designs.
 
 **Running the entrypoint (`check --smoke`).** The default check reads files and executes
-nothing. `check --smoke` also runs the entrypoint the way a consumer dispatches it under
-`stdio_json`: once per `examples[]` entry of the manifest, with that example's `inputs` as
-the request, in the package directory, within `invocation.timeout_s`. Each answer MUST exit
-0 with a JSON object on stdout that carries every declared output and every uncertainty
-field the manifest's `per_output` blocks name (`*_field`) (`S001`). The smoke test runs only
-an entrypoint the static check verified (no `M008`, `M012` or `M013` finding). When it cannot
-run -- the manifest declares no examples, the entrypoint is not verified, the host cannot
-launch it, or a module it imports is not installed in the checking environment -- it says
-so as a warning (`S002`), never as a pass.
+nothing. `check --smoke` also runs the entrypoint the way a consumer dispatches it, in the
+frame section 12 defines: each `examples[]` entry of the manifest as a `single` request,
+and all of them as one `batch` request when the manifest declares
+`invocation.batch_supported: true`, each in a fresh working directory the checker creates
+and removes, within `invocation.timeout_s`. An answer that breaks the frame is `S001`; an
+artifact reference that does not verify, or a declared field or `*_artifact` key answered
+without one, is `S003`. The smoke test runs only an entrypoint the static check verified
+(no `M008`, `M012` or `M013` finding). When it cannot run -- the manifest declares no
+examples, the entrypoint is not verified, the host cannot launch it, or a module it
+imports is not installed in the checking environment -- it says so as a warning (`S002`),
+never as a pass.
 
 **The conformance record (`check --json`).** `--json` writes, per package, the record
 version, the checker and its version, the contract version it implements and the
@@ -467,9 +566,10 @@ test red, and the checker was restored byte-exact afterwards.
 
 The worked conformant instance is `examples/reference-package/`. Every number in
 its `validation_report.json` was measured, every hash is real, its entrypoint really
-runs under `stdio_json` (`check --smoke` runs it on the manifest's two examples), and its
-`C2_serve_parity` check really shells out to that entrypoint and compares against the
-in-process fit. It declares 1.1 and states its comparators.
+answers in the `stdio_json` frame (`check --smoke` runs it on the manifest's two examples,
+one at a time and as a batch), and its `C2_serve_parity` check really shells out to that
+entrypoint and compares against the in-process fit. It declares 1.1 and states its
+comparators and its licences.
 
 ## 9. What this spec is careful not to do
 
@@ -496,14 +596,19 @@ in-process fit. It declares 1.1 and states its comparators.
    categoricals. A field output's shape, mesh reference and units need a v1.1 addition
    before a field producer can describe a field model fully. This is the largest single
    hole in v1.0, and it is on the critical path for field surrogates adopting the
-   Contract.
+   Contract. *Addressed by 1.1:* a field output declares its kind, units, support and
+   payload format (section 3, "Field outputs"), and each run's answer references the
+   payload it wrote, with the payload's digest and the run's node count and value range
+   (section 12). A tensor-valued field has no `kind` yet.
 4. **No signature or attestation.** `provenance` proves the bytes have not changed since
    packaging. It does not prove who packaged them. Signing is a v2 concern.
    [PROVENANCE-SIGNING.md](PROVENANCE-SIGNING.md) designs an optional
    OpenSSF-Model-Signing sidecar and concludes the *field* can land additively in a
    later minor version while *enforcement* stays a v2 concern. It also records what `provenance`
    does not cover: the manifest, the card and the validation report are not
-   hashed by anything, so their contents are not tamper-evident.
+   hashed by anything, so their contents are not tamper-evident. *1.1 defines the
+   field* (section 6) *and warns about a malformed one* (`M017`); verifying a
+   signature, and warning when a package has none, stay v2 concerns.
 5. **The checker's front-matter parser accepts only flat scalars.** This is stated as a
    spec rule (4.1) rather than hidden as an implementation limit, but a future card
    needing structured front-matter would need both changed together.
@@ -511,8 +616,10 @@ in-process fit. It declares 1.1 and states its comparators.
 ## 11. Changes in 1.1
 
 Contract 1.1 is a MINOR amendment of 1.0 (section 7). These changes add what a package
-declaring 1.1 must state, or what a checker offers; a package declaring 1.0 is bound by
-them only where it declares comparators, which 1.0 did not define:
+declaring 1.1 must state, what any package may declare, or what a checker offers. A
+package declaring 1.0 is bound by them only where it declares a key that 1.1 defines --
+comparators, a field block, a licence block, a signature -- or where a row says
+otherwise:
 
 | Change | Rule | Binds | A 1.0 package |
 |---|---|---|---|
@@ -521,6 +628,15 @@ them only where it declares comparators, which 1.0 did not define:
 | `bitwise` reproducibility means a tolerance of 0 (section 5.5) | `V011` | from `spec_version` 1.1 | unaffected |
 | `check --smoke` runs the entrypoint on the manifest's examples (section 8) | `S001`, `S002` | only when asked for | unaffected by the default check |
 | `check --json` writes a conformance record with a state for every rule (section 8) | -- | checker output | unaffected |
+| `B4_conservation` may report `NOT_RUN` with `applicable: true`, carrying no measurement and blocking `overall` (sections 5.3, 5.4) | `V009` | every package | may report it too; a report `V009` rejected for it before is accepted |
+| `uncertainty.form: none` declares a point predictor: `per_output: {}`, no `calibration` block, and a card that says the model reports no uncertainty (section 3) | `M007`, `C005` | a package that declares it, from `spec_version` 1.1 | cannot declare it (`M007`) |
+| A `type: field` output declares `field: {kind, units, support, media_type}`, with `shape` and `coordinate_ref` where its layout is fixed; the block is defined once, in both manifest schemas (section 3) | `M019`, `M018` | from `spec_version` 1.1; a declared block wherever it is declared | keeps conforming with a field output that declares no block |
+| An optional `licence` block names the licences of the model, the weights and the training data, each an SPDX expression with its text or URL, or `NOASSERTION` with a note (section 3) | `M020` | a block wherever it is declared | may declare one, held to the same rule |
+| A package that declares no `licence` block is warned (section 3) | `M021` (a warning) | from `spec_version` 1.1 | not warned |
+| `provenance.signature`, optional: `{format: oms, path}` naming a sidecar in the package that is not a pinned artifact; nothing is verified (section 6) | `M017` (a warning) | a signature wherever it is declared | may declare one |
+| A MINOR binds only a package that declares it; deprecation at a MINOR, removal only at a MAJOR; which release implements which version (section 7) | -- | the Contract | unaffected |
+| The `stdio_json` frame: the request `{run_id, mode, inputs}`, an `ok` or `error` frame per row, exit 0 for every answer, a working directory of its own, and the artifact reference a field travels in (section 12) | `S001`, `S003` | every package, under `check --smoke`; `status` and `run_id` from `spec_version` 1.1 | its `ok` answers may omit `status` and `run_id` |
+| `check --smoke` runs each request in a fresh working directory, and the examples as one batch where the manifest declares batch support (sections 8, 12) | `S001`, `S002`, `S003` | only when asked for | unaffected by the default check |
 
 These bind every package, because they hold it to what 1.0 already stated -- its schema,
 its package as a directory, its byte-count pins -- or to what the rules are documented to
@@ -534,4 +650,103 @@ cover:
 | The report declares the `spec_version` its manifest declares (section 7) | `V002` | none |
 
 No package starts conforming. The reference package (`examples/reference-package/`)
-declares 1.1, states its comparators, and passes `check` and `check --smoke`.
+declares 1.1, states its comparators and its licences, answers in the frame, and passes
+`check` and `check --smoke`.
+
+## 12. The `stdio_json` frame
+
+`invocation.protocol: stdio_json` names the one protocol v1 defines: how a consumer asks a
+package's entrypoint for an answer, and how the entrypoint replies. This section is that
+protocol's normative text (1.1). A consumer, and `check --smoke` (section 8), launch the
+file `invocation.executable` names -- a `.py` file with a Python interpreter, any other
+file as an executable -- once per request.
+
+**The working directory.** Each request runs in a working directory of its own, created
+for that request and empty when the entrypoint starts; it is never the package directory.
+An entrypoint reads its own files -- weights, assets -- relative to its own location, never
+relative to the working directory, and writes every file it produces into the working
+directory. Every file an answer references is there.
+
+**The request** is one JSON object on stdin, followed by end of file:
+
+```json
+{"run_id": "r-17", "mode": "single",
+ "inputs": {"peak_temp_K": 873.15, "cycle_count": 5000, "material": "GG25"}}
+```
+
+- `run_id` is a string the caller chooses for the request; every frame of the answer
+  echoes it.
+- `mode` is `single` or `batch`. A caller sends `batch` only to a package whose manifest
+  declares `invocation.batch_supported: true`.
+- `inputs` is an object in `single` mode -- one value per declared input, by name, in that
+  input's canonical units -- and an array of such objects in `batch` mode. An entrypoint
+  that receives no `mode` reads an object as `single` and an array as `batch`.
+
+**The answer** is a sequence of frames on stdout, one JSON object per line, and nothing
+else; diagnostics and progress go to stderr. A frame is one of two:
+
+- an **`ok` frame**, `{"run_id": ..., "status": "ok", "outputs": {...}}`. `outputs` carries
+  every declared output and every key the manifest's `uncertainty.per_output` blocks name
+  -- the value of each `field`, `*_field` and `*_artifact` key -- each present and not
+  `null`. Keys beyond the declaration are allowed. A value travels in band, as JSON (a
+  number, a label, a series), or as an artifact reference (below).
+- an **`error` frame**, `{"run_id": ..., "status": "error", "error": {"code": ...,
+  "message": ..., "field": ...}}`, for a request the model declines: `code` is a short
+  upper-case token such as `MISSING_INPUT`, `OUT_OF_RANGE` or `BAD_REQUEST`; `message` says
+  why, in a sentence; `field`, which is optional, names the input at fault. Declining is
+  an answer, not a failure.
+
+A `single` request is answered by exactly one frame. A `batch` request is answered by one
+frame per element of `inputs`, in the same order; a row the model declines gets its error
+frame and the other rows are still answered.
+
+**The exit code.** The entrypoint exits 0 after any answer it gave, `ok` or `error`. A
+non-zero exit, a run past `invocation.timeout_s`, stdout that is not frames, or more or
+fewer frames than the request owed is a crash: the request has no result, whatever the
+entrypoint printed, and a consumer records it as a failure of the package, not as the
+model's answer.
+
+**The artifact reference.** A value an `ok` frame cannot carry in band -- a field -- is a
+file the entrypoint wrote into the working directory, and the frame carries a reference to
+it:
+
+```json
+{"kind": "artifact", "path": "temperature.vtp", "media_type": "application/vnd.vtk.vtp+xml",
+ "sha256": "<64 lowercase hex>", "bytes": 12345,
+ "field": {"name": "temperature", "units": "K", "range": [300.0, 412.5], "n_nodes": 289}}
+```
+
+| Key | What it is |
+|---|---|
+| `kind` | the string `artifact` |
+| `path` | the file, relative to the working directory and inside it: not absolute, no drive, no `..` that leaves it, no symbolic link that leads out of it |
+| `media_type` | the file's format, a bare `type/subtype` token; for a declared field, the `media_type` its field block states (section 3) |
+| `sha256` | the file's digest, 64 lowercase hex characters, taken from the bytes on disk after the write |
+| `bytes` | the file's length, a non-negative integer |
+| `field` | what the payload holds: `name`, the name of its array in the payload; `units`, the field's units, its field block's where one is declared; `range`, `[low, high]`, two finite numbers with `low <= high` (for a `vector` field, the range of its magnitude); `n_nodes`, the payload's node count, a positive integer |
+
+The file is exactly `bytes` long and its sha256 is `sha256`. Keys beyond these are
+allowed. A reference is a top-level value of `outputs`. The value of a `type: field`
+output that declares a field block is a reference, and so is the value of every key a
+`*_artifact` declaration in its `uncertainty.per_output` block names; a `*_field` key may
+carry one too, and any value whose `kind` is `artifact` is held to the same rules. In
+`batch` mode each row's references name that row's own files, since one path cannot carry
+two digests. What the reference carries -- the node count, the value range, the digest --
+is what section 3 leaves out of the manifest: it is the run's.
+
+**What binds whom.** The frame binds every package: it is what `stdio_json` has meant to
+the consumers that dispatch it, and 1.0 left it unwritten. A checker reading a package that
+declares 1.0 accepts an `ok` answer that carries no `status` or `run_id`, and stdout lines
+that are not frames, the form 1.0 entrypoints answered in; from 1.1 every frame carries
+both, and stdout carries frames alone. An artifact reference is held to its rules in a
+package of any version.
+
+**How `check --smoke` holds it.** An answer that crashes, declines an example, omits a
+declared output or a key the `per_output` blocks name, owes another number of frames, or
+-- from 1.1 -- lacks `status`, echoes another `run_id` or puts a line that is not a frame
+on stdout, is `S001`. A reference that lacks a key, names a path outside the working
+directory or a file that is absent or not exactly `bytes` long with that `sha256`, or
+states a `media_type` or units other than the declared ones, and a declared field or
+`*_artifact` key answered without a reference, is `S003`.
+`opencontractml.verify.read_frames`, `frame_problems` and `reference_problems` are the
+same checks, callable on a frame and a working directory a consumer holds.

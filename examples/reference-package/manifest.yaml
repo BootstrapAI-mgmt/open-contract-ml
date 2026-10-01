@@ -82,8 +82,8 @@ invocation:
   executable: ./predict.py
   protocol: stdio_json
   timeout_s: 60
-  expected_runtime_s: 0.154
-  batch_supported: false
+  expected_runtime_s: 0.035
+  batch_supported: true
 
 lineage:
   training_data_version: "contract-reference-corpus-1.0"
@@ -100,8 +100,8 @@ provenance:
   artifacts:
     - path: ./predict.py
       role: entrypoint
-      sha256: a196f1cb68586f1e8ccedc2164700331541584063b3559bb9bfbc142707071bd
-      bytes: 2418
+      sha256: b88997634053fed8990a5044d61c9729bbcedf735d7ee08adb2f11e41b580c8a
+      bytes: 5141
     - path: ./model_weights.json
       role: weights
       sha256: d2f233407ff908a709cf7abd434d45e3283ad104d4f15070d71a4e590aaac813
@@ -127,6 +127,21 @@ validation:
   overall: PASS
 
 model_card: ./model_card.md
+
+# --- the licences, contract 1.1 --------------------------------------------- #
+# The entrypoint and the weights are files of this repository, which is
+# Apache-2.0. The corpus the fit was drawn from is not distributed with the
+# package or the repository, so no licence is asserted for it.
+licence:
+  model:
+    spdx: Apache-2.0
+    url: "http://www.apache.org/licenses/LICENSE-2.0"
+  weights:
+    spdx: Apache-2.0
+    url: "http://www.apache.org/licenses/LICENSE-2.0"
+  training_data:
+    spdx: NOASSERTION
+    note: "the synthetic corpus contract-reference-corpus-1.0 is not distributed with this package or this repository; the package pins it by sha256 and asserts no licence for it"
 
 examples:
   - label: "Mid-range commuter brake"

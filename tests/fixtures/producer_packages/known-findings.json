@@ -7,7 +7,7 @@
         {
           "rule": "M018",
           "where": "manifest.yaml uncertainty.form",
-          "message": "'ensemble_spread' is not one of ['class_probabilities', 'ensemble', 'monte_carlo', 'predictive_interval', 'quantiles']"
+          "message": "'ensemble_spread' is not one of ['class_probabilities', 'ensemble', 'monte_carlo', 'none', 'predictive_interval', 'quantiles']"
         },
         {
           "rule": "M018",
@@ -27,7 +27,7 @@
         {
           "rule": "M018",
           "where": "manifest.yaml uncertainty.form",
-          "message": "'ensemble_spread' is not one of ['class_probabilities', 'ensemble', 'monte_carlo', 'predictive_interval', 'quantiles']"
+          "message": "'ensemble_spread' is not one of ['class_probabilities', 'ensemble', 'monte_carlo', 'none', 'predictive_interval', 'quantiles']"
         },
         {
           "rule": "M018",

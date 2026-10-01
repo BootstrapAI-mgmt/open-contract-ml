@@ -40,8 +40,100 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   (with the reason), beside the verdict and the findings it wrote before. Its
   JSON Schema ships as `schemas/contract-v1/conformance-record.schema.json`;
   `opencontractml.verify.conformance_record()` returns the same record.
+- A point predictor, as an amendment proposed for the maintainer's
+  ratification (`docs/spec/CONTRACT-v1.md`, section 3): `uncertainty.form:
+  none` declares that a model reports no uncertainty. Such a package declares
+  `per_output: {}` and no `calibration` block, and its card's uncertainty
+  section says the model reports no uncertainty where another card names a
+  method and a number (`M007`, `C005`). The value is defined from contract 1.1;
+  a 1.0 package that declares it is rejected (`M007`). A consumer may refuse
+  such a package by its own policy, and the package-v1 manifest schema does
+  not define the value.
+- A field output's declaration, as an amendment proposed for the maintainer's
+  ratification (section 3): a `type: field` output states `field: {kind,
+  units, support, media_type}` -- `scalar` or `vector`, the field's units,
+  `node` or `cell`, and the payload's format as a bare `type/subtype` token --
+  and, where its node layout is fixed, `shape` and `coordinate_ref` (new rule
+  `M019`). It is required from contract 1.1; a 1.0 package's field output
+  without a block keeps conforming. The block is defined once, identically in
+  the contract-v1 manifest schema's outputs and in the package-v1 schema's
+  `$defs.output_field`, and a test holds the two equal. The schema accepts a
+  block of `shape`, `coordinate_ref` and `units` alone; `M019` names the keys
+  such a block lacks.
+- A licence block, as an amendment proposed for the maintainer's
+  ratification (section 3): `licence` names the licence of the model, of
+  its weights and of its training data, each as an SPDX license expression
+  with the licence's text or a URL to it, or as `NOASSERTION` with a note. A
+  malformed block is an error (new rule `M020`); a package declaring 1.1 or
+  later that declares none is warned (new rule `M021`), never failed.
+  `opencontractml.verify.spdx_expression_problem()` reads an expression's
+  grammar with the standard library; it does not carry the SPDX licence
+  list. Which licences a package should carry is left to its publisher. The
+  reference package declares its own: Apache-2.0 for the model and the
+  weights, which are files of this repository, and `NOASSERTION` for a
+  training corpus that is not distributed.
+- An optional signature, as an amendment proposed for the maintainer's
+  ratification (section 6): `provenance.signature: {format: oms, path}`
+  records a detached signature beside the package, in the shape
+  `docs/spec/PROVENANCE-SIGNING.md` designed. Rule `M017`, reserved until
+  now, warns about a malformed declaration -- an unknown format, a missing
+  path, a sidecar that is absent, outside the package or pinned as an
+  artifact -- and about nothing else. The checker verifies no signature, and
+  an unsigned package is not warned; enforcing signatures stays a v2
+  concern.
+- The versioning and deprecation policy, as an amendment proposed for the
+  maintainer's ratification (section 7): what a MINOR version newly
+  requires binds only a package that declares it, and a key a later MINOR
+  defines is held to its definition wherever a package declares it; a MINOR
+  may deprecate a key or a value, which a checker then warns about, and only
+  a MAJOR removes one, not before two releases have carried the
+  deprecation. Section 7 also maps each release to the contract version it
+  implements: 0.1.0 and 0.1.1 implement 1.0, and the unreleased line 1.1,
+  proposed. `CONTRIBUTING.md` says how a change is recorded here.
+- The normative `stdio_json` frame, as an amendment proposed for the
+  maintainer's ratification (section 12): the request `{run_id, mode,
+  inputs}` on stdin, then end of file; one `ok` or `error` frame per row on
+  stdout, in order; exit 0 for every answer, a refusal included, so that a
+  non-zero exit, a timeout or stdout without frames is a crash and not a
+  result; a working directory of its own for every request, never the
+  package directory; and the artifact reference a field travels in,
+  `{kind: artifact, path, media_type, sha256, bytes, field: {name, units,
+  range, n_nodes}}`, whose file is inside the working directory and exactly
+  its declared size and digest. `check --smoke` holds an entrypoint to it:
+  the frame under `S001`, and every reference, verified against the file the
+  entrypoint wrote, under the new rule `S003`.
+  `opencontractml.verify.stdio_request()`, `read_frames()`,
+  `frame_problems()` and `reference_problems()` are the same checks, callable
+  on their own.
 
 ### Changed
+
+- `check --smoke` sends each example as `{run_id, mode, inputs}`, runs every
+  request in a fresh working directory rather than in the package directory,
+  and, for a package that declares `invocation.batch_supported: true`, also
+  sends the examples as one batch, which owes one frame per row. From
+  contract 1.1 a frame must carry `status` and the request's `run_id`, and
+  stdout must carry frames alone; a 1.0 package's answer without them is read
+  as before. An output or uncertainty key answered as `null` counts as
+  missing.
+- The reference package's entrypoint answers in the frame: `{run_id, status:
+  ok, outputs}`, a frame per row in batch mode, and an in-band error frame
+  with exit 0 for a request it will not take, where it used to exit 1 with
+  `{"error": ...}`. Its outputs are bitwise those of the earlier entrypoint on
+  90 inputs across its ranges. The manifest re-pins the entrypoint and
+  declares `batch_supported: true`, and the report's `C2_serve_parity`,
+  `C3_provenance_integrity` and `C4_deployment_readiness` were re-measured
+  against it: serve parity and the hashes are unchanged, and the single-call
+  runtime is now the median of five calls on the machine that measured it.
+- `B4_conservation` may report `NOT_RUN` with `applicable: true`, as an
+  amendment proposed for the maintainer's ratification (sections 5.3 and 5.4):
+  a conservation check that applies and was not run carries no measurement and
+  blocks `overall`, as every `NOT_RUN` does. `V009` used to demand a
+  measurement from it, so the only report that conformed called the check
+  `NOT_APPLICABLE`, which is false. This applies to every package. The two
+  recorded `M018` findings on `uncertainty.form` in
+  `tests/fixtures/producer_packages/known-findings.json` now list `none` among
+  the schema's forms; the findings are otherwise unchanged.
 
 - The validation report must declare the `spec_version` its manifest declares
   (`V002`), as the model card already must (`C002`).

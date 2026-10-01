@@ -109,6 +109,8 @@ def test_the_untrained_packages_declare_no_examples_so_the_smoke_test_cannot_run
 def test_the_plate_copy_cannot_answer_its_examples_because_its_weights_are_a_stub():
     """The copy's weights file is a text stub (see its README), so its entrypoint reports an internal error.
 
+    It declares batch support, so the smoke test sends its two examples one at a
+    time and then together, and each of the three requests ends in that error.
     Where numpy is not installed the entrypoint cannot even start, and the smoke
     test reports that it could not run instead.
     """
@@ -118,5 +120,7 @@ def test_the_plate_copy_cannot_answer_its_examples_because_its_weights_are_a_stu
     if importlib.util.find_spec("numpy") is None:
         assert [f.rule for f in found] == ["S002"] and "'numpy'" in found[0].message
     else:
-        assert [f.rule for f in found] == ["S001", "S001"]
+        assert [(f.rule, f.where) for f in found] == [
+            ("S001", "manifest.yaml examples[0]"), ("S001", "manifest.yaml examples[1]"),
+            ("S001", "manifest.yaml examples, as one batch")]
         assert all("cannot load the packaged weights" in f.message for f in found), found

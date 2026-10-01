@@ -52,6 +52,7 @@ import argparse
 import contextvars
 import hashlib
 import json
+import math
 import operator
 import os
 import re
@@ -224,7 +225,8 @@ RULES: Tuple[Rule, ...] = (
                           "min < max)"),
     Rule("M005", "ERROR", "outputs declared and well formed (float outputs state units)"),
     Rule("M006", "ERROR", "no duplicate input or output names"),
-    Rule("M007", "ERROR", "every output is covered by an uncertainty.per_output block"),
+    Rule("M007", "ERROR", "every output is covered by an uncertainty.per_output block; uncertainty.form none "
+                          "(from contract 1.1) declares no block and no calibration"),
     Rule("M008", "ERROR", "invocation block complete and protocol is supported"),
     Rule("M009", "ERROR", "model_card path declared, inside the package, and the file exists"),
     Rule("M010", "ERROR", "validation.report path declared, inside the package, and the file exists"),
@@ -235,14 +237,21 @@ RULES: Tuple[Rule, ...] = (
     Rule("M014", "ERROR", "provenance.dataset carries a well formed sha256"),
     Rule("M015", "ERROR", "provenance.code carries repo and commit"),
     Rule("M016", "WARN", "provenance.environment names the interpreter"),
-    # M017 is reserved for the signature warning designed in docs/spec/PROVENANCE-SIGNING.md.
+    Rule("M017", "WARN", "a declared provenance.signature is {format: oms, path} naming a file in the package that "
+                         "is not a pinned artifact (the checker verifies no signature)"),
     Rule("M018", "ERROR", "the manifest conforms to the contract-v1 manifest schema "
                           "(required keys, types, enumerations, patterns, bounds)"),
+    Rule("M019", "ERROR", "a type: field output declares its field block (kind, units, support, media_type) from "
+                          "contract 1.1, and a declared block is complete and sits on a field output"),
+    Rule("M020", "ERROR", "a declared licence block names the model, the weights and the training data, each by an "
+                          "SPDX license expression with its text or URL, or by NOASSERTION with a note"),
+    Rule("M021", "WARN", "a package declaring contract 1.1 or later declares a licence block"),
     Rule("C001", "ERROR", "model card parses with a flat scalar front-matter"),
     Rule("C002", "ERROR", "card front-matter identity matches the manifest"),
     Rule("C003", "ERROR", "the eleven required card sections are present, first, in order"),
     Rule("C004", "ERROR", "no required card section is a stub"),
-    Rule("C005", "ERROR", "the uncertainty section states a method and a number"),
+    Rule("C005", "ERROR", "the uncertainty section states a method and a number, or, under uncertainty.form none, "
+                          "that the model reports no uncertainty"),
     Rule("C006", "WARN", "extra H2 sections use reserved names"),
     Rule("V001", "ERROR", "validation report parses and declares its identity"),
     Rule("V002", "ERROR", "validation report identity (model_id, model_version, spec_version) matches the manifest"),
@@ -252,16 +261,21 @@ RULES: Tuple[Rule, ...] = (
     Rule("V006", "ERROR", "a PASS carries a numeric measurement and a numeric threshold"),
     Rule("V007", "ERROR", "NOT_APPLICABLE states a reason"),
     Rule("V008", "ERROR", "the declared overall verdict matches the recomputed one"),
-    Rule("V009", "ERROR", "B4 conservation is measured, not declared"),
+    Rule("V009", "ERROR", "B4 conservation is measured, not declared (a NOT_RUN check declares applicable: true and "
+                          "carries no measurement)"),
     Rule("V010", "ERROR", "A3 uq_calibration reports nominal, empirical coverage, n and method"),
     Rule("V011", "ERROR", "A5 reproducibility declares a determinism class and a tolerance (bitwise means "
                           "tolerance 0, from contract 1.1)"),
     Rule("V012", "ERROR", "comparators are well formed, and every PASS or FAIL check has one from contract 1.1"),
     Rule("V013", "ERROR", "each measured check's declared status agrees with the status its comparators give"),
-    Rule("S001", "ERROR", "check --smoke: the entrypoint answers every declared example within its timeout, with "
-                          "every declared output and uncertainty field"),
+    Rule("S001", "ERROR", "check --smoke: the entrypoint answers each example, and a batch of them where batch is "
+                          "supported, in the stdio_json frame: exit 0 within its timeout, a frame per row, every "
+                          "declared output and uncertainty key (and, from contract 1.1, status and run_id)"),
     Rule("S002", "WARN", "check --smoke: the smoke test could run (examples declared, the entrypoint verified and "
                          "launchable here)"),
+    Rule("S003", "ERROR", "check --smoke: every artifact reference an answer carries, and every declared field and "
+                          "*_artifact value, names a file in the run's working directory with its declared bytes, "
+                          "sha256 and media type"),
 )
 RULES_BY_ID: Dict[str, Rule] = {r.id: r for r in RULES}
 
@@ -355,16 +369,23 @@ def outside_package(pkg: Path, rel: str) -> Optional[str]:
     symbolic link -- to somewhere outside the directory, names a file the package
     does not carry, so the checker neither hashes nor reads it.
     """
+    return _outside(pkg, rel, "the package directory")
+
+
+def _outside(root_dir: Path, rel: str, name: str) -> Optional[str]:
+    """Why ``rel`` does not name a path inside ``root_dir`` (called ``name`` in the reason), or None."""
     if not rel.strip():
         return "is empty"
+    if "\x00" in rel:
+        return "contains a NUL character"
     # absolute on either platform: rooted at / or \, or carrying a drive (C:/x, C:x, \\server\share)
     if (rel.startswith(("/", "\\")) or Path(rel).is_absolute() or PureWindowsPath(rel).is_absolute()
             or PureWindowsPath(rel).drive):
         return "is absolute"
-    root = pkg.resolve()
-    target = (pkg / rel).resolve()
+    root = root_dir.resolve()
+    target = (root_dir / rel).resolve()
     if target != root and root not in target.parents:
-        return "resolves outside the package directory"
+        return "resolves outside %s" % name
     return None
 
 
@@ -799,6 +820,9 @@ def check_manifest(man: Dict[str, Any], pkg: Path, where: str, findings: List[Fi
                                                 "a result anyone can read (a dimensionless one says so)"
                                     % (field.get("name"),)))
 
+    check_field_blocks(outputs, _major_minor(spec_version), where, findings)
+    check_licence(man, pkg, _major_minor(spec_version), where, findings)
+
     in_names = [f.get("name") for f in inputs if isinstance(f, dict)]
     out_names = [f.get("name") for f in outputs if isinstance(f, dict)]
     for kind, names in (("input", in_names), ("output", out_names)):
@@ -811,6 +835,8 @@ def check_manifest(man: Dict[str, Any], pkg: Path, where: str, findings: List[Fi
     unc = man.get("uncertainty")
     if not isinstance(unc, dict) or not isinstance(unc.get("per_output"), dict) or not str(unc.get("form", "")).strip():
         findings.append(Finding("M007", where, "uncertainty must declare form and a per_output mapping"))
+    elif unc.get("form") == UNCERTAINTY_FORM_NONE:
+        check_point_predictor(unc, _major_minor(spec_version), where, findings)
     else:
         covered = set(unc["per_output"])
         for name in out_names:
@@ -854,6 +880,268 @@ def check_manifest(man: Dict[str, Any], pkg: Path, where: str, findings: List[Fi
     check_provenance(man.get("provenance"), man, pkg, where, findings)
 
 
+# A field output's declaration (contract 1.1).  ``outputs[].field`` states what a
+# ``type: field`` output holds, which a consumer reads before any run: the kind of
+# field, its units, whether its values live on the payload's nodes or its cells,
+# and the media type of the payload the entrypoint answers with; for a field whose
+# node layout is fixed, also its shape and the coordinate convention that shape
+# indexes.  What belongs to one run -- the node count, the value range, the
+# payload's digest -- travels in that run's answer, as an artifact reference
+# (spec section 12).  The block's structure is the manifest schema's (M018); its
+# presence from 1.1, and its completeness wherever it is declared, are M019's.
+FIELD_BLOCK_KEYS: Tuple[str, ...] = ("kind", "units", "support", "media_type")
+FIELD_KINDS: Tuple[str, ...] = ("scalar", "vector")
+FIELD_SUPPORTS: Tuple[str, ...] = ("cell", "node")
+#: The contract version from which every ``type: field`` output declares its field block.
+FIELD_BLOCK_REQUIRED_FROM: Tuple[int, int] = (1, 1)
+#: A media type as a bare ``type/subtype`` token: no parameters, no whitespace.  The
+#: manifest schema's ``field.media_type`` pattern is this one (a test holds them equal).
+MEDIA_TYPE_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9_.+-]*/[A-Za-z0-9][A-Za-z0-9_.+-]*$"
+#: VTK XML PolyData: the field payload format the reference field package answers with.
+VTK_POLYDATA_MEDIA_TYPE = "application/vnd.vtk.vtp+xml"
+
+
+def check_field_blocks(outputs: List[Any], version: Optional[Tuple[int, int]], where: str,
+                       findings: List[Finding]) -> None:
+    """M019: each ``type: field`` output's field block -- required from contract 1.1, complete wherever declared."""
+    required = version is not None and version >= FIELD_BLOCK_REQUIRED_FROM
+    seen = False
+    for i, out in enumerate(outputs):
+        if not isinstance(out, dict):
+            continue
+        block = out.get("field")
+        is_field = out.get("type") == "field"
+        if block is None and not is_field:
+            continue
+        seen = True
+        at = "%s outputs[%d]" % (where, i)
+        name = out.get("name")
+        if block is None:
+            if required:
+                findings.append(Finding("M019", at, "the type: field output %r declares no field block; from contract "
+                                                    "1.1 a field output states field: {kind, units, support, "
+                                                    "media_type}" % (name,)))
+            continue
+        if not is_field:
+            findings.append(Finding("M019", at, "output %r is of type %r and declares a field block; only a type: "
+                                                "field output carries one" % (name, out.get("type"))))
+            continue
+        if not isinstance(block, dict):
+            findings.append(Finding("M019", at, "field must be a mapping {kind, units, support, media_type}, got %r"
+                                    % (block,)))
+            continue
+        missing = [key for key in FIELD_BLOCK_KEYS
+                   if not isinstance(block.get(key), str) or not block.get(key).strip()]
+        if missing:
+            findings.append(Finding("M019", at, "the field block of %r lacks %s; a consumer reads kind, units, support "
+                                                "and media_type before any run" % (name, ", ".join(missing))))
+        declared, own = out.get("units"), block.get("units")
+        if (isinstance(declared, str) and declared.strip() and isinstance(own, str) and own.strip()
+                and declared.strip() != own.strip()):
+            findings.append(Finding("M019", at, "field.units %r differs from the output's units %r; one field has one "
+                                                "set of units" % (own, declared)))
+    if seen:
+        _ran("M019")
+    else:
+        _not_run("no output is of type field or declares a field block", "M019")
+
+
+# The licence block (contract 1.1).  ``licence`` names, for the model (its code),
+# its weights and its training data, the licence each is offered under: an SPDX
+# license expression with the licence's text (a file in the package) or a URL
+# where the text is published, or ``NOASSERTION`` with a note saying why no
+# licence is asserted.  A declared block is held to that at any version (M020); a
+# package declaring 1.1 or later that declares none is warned (M021).  Which
+# licences a package should carry is its publisher's policy, not the Contract's.
+LICENCE_MEMBERS: Tuple[str, ...] = ("model", "weights", "training_data")
+LICENCE_NOASSERTION = "NOASSERTION"
+#: The contract version from which a package that declares no licence block is warned.
+LICENCE_WARNED_FROM: Tuple[int, int] = (1, 1)
+_SPDX_TOKEN = re.compile(r"\s*(\(|\)|[^\s()]+)")
+_SPDX_IDSTRING = re.compile(r"^[A-Za-z0-9.-]+$")
+_SPDX_LICENSE_REF = re.compile(r"^(?:DocumentRef-[A-Za-z0-9.-]+:)?LicenseRef-[A-Za-z0-9.-]+$")
+_SPDX_OPERATORS: Tuple[str, ...] = ("AND", "OR", "WITH")
+
+
+class _SpdxError(ValueError):
+    pass
+
+
+def spdx_expression_problem(expression: Any) -> Optional[str]:
+    """Why ``expression`` is not an SPDX license expression, or None when it is one.
+
+    Checks the expression's grammar: licence identifiers (letters, digits, ``.``
+    and ``-``, optionally ending in ``+``), ``LicenseRef-`` references (optionally
+    behind ``DocumentRef-<id>:``), ``WITH`` an exception identifier, ``AND``,
+    ``OR`` and parentheses, with ``WITH`` binding tightest and ``OR`` loosest, and
+    the three operators in upper case.  It does not carry the SPDX licence list,
+    so an identifier that is well formed but not on the list is not caught.
+    ``NOASSERTION`` and ``NONE`` are not licences and are refused inside an
+    expression; a member that asserts no licence says ``NOASSERTION`` alone.
+    """
+    if not isinstance(expression, str) or not expression.strip():
+        return "it is not a non-empty string"
+    tokens: List[str] = []
+    pos = 0
+    while pos < len(expression):
+        match = _SPDX_TOKEN.match(expression, pos)
+        if match is None:
+            break                                   # only whitespace remains
+        tokens.append(match.group(1))
+        pos = match.end()
+    state = {"i": 0}
+
+    def peek() -> Optional[str]:
+        return tokens[state["i"]] if state["i"] < len(tokens) else None
+
+    def take() -> Optional[str]:
+        token = peek()
+        state["i"] += 1
+        return token
+
+    def identifier(kind: str, allow_plus: bool) -> None:
+        token = take()
+        if token is None:
+            raise _SpdxError("it ends where %s is expected" % kind)
+        if token in ("(", ")") or token in _SPDX_OPERATORS:
+            raise _SpdxError("%r stands where %s is expected" % (token, kind))
+        if token.upper() in _SPDX_OPERATORS:
+            raise _SpdxError("%r: the operators are AND, OR and WITH, in upper case" % token)
+        if token in (LICENCE_NOASSERTION, "NONE"):
+            raise _SpdxError("%r is not a licence; a member that asserts no licence says NOASSERTION alone" % token)
+        if allow_plus and _SPDX_LICENSE_REF.match(token):
+            return
+        body = token[:-1] if allow_plus and token.endswith("+") else token
+        if not _SPDX_IDSTRING.match(body):
+            raise _SpdxError("%r is not %s: letters, digits, '.' and '-'%s" % (
+                token, kind, ", with an optional trailing '+'" if allow_plus else ""))
+
+    def term() -> None:
+        if peek() == "(":
+            take()
+            disjunction()
+            if take() != ")":
+                raise _SpdxError("an opening '(' is not closed")
+            return
+        identifier("a licence identifier", allow_plus=True)
+        if peek() == "WITH":
+            take()
+            identifier("an exception identifier", allow_plus=False)
+
+    def conjunction() -> None:
+        term()
+        while peek() == "AND":
+            take()
+            term()
+
+    def disjunction() -> None:
+        conjunction()
+        while peek() == "OR":
+            take()
+            conjunction()
+
+    try:
+        disjunction()
+        if peek() is not None:
+            token = peek()
+            if token.upper() in _SPDX_OPERATORS:
+                raise _SpdxError("%r: the operators are AND, OR and WITH, in upper case" % token)
+            raise _SpdxError("%r follows a complete expression without an operator" % token)
+    except _SpdxError as exc:
+        return str(exc)
+    return None
+
+
+def check_licence(man: Dict[str, Any], pkg: Path, version: Optional[Tuple[int, int]], where: str,
+                  findings: List[Finding]) -> None:
+    """M020 for a declared licence block; M021 when a package declaring 1.1 or later declares none."""
+    licence = man.get("licence")
+    if licence is None:
+        _not_run("the package declares no licence block", "M020")
+        if version is not None and version >= LICENCE_WARNED_FROM:
+            _ran("M021")
+            hint = (" (it carries a 'license' key, which the Contract does not read: its key is 'licence')"
+                    if "license" in man else "")
+            findings.append(Finding("M021", where, "the package declares no licence block%s; a reader cannot tell "
+                                                   "under which terms the model, its weights and its training data "
+                                                   "may be used" % hint))
+        else:
+            _not_run("the package declares contract 1.0, which defines no licence block", "M021")
+        return
+    _ran("M020", "M021")
+    if not isinstance(licence, dict):
+        findings.append(Finding("M020", "%s licence" % where, "licence must be a mapping of model, weights and "
+                                                              "training_data, got %r" % (licence,)))
+        return
+    for member in LICENCE_MEMBERS:
+        at = "%s licence.%s" % (where, member)
+        entry = licence.get(member)
+        if entry is None:
+            findings.append(Finding("M020", at, "missing: a licence block names the licence of the model, of the "
+                                                "weights and of the training data"))
+            continue
+        if not isinstance(entry, dict):
+            findings.append(Finding("M020", at, "must be a mapping {spdx, text or url}, got %r" % (entry,)))
+            continue
+        spdx = entry.get("spdx")
+        if spdx == LICENCE_NOASSERTION:
+            if not isinstance(entry.get("note"), str) or not entry["note"].strip():
+                findings.append(Finding("M020", at, "NOASSERTION asserts no licence and needs a note saying why"))
+            continue
+        problem = spdx_expression_problem(spdx)
+        if problem:
+            findings.append(Finding("M020", at, "spdx %r is not an SPDX license expression: %s" % (spdx, problem)))
+        text, url = entry.get("text"), entry.get("url")
+        has_text = isinstance(text, str) and bool(text.strip())
+        if not has_text and not (isinstance(url, str) and url.strip()):
+            findings.append(Finding("M020", at, "a licence states its text (a file in the package) or a url where "
+                                                "the text is published"))
+        if has_text:
+            outside = outside_package(pkg, text)
+            if outside:
+                findings.append(Finding("M020", at, "text %r %s -- the licence text is a file inside the package"
+                                        % (text, outside)))
+            elif not (pkg / text).is_file():
+                findings.append(Finding("M020", at, "text %r does not name a file in the package" % (text,)))
+
+
+# A point predictor (contract 1.1).  ``uncertainty.form: none`` declares that the
+# model reports no uncertainty: no output carries a band, so ``per_output`` is the
+# empty mapping and there is no calibration block to state (M007), and the card's
+# uncertainty section says so instead of naming a method and a number (C005).  It
+# is an honest declaration, not a pass: whether to dock a model without bars is a
+# consumer's policy, and a consumer that holds every prediction to its bars
+# refuses it.  The value is defined from contract 1.1.
+UNCERTAINTY_FORM_NONE = "none"
+#: The contract version from which ``uncertainty.form`` may be ``none``.
+FORM_NONE_FROM: Tuple[int, int] = (1, 1)
+#: Phrases one of which a point predictor's uncertainty section uses to say it reports none (C005).
+NO_UNCERTAINTY_PHRASES: Tuple[str, ...] = (
+    "no uncertainty", "point predict", "without uncertainty", "no band", "no interval",
+)
+
+
+def _point_predictor(man: Optional[Dict[str, Any]]) -> bool:
+    unc = man.get("uncertainty") if isinstance(man, dict) else None
+    return isinstance(unc, dict) and unc.get("form") == UNCERTAINTY_FORM_NONE
+
+
+def check_point_predictor(unc: Dict[str, Any], version: Optional[Tuple[int, int]], where: str,
+                          findings: List[Finding]) -> None:
+    """M007 for ``uncertainty.form: none``: no per_output block and no calibration, from contract 1.1."""
+    if version is not None and version < FORM_NONE_FROM:
+        findings.append(Finding("M007", where, "uncertainty.form 'none' is defined from contract 1.1; a package "
+                                               "declaring %d.%d covers every output with an uncertainty.per_output "
+                                               "block" % version))
+        return
+    for name in sorted(unc["per_output"]):
+        findings.append(Finding("M007", where, "uncertainty.form is 'none', so no output carries a band, but "
+                                               "uncertainty.per_output declares a block for %r" % (name,)))
+    if "calibration" in unc:
+        findings.append(Finding("M007", where, "uncertainty.form is 'none', so there is no band to calibrate, but "
+                                               "uncertainty declares a calibration block"))
+
+
 # Roles a hashed artifact may play. The set is deliberately confined to files
 # needed to *execute* the model: the card and the validation report are bound by
 # identity (C002 / V002 / V003) rather than by hash, because both are written
@@ -865,7 +1153,7 @@ def check_provenance(prov: Any, man: Dict[str, Any], pkg: Path, where: str, find
     _ran("M011")
     if not isinstance(prov, dict):
         findings.append(Finding("M011", where, "provenance block is missing or not a mapping"))
-        _not_run("the provenance block is missing (M011)", "M012", "M013", "M014", "M015", "M016")
+        _not_run("the provenance block is missing (M011)", "M012", "M013", "M014", "M015", "M016", "M017")
         return
     _ran("M012", "M014", "M015", "M016")
     artifacts = prov.get("artifacts")
@@ -951,6 +1239,56 @@ def check_provenance(prov: Any, man: Dict[str, Any], pkg: Path, where: str, find
         findings.append(Finding("M016", where, "provenance.environment.python is not declared"))
     _not_run("no artifact reached the hash comparison and no single entrypoint was declared (M012)", "M013")
 
+    signature = prov.get("signature")
+    if signature is None:
+        _not_run("provenance declares no signature", "M017")
+    else:
+        _ran("M017")
+        check_signature(signature, artifacts, pkg, where, findings)
+
+
+# The optional signature (contract 1.1; docs/spec/PROVENANCE-SIGNING.md).
+# ``provenance.signature: {format: oms, path}`` records that a detached signature
+# over the package sits at ``path``.  The sidecar is never one of
+# ``provenance.artifacts``: the manifest would then carry the digest of a file that
+# signs the manifest, a cycle with no fixed point.  M017 warns about a malformed
+# declaration and about nothing else -- not about an unsigned package, and never
+# as an error.  The checker verifies no signature: a package that passes M017 is
+# not thereby signed.  Verifying one needs key material and a trust policy, which
+# a standard-library checker does not carry; enforcing signatures is a v2 concern.
+SIGNATURE_FORMATS: Tuple[str, ...] = ("oms",)
+
+
+def _relative(path: str) -> str:
+    return path[2:] if path.startswith("./") else path
+
+
+def check_signature(signature: Any, artifacts: List[Any], pkg: Path, where: str, findings: List[Finding]) -> None:
+    """M017: a declared ``provenance.signature`` is well formed.  It reports; it never verifies."""
+    at = "%s provenance.signature" % where
+    if not isinstance(signature, dict):
+        findings.append(Finding("M017", at, "must be a mapping {format, path}, got %r; the checker verifies no "
+                                            "signature either way" % (signature,)))
+        return
+    fmt = signature.get("format")
+    if fmt not in SIGNATURE_FORMATS:
+        findings.append(Finding("M017", at, "format %r is not one of %s" % (fmt, list(SIGNATURE_FORMATS))))
+    path = signature.get("path")
+    if not isinstance(path, str) or not path.strip():
+        findings.append(Finding("M017", at, "path is missing: the signature is a file in the package"))
+        return
+    outside = outside_package(pkg, path)
+    if outside:
+        findings.append(Finding("M017", at, "path %r %s -- the signature is a file inside the package"
+                                % (path, outside)))
+        return
+    if not (pkg / path).is_file():
+        findings.append(Finding("M017", at, "path %r names no file in the package" % (path,)))
+    pinned = {_relative(str(a.get("path"))) for a in artifacts if isinstance(a, dict)}
+    if _relative(path) in pinned:
+        findings.append(Finding("M017", at, "the signature %r is pinned in provenance.artifacts, so the manifest "
+                                            "carries the digest of a file that signs the manifest: a cycle" % (path,)))
+
 
 # --------------------------------------------------------------------------- #
 # Model-card checks.
@@ -1006,7 +1344,14 @@ def check_card(text: str, man: Optional[Dict[str, Any]], where: str, findings: L
     uq = bodies.get("Uncertainty quantification", "")
     if not uq:
         _not_run("the card has no Uncertainty quantification section to read (C003)", "C005")
-    if uq:
+    if uq and _point_predictor(man):
+        _ran("C005")
+        if not any(phrase in uq.lower() for phrase in NO_UNCERTAINTY_PHRASES):
+            findings.append(Finding("C005", where, "uncertainty.form is 'none', and section '## Uncertainty "
+                                                   "quantification' does not say that the model reports no "
+                                                   "uncertainty (for example: 'a point predictor; it reports no "
+                                                   "uncertainty')"))
+    elif uq:
         _ran("C005")
         if not _NUMERAL.search(uq):
             findings.append(Finding("C005", where, "section '## Uncertainty quantification' states no number; "
@@ -1201,13 +1546,20 @@ def check_report(rep: Dict[str, Any], man: Optional[Dict[str, Any]], where: str,
 
 
 def check_b4(check: Any, where: str, findings: List[Finding]) -> None:
-    """B4 conservation: a number over a named control volume, or a stated inapplicability.
+    """B4 conservation: a number over a named control volume, a stated inapplicability, or an honest NOT_RUN.
 
     This is the rule the scalar ladder's V2.3 cannot satisfy.  V2.3 passes when a
     free-text field is a non-empty string, so the string
     ``"applicable_not_implemented_v0 (...)"`` -- which asserts the check applies
     and supplies no measurement -- is graded PASS today.  Under B4 that is a FAIL,
     because asserting applicability obliges a number.
+
+    A check that applies and was not run reports ``NOT_RUN`` with ``applicable:
+    true``.  It carries no measurement, so nothing here reads one from it, and it
+    blocks the rollup like every NOT_RUN (V008 rejects a report that says
+    otherwise).  Before contract 1.1 this rule demanded a measurement from it, so
+    a producer whose model conserves a quantity it had not yet measured could
+    only call the check NOT_APPLICABLE, which is false.
     """
     at = "%s checks.B4_conservation" % where
     if check is None:
@@ -1229,6 +1581,8 @@ def check_b4(check: Any, where: str, findings: List[Finding]) -> None:
             findings.append(Finding("V009", at, "B4 applicable: false must carry status NOT_APPLICABLE, not %r"
                                     % (check.get("status"),)))
         return
+    if check.get("status") == "NOT_RUN":
+        return  # applies and was not run: no measurement to read, and NOT_RUN blocks the rollup
     for key in ("quantity", "control_volume"):
         if not str(check.get(key, "")).strip():
             findings.append(Finding("V009", at, "B4 applicable: true must name %r" % key))
@@ -1259,7 +1613,8 @@ def check_b4(check: Any, where: str, findings: List[Finding]) -> None:
 # made NOT_RUN -- a status spec section 5.3 defines for every key -- impossible
 # to report honestly for A3 and A5: a package whose model has not been trained
 # was rejected for saying so, while a NOT_APPLICABLE claim with any reason at
-# all was accepted.
+# all was accepted.  B4's V009 reads no measurement from a NOT_RUN either
+# (check_b4), so from contract 1.1 no rule reads one on any key.
 #
 # This narrows what V010 and V011 read; it does not loosen the verdict.  NOT_RUN
 # is in BLOCKING_STATUSES, so it forces the recomputed overall to FAIL and V008
@@ -1312,44 +1667,274 @@ def check_a5(check: Any, where: str, findings: List[Finding],
 
 
 # --------------------------------------------------------------------------- #
-# The smoke test: ``check --smoke`` runs the entrypoint on the manifest's examples.
+# The stdio_json frame (spec section 12) and the smoke test that holds an
+# entrypoint to it: ``check --smoke`` runs the entrypoint on the manifest's examples.
 #
 # The default check reads files and runs nothing.  ``--smoke`` also runs the
-# package's entrypoint the way a consumer dispatches it under ``stdio_json``: once
-# per ``examples[]`` entry, with that example's inputs as the request, in the
-# package directory, within ``invocation.timeout_s``.  Each answer must carry every
-# declared output and every uncertainty field the manifest's ``per_output`` blocks
-# name (S001).  A smoke test that cannot run -- no examples, an entrypoint the static
-# check did not verify, a host that cannot launch it, a module the entrypoint
-# imports missing from the checking environment -- is reported as a warning with
-# its reason (S002), never as a pass.
+# package's entrypoint the way a consumer dispatches it under ``stdio_json``: each
+# ``examples[]`` entry as a ``single`` request, and all of them as one ``batch``
+# request when the manifest declares ``invocation.batch_supported: true``, each in a
+# fresh working directory the checker creates and removes -- never the package
+# directory -- within ``invocation.timeout_s``.  The request is ``{run_id, mode,
+# inputs}`` on stdin, then end of file; the answer is one frame per row on stdout.
+#
+# S001 holds the frame: an answer that crashes (a non-zero exit, a timeout, no
+# frame, the wrong number of frames), declines an example, omits a declared output
+# or a key the ``per_output`` blocks name, or -- from contract 1.1 -- carries no
+# ``status``, echoes another ``run_id`` or puts a line that is not a frame on stdout.
+# S003 holds the artifact references an answer carries: a declared field and every
+# ``*_artifact`` key must be one, and each must name a file inside the working
+# directory, of exactly its declared ``bytes`` and ``sha256``, in its declared media
+# type.  A smoke test that cannot run -- no examples, an entrypoint the static check
+# did not verify, a host that cannot launch it, a module the entrypoint imports
+# missing from the checking environment -- is reported as a warning with its reason
+# (S002), never as a pass.
 #
 # It runs only an entrypoint the static check verified: inside the package, its
 # bytes matching their pin.  It still executes the package's code, so run it only
 # on a package you would run.
 # --------------------------------------------------------------------------- #
-SMOKE_RULES: Tuple[str, ...] = ("S001", "S002")
+SMOKE_RULES: Tuple[str, ...] = ("S001", "S002", "S003")
 #: Static findings after which the entrypoint is not one the checker will run.
 _SMOKE_BLOCKERS: Tuple[str, ...] = ("M008", "M012", "M013")
 _MODULE_NOT_FOUND = re.compile(r"ModuleNotFoundError: No module named '([^']+)'")
+#: The contract version from which every frame carries ``status`` and the request's
+#: ``run_id``, and stdout carries frames and nothing else.
+FRAME_STRICT_FROM: Tuple[int, int] = (1, 1)
+STDIO_MODES: Tuple[str, ...] = ("single", "batch")
+#: Every key of an artifact reference, and the keys of its ``field`` descriptor.
+REFERENCE_KEYS: Tuple[str, ...] = ("kind", "path", "media_type", "sha256", "bytes", "field")
+REFERENCE_FIELD_KEYS: Tuple[str, ...] = ("name", "units", "range", "n_nodes")
+REFERENCE_KIND = "artifact"
 
 
-def _last_json_object(text: str) -> Optional[Dict[str, Any]]:
-    """The answer frame: all of stdout as one JSON object, else its last line that is one."""
+def stdio_request(run_id: str, inputs: Any, mode: Optional[str] = None) -> Dict[str, Any]:
+    """The request a consumer sends on stdin: ``{run_id, mode, inputs}``; ``mode`` follows the inputs' shape."""
+    if mode is None:
+        mode = "batch" if isinstance(inputs, list) else "single"
+    return {"run_id": run_id, "mode": mode, "inputs": inputs}
+
+
+def read_frames(stdout: str, strict: bool) -> Tuple[List[Dict[str, Any]], Optional[str]]:
+    """The frames an answer carries on stdout, and why stdout is not a frame stream (or None).
+
+    A frame is a JSON object on a line of its own; stdout carrying one object over
+    several lines is read as that one frame.  ``strict`` (contract 1.1 and later)
+    refuses a line that is not a frame; otherwise such lines are skipped, as a 1.0
+    entrypoint's banner was.
+    """
     try:
-        whole = json.loads(text)
+        whole = json.loads(stdout)
     except ValueError:
         whole = None
     if isinstance(whole, dict):
-        return whole
-    for line in reversed([ln for ln in text.splitlines() if ln.strip()]):
+        return [whole], None
+    frames: List[Dict[str, Any]] = []
+    for line in stdout.splitlines():
+        if not line.strip():
+            continue
         try:
             frame = json.loads(line)
         except ValueError:
-            continue
+            frame = None
         if isinstance(frame, dict):
-            return frame
-    return None
+            frames.append(frame)
+        elif strict:
+            return frames, "stdout carries a line that is not a frame%s" % _tail(line)
+    if not frames:
+        return frames, "the answer on stdout is not a JSON object%s" % _tail(stdout)
+    return frames, None
+
+
+def _is_reference(value: Any) -> bool:
+    return isinstance(value, dict) and value.get("kind") == REFERENCE_KIND
+
+
+def _uq_keys(block: Any) -> Tuple[List[str], List[str]]:
+    """The output keys a ``per_output`` block names: ``(every key owed, the keys owed as references)``."""
+    owed: List[str] = []
+    references: List[str] = []
+    if isinstance(block, dict):
+        for key, value in block.items():
+            if not isinstance(value, str):
+                continue
+            if key == "field" or key.endswith("_field"):
+                owed.append(value)
+            elif key == "artifact" or key.endswith("_artifact"):
+                owed.append(value)
+                references.append(value)
+    return owed, references
+
+
+def _reference_positions(man: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+    """Output keys whose value an ``ok`` frame may or must carry as a reference, and what it must state.
+
+    Maps a key to ``{"required", "media_type", "units"}``.  Required: the value of a
+    ``type: field`` output that declares a field block, and of every key a
+    ``*_artifact`` declaration names.  Not required, but held to the same media type
+    and units when it is a reference: a ``*_field`` band key of a field output.  A
+    band key carries its output's declared media type and units.
+    """
+    outputs = {o.get("name"): o for o in man.get("outputs") or [] if isinstance(o, dict)}
+    unc = man.get("uncertainty") if isinstance(man.get("uncertainty"), dict) else {}
+    per_output = unc.get("per_output") if isinstance(unc.get("per_output"), dict) else {}
+
+    def expectation(name: Any) -> Dict[str, Any]:
+        out = outputs.get(name) or {}
+        block = out.get("field") if out.get("type") == "field" and isinstance(out.get("field"), dict) else {}
+        return {"media_type": block.get("media_type"), "units": block.get("units"), "declared": bool(block)}
+
+    positions: Dict[str, Dict[str, Any]] = {}
+    for name in outputs:
+        want = expectation(name)
+        if want["declared"]:
+            positions[name] = {"required": True, "media_type": want["media_type"], "units": want["units"]}
+    for name, block in per_output.items():
+        owed, references = _uq_keys(block)
+        want = expectation(name)
+        for key in owed:
+            if key not in positions:
+                positions[key] = {"required": key in references, "media_type": want["media_type"],
+                                  "units": want["units"]}
+    return positions
+
+
+def reference_problems(value: Any, run_dir: Path, media_type: Optional[str] = None,
+                       units: Optional[str] = None) -> List[str]:
+    """Every way ``value`` breaks the artifact-reference rules (spec section 12), empty when it holds.
+
+    The keys are checked first, then the containment of ``path`` in ``run_dir``,
+    then -- only when both hold -- the file's size and digest.  ``media_type`` and
+    ``units``, when given, are what the manifest declared for this value.
+    """
+    if not isinstance(value, dict):
+        return ["is not an artifact reference: a mapping {kind, path, media_type, sha256, bytes, field} "
+                "was owed, got %s" % type(value).__name__]
+    problems = ["lacks %r" % key for key in REFERENCE_KEYS if key not in value]
+    if "kind" in value and value["kind"] != REFERENCE_KIND:
+        problems.append("kind %r is not %r" % (value["kind"], REFERENCE_KIND))
+    media = value.get("media_type")
+    if "media_type" in value:
+        if not isinstance(media, str) or not re.match(MEDIA_TYPE_PATTERN, media):
+            problems.append("media_type %r is not a bare type/subtype token" % (media,))
+        elif media_type and media != media_type:
+            problems.append("media_type %r is not the declared %r" % (media, media_type))
+    digest = value.get("sha256")
+    digest_ok = isinstance(digest, str) and bool(_HEX64.match(digest))
+    if "sha256" in value and not digest_ok:
+        problems.append("sha256 %r is not 64 lowercase hex characters" % (digest,))
+    size = value.get("bytes")
+    size_ok = isinstance(size, int) and not isinstance(size, bool) and size >= 0
+    if "bytes" in value and not size_ok:
+        problems.append("bytes %r is not a non-negative integer" % (size,))
+    descriptor = value.get("field")
+    if "field" in value:
+        if not isinstance(descriptor, dict):
+            problems.append("field must be a mapping {name, units, range, n_nodes}, got %r" % (descriptor,))
+        else:
+            problems += ["field lacks %r" % key for key in REFERENCE_FIELD_KEYS if key not in descriptor]
+            name = descriptor.get("name")
+            if "name" in descriptor and (not isinstance(name, str) or not name.strip()):
+                problems.append("field.name %r is not a non-empty string" % (name,))
+            own = descriptor.get("units")
+            if "units" in descriptor and not isinstance(own, str):
+                problems.append("field.units %r is not a string" % (own,))
+            elif units and isinstance(own, str) and own != units:
+                problems.append("field.units %r is not the declared %r" % (own, units))
+            span = descriptor.get("range")
+            if "range" in descriptor and not (
+                    isinstance(span, list) and len(span) == 2 and all(_is_number(x) for x in span)
+                    and all(math.isfinite(x) for x in span) and span[0] <= span[1]):
+                problems.append("field.range %r is not [low, high], two finite numbers with low <= high" % (span,))
+            count = descriptor.get("n_nodes")
+            if "n_nodes" in descriptor and not (isinstance(count, int) and not isinstance(count, bool) and count > 0):
+                problems.append("field.n_nodes %r is not a positive integer" % (count,))
+    path = value.get("path")
+    if "path" not in value:
+        return problems
+    if not isinstance(path, str):
+        problems.append("path %r is not a string" % (path,))
+        return problems
+    outside = _outside(run_dir, path, "the run's working directory")
+    if outside:
+        problems.append("path %r %s -- a reference names a file the entrypoint wrote into its working "
+                        "directory" % (path, outside))
+        return problems
+    if not (digest_ok and size_ok):
+        return problems
+    target = run_dir / path
+    if not target.exists():
+        problems.append("path %r names no file in the run's working directory" % (path,))
+    elif not target.is_file():
+        problems.append("path %r is not a regular file" % (path,))
+    else:
+        real_size = target.stat().st_size
+        if real_size != size:
+            problems.append("the file %r is %d bytes, not the declared %d" % (path, real_size, size))
+        else:
+            actual = sha256_file(target)
+            if actual != digest:
+                problems.append("sha256 mismatch for %r: declared %s, on disk %s" % (path, digest, actual))
+    return problems
+
+
+def frame_problems(frame: Any, man: Dict[str, Any], run_dir: Path, run_id: Optional[str] = None,
+                   version: Optional[Tuple[int, int]] = None) -> List[Tuple[str, str]]:
+    """``(rule, message)`` for every way one frame breaks the stdio_json frame (spec section 12).
+
+    S001 for the frame itself; S003 for its artifact references, each verified
+    against the files in ``run_dir``, the request's working directory.  ``version``
+    is the contract version the package declares (from 1.1 a frame carries
+    ``status`` and echoes ``run_id``); by default, the manifest's.
+    """
+    if version is None:
+        version = _major_minor(man.get("spec_version"))
+    strict = version is not None and version >= FRAME_STRICT_FROM
+    if not isinstance(frame, dict):
+        return [("S001", "the frame is not a JSON object")]
+    problems: List[Tuple[str, str]] = []
+    if "status" not in frame:
+        if strict:
+            problems.append(("S001", "the frame carries no status; from contract 1.1 every frame says ok or error"))
+    elif frame["status"] == "error":
+        said = frame.get("error")
+        detail = json.dumps(said) if not isinstance(said, str) else said
+        return [("S001", "the entrypoint declined the example: status 'error'%s" % _tail(detail))]
+    elif frame["status"] != "ok":
+        return [("S001", "status %r is neither 'ok' nor 'error'" % (frame["status"],))]
+    if strict and run_id is not None and frame.get("run_id") != run_id:
+        problems.append(("S001", "the frame echoes run_id %r, not the request's %r" % (frame.get("run_id"), run_id)))
+    outputs = frame.get("outputs")
+    if not isinstance(outputs, dict):
+        problems.append(("S001", "the answer carries no outputs mapping"))
+        return problems
+    declared = [o.get("name") for o in man.get("outputs") or [] if isinstance(o, dict)]
+    missing = [name for name in declared if outputs.get(name) is None]
+    if missing:
+        problems.append(("S001", "the answer omits declared output(s) %s" % missing))
+    unc = man.get("uncertainty") if isinstance(man.get("uncertainty"), dict) else {}
+    per_output = unc.get("per_output") if isinstance(unc.get("per_output"), dict) else {}
+    owed = sorted({key for block in per_output.values() for key in _uq_keys(block)[0]})
+    missing_uq = [key for key in owed if outputs.get(key) is None]
+    if missing_uq:
+        problems.append(("S001", "the answer omits the uncertainty key(s) %s that uncertainty.per_output names"
+                         % missing_uq))
+    positions = _reference_positions(man)
+    for key in sorted(outputs, key=str):
+        value = outputs[key]
+        if value is None:
+            continue
+        want = positions.get(key)
+        if want is None:
+            if not _is_reference(value):
+                continue                          # an in-band value nothing declared as a reference
+            want = {}
+        elif not want["required"] and not _is_reference(value):
+            continue                              # a *_field band sent in band: owed, but not as a reference
+        _ran("S003")
+        for problem in reference_problems(value, run_dir, want.get("media_type"), want.get("units")):
+            problems.append(("S003", "outputs.%s %s" % (key, problem)))
+    return problems
 
 
 def _tail(text: str, limit: int = 200) -> str:
@@ -1361,7 +1946,7 @@ def _tail(text: str, limit: int = 200) -> str:
 
 
 def _smoke_command(pkg: Path, executable: str) -> Tuple[Optional[List[str]], Optional[str]]:
-    # absolute, because the process runs with the package directory as its cwd
+    # absolute, because the process runs in a working directory of its own
     target = (pkg / executable).resolve()
     if target.suffix.lower() == ".py":
         return [sys.executable, str(target)], None
@@ -1371,7 +1956,7 @@ def _smoke_command(pkg: Path, executable: str) -> Tuple[Optional[List[str]], Opt
 
 
 def smoke_test(man: Dict[str, Any], pkg: Path, where: str, findings: List[Finding]) -> Optional[str]:
-    """Run S001 over the manifest's examples.  Returns None, or why the smoke test could not run."""
+    """Run S001 and S003 over the manifest's examples.  Returns None, or why the smoke test could not run."""
     blockers = sorted({f.rule for f in findings if f.rule in _SMOKE_BLOCKERS})
     if blockers:
         return ("the static check did not verify the entrypoint (%s), and the smoke test runs only a verified one"
@@ -1389,55 +1974,57 @@ def smoke_test(man: Dict[str, Any], pkg: Path, where: str, findings: List[Findin
     argv, problem = _smoke_command(pkg, executable)
     if argv is None:
         return problem
-    outputs = [f.get("name") for f in man.get("outputs") or [] if isinstance(f, dict)]
-    unc = man.get("uncertainty") if isinstance(man.get("uncertainty"), dict) else {}
-    per_output = unc.get("per_output") if isinstance(unc.get("per_output"), dict) else {}
-    uq_fields = sorted({value for block in per_output.values() if isinstance(block, dict)
-                        for key, value in block.items() if key.endswith("_field") and isinstance(value, str)})
-    env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONIOENCODING="utf-8")
-    import subprocess  # noqa: PLC0415 -- imported only when --smoke asks for a run
+    version = _major_minor(man.get("spec_version"))
+    strict = version is not None and version >= FRAME_STRICT_FROM
+    requests: List[Tuple[str, str, List[Dict[str, Any]]]] = []
     for i, example in enumerate(examples):
         at = "%s examples[%d]" % (where, i)
         if not isinstance(example, dict) or not isinstance(example.get("inputs"), dict):
             findings.append(Finding("S001", at, "the example has no inputs mapping to send"))
             continue
-        request = json.dumps({"inputs": example["inputs"]}) + "\n"
-        try:
-            proc = subprocess.run(argv, input=request, capture_output=True, text=True, encoding="utf-8",
-                                  errors="replace", timeout=timeout, cwd=str(pkg.resolve()), env=env)
-        except subprocess.TimeoutExpired:
-            findings.append(Finding("S001", at, "no answer within invocation.timeout_s = %d s" % timeout))
-            continue
-        except OSError as exc:
-            return "the entrypoint could not be launched here (%s: %s)" % (type(exc).__name__, exc)
-        if proc.returncode != 0:
-            missing = _MODULE_NOT_FOUND.search(proc.stderr or "")
-            if missing and not proc.stdout.strip():
-                return ("the entrypoint imports %r, which is not installed in the checking environment"
-                        % missing.group(1))
-            findings.append(Finding("S001", at, "the entrypoint exited with code %d%s"
-                                    % (proc.returncode, _tail(proc.stdout) or _tail(proc.stderr))))
-            continue
-        frame = _last_json_object(proc.stdout)
-        if frame is None:
-            findings.append(Finding("S001", at, "the answer on stdout is not a JSON object%s" % _tail(proc.stdout)))
-            continue
-        if "status" in frame and frame["status"] != "ok":
-            said = frame.get("error") or frame.get("reason") or ""
-            findings.append(Finding("S001", at, "the entrypoint declined the example: status %r%s"
-                                    % (frame["status"], _tail(said if isinstance(said, str) else json.dumps(said)))))
-            continue
-        answer = frame.get("outputs")
-        if not isinstance(answer, dict):
-            findings.append(Finding("S001", at, "the answer carries no outputs mapping"))
-            continue
-        missing_outputs = [name for name in outputs if name not in answer]
-        if missing_outputs:
-            findings.append(Finding("S001", at, "the answer omits declared output(s) %s" % missing_outputs))
-        missing_uq = [name for name in uq_fields if name not in answer]
-        if missing_uq:
-            findings.append(Finding("S001", at, "the answer omits the uncertainty field(s) %s that "
-                                                "uncertainty.per_output names" % missing_uq))
+        requests.append((at, "single", [example["inputs"]]))
+    if inv.get("batch_supported") is True and requests:
+        requests.append(("%s examples, as one batch" % where, "batch", [rows[0] for _, _, rows in requests]))
+    env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONIOENCODING="utf-8")
+    import subprocess  # noqa: PLC0415 -- imported only when --smoke asks for a run
+    import tempfile  # noqa: PLC0415
+    for n, (at, mode, rows) in enumerate(requests):
+        run_id = "smoke-%d" % n
+        request = stdio_request(run_id, rows[0] if mode == "single" else rows, mode)
+        with tempfile.TemporaryDirectory(prefix="open-contract-ml-smoke-") as tmp:
+            run_dir = Path(tmp)
+            try:
+                proc = subprocess.run(argv, input=json.dumps(request) + "\n", capture_output=True, text=True,
+                                      encoding="utf-8", errors="replace", timeout=timeout, cwd=str(run_dir),
+                                      env=env)
+            except subprocess.TimeoutExpired:
+                findings.append(Finding("S001", at, "no answer within invocation.timeout_s = %d s" % timeout))
+                continue
+            except OSError as exc:
+                return "the entrypoint could not be launched here (%s: %s)" % (type(exc).__name__, exc)
+            if proc.returncode != 0:
+                missing = _MODULE_NOT_FOUND.search(proc.stderr or "")
+                if missing and not proc.stdout.strip():
+                    return ("the entrypoint imports %r, which is not installed in the checking environment"
+                            % missing.group(1))
+                findings.append(Finding("S001", at, "the entrypoint exited with code %d%s"
+                                        % (proc.returncode, _tail(proc.stdout) or _tail(proc.stderr))))
+                continue
+            frames, stream_problem = read_frames(proc.stdout, strict)
+            if stream_problem:
+                findings.append(Finding("S001", at, stream_problem))
+                continue
+            if mode == "single" and not strict and len(frames) > 1:
+                frames = frames[-1:]                 # a 1.0 entrypoint's answer is its last JSON object
+            if len(frames) != len(rows):
+                findings.append(Finding("S001", at, "the answer carries %d frame(s) for %d row(s); a %s request is "
+                                                    "answered with one frame per row" % (len(frames), len(rows), mode)))
+                continue
+            for k, frame in enumerate(frames):
+                frame_at = at if mode == "single" else "%s, frame %d" % (at, k)
+                for rule, message in frame_problems(frame, man, run_dir, run_id, version):
+                    findings.append(Finding(rule, frame_at, message))
+    _not_run("no answer carried an artifact reference to verify", "S003")
     return None
 
 

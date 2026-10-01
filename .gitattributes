@@ -8,7 +8,7 @@
 #
 # Measured, not assumed: cloning this repo on a machine with core.autocrlf=true
 # and no .gitattributes rewrites examples/reference-package/predict.py from
-# 2418 to 2484 bytes (66 CRLF conversions) and all four M013 pins fail. The
+# 5141 to 5265 bytes (124 CRLF conversions) and all four M013 pins fail. The
 # first thing a new user does is clone and run the checker, so that is the
 # worst possible place for the standard to appear broken.
 

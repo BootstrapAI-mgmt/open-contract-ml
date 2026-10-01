@@ -161,7 +161,7 @@
     {
       "id": "M007",
       "severity": "ERROR",
-      "title": "every output is covered by an uncertainty.per_output block"
+      "title": "every output is covered by an uncertainty.per_output block; uncertainty.form none (from contract 1.1) declares no block and no calibration"
     },
     {
       "id": "M008",
@@ -209,9 +209,29 @@
       "title": "provenance.environment names the interpreter"
     },
     {
+      "id": "M017",
+      "severity": "WARN",
+      "title": "a declared provenance.signature is {format: oms, path} naming a file in the package that is not a pinned artifact (the checker verifies no signature)"
+    },
+    {
       "id": "M018",
       "severity": "ERROR",
       "title": "the manifest conforms to the contract-v1 manifest schema (required keys, types, enumerations, patterns, bounds)"
+    },
+    {
+      "id": "M019",
+      "severity": "ERROR",
+      "title": "a type: field output declares its field block (kind, units, support, media_type) from contract 1.1, and a declared block is complete and sits on a field output"
+    },
+    {
+      "id": "M020",
+      "severity": "ERROR",
+      "title": "a declared licence block names the model, the weights and the training data, each by an SPDX license expression with its text or URL, or by NOASSERTION with a note"
+    },
+    {
+      "id": "M021",
+      "severity": "WARN",
+      "title": "a package declaring contract 1.1 or later declares a licence block"
     },
     {
       "id": "C001",
@@ -236,7 +256,7 @@
     {
       "id": "C005",
       "severity": "ERROR",
-      "title": "the uncertainty section states a method and a number"
+      "title": "the uncertainty section states a method and a number, or, under uncertainty.form none, that the model reports no uncertainty"
     },
     {
       "id": "C006",
@@ -286,7 +306,7 @@
     {
       "id": "V009",
       "severity": "ERROR",
-      "title": "B4 conservation is measured, not declared"
+      "title": "B4 conservation is measured, not declared (a NOT_RUN check declares applicable: true and carries no measurement)"
     },
     {
       "id": "V010",
@@ -311,12 +331,17 @@
     {
       "id": "S001",
       "severity": "ERROR",
-      "title": "check --smoke: the entrypoint answers every declared example within its timeout, with every declared output and uncertainty field"
+      "title": "check --smoke: the entrypoint answers each example, and a batch of them where batch is supported, in the stdio_json frame: exit 0 within its timeout, a frame per row, every declared output and uncertainty key (and, from contract 1.1, status and run_id)"
     },
     {
       "id": "S002",
       "severity": "WARN",
       "title": "check --smoke: the smoke test could run (examples declared, the entrypoint verified and launchable here)"
+    },
+    {
+      "id": "S003",
+      "severity": "ERROR",
+      "title": "check --smoke: every artifact reference an answer carries, and every declared field and *_artifact value, names a file in the run's working directory with its declared bytes, sha256 and media type"
     }
   ]
 }

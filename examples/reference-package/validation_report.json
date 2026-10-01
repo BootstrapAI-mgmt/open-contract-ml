@@ -1,6 +1,6 @@
 {
   "spec_version": "1.1",
-  "produced_by": "the reference package's build script (not shipped with this repository)",
+  "produced_by": "the reference package's build script (not shipped with this repository); C2, C3 and C4 re-measured against the contract 1.1 entrypoint, as their methods say",
   "model_id": "contract_reference_tmf_v1",
   "model_version": "1.0.0",
   "dataset_sha256": "7bd50c57ac6251e6011f4612ba75da49d4e48d320afbcb923f1aa94b6f140d64",
@@ -239,7 +239,7 @@
     },
     "C2_serve_parity": {
       "status": "PASS",
-      "method": "predict.py invoked as a stdio_json subprocess against the in-process fit",
+      "method": "predict.py invoked as a stdio_json subprocess, in a working directory other than the package's, against the in-process fit: 12 cases, peak_temp_K 473.15, 773.15, 973.15 and 1123.15 K for each of the three materials at 5000 cycles (re-measured for the contract 1.1 entrypoint, CPython 3.11.15)",
       "metrics": {
         "max_rel_diff": 0.0,
         "n_cases": 12
@@ -257,7 +257,7 @@
     },
     "C3_provenance_integrity": {
       "status": "PASS",
-      "method": "re-hash every declared artifact at report time",
+      "method": "re-hash every declared artifact at report time (re-measured once the contract 1.1 entrypoint was pinned)",
       "metrics": {
         "artifacts_verified": 2,
         "hash_mismatches": 0
@@ -275,10 +275,10 @@
     },
     "C4_deployment_readiness": {
       "status": "PASS",
-      "method": "required deployment declarations present, and measured single-call runtime against the manifest timeout",
+      "method": "required deployment declarations present, and measured single-call runtime against the manifest timeout: the median of 5 single calls (re-measured for the contract 1.1 entrypoint, CPython 3.11.15 on Linux)",
       "metrics": {
         "declarations_present": 4,
-        "measured_runtime_s": 0.154
+        "measured_runtime_s": 0.035
       },
       "thresholds": {
         "declarations_required": 4,

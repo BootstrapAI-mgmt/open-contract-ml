@@ -65,7 +65,7 @@ jobs:
       #
       # Windows is not decoration. This repository's `.gitattributes` exists
       # because a CRLF checkout rewrites examples/reference-package/predict.py
-      # from 2418 to 2484 bytes and all four M013 pins fail. That
+      # from 5141 to 5265 bytes and all four M013 pins fail. That
       # regression is invisible on Linux, so the platform where it happens is
       # tested -- weekly, and whenever the matrix is dispatched by hand.
       matrix:

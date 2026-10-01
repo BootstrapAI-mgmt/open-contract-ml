@@ -80,6 +80,11 @@ def base_manifest() -> dict:
         },
         "validation": {"report": "./validation_report.json", "overall": "PASS"},
         "model_card": "./model_card.md",
+        "licence": {
+            "model": {"spdx": "Apache-2.0", "url": "http://www.apache.org/licenses/LICENSE-2.0"},
+            "weights": {"spdx": "Apache-2.0", "url": "http://www.apache.org/licenses/LICENSE-2.0"},
+            "training_data": {"spdx": "NOASSERTION", "note": "a constant function has no training data"},
+        },
     }
 
 
@@ -411,6 +416,114 @@ def _a5_bitwise_at(tolerance: float):
     return plant
 
 
+#: B4 as a check that applies and was not run: the honest encoding contract 1.1 accepts.
+B4_NOT_RUN = {"status": "NOT_RUN", "applicable": True,
+              "reason": "the model conserves energy, and the balance has not been measured yet"}
+
+#: What a point predictor's card says where another card names a method and a number.
+POINT_PREDICTOR_UQ = ("A point predictor: the model reports no uncertainty, and its answers carry no bands, "
+                      "so there is no interval to calibrate.")
+
+
+def _point_predictor_package(spec_version: str = "1.1", calibration: bool = False, card_says_so: bool = True):
+    """The synthetic package declaring uncertainty.form none, consistently in all three documents."""
+    def apply(root: Path) -> None:
+        man = base_manifest()
+        man["spec_version"] = spec_version
+        man["uncertainty"] = {"form": "none", "per_output": {}}
+        if calibration:
+            man["uncertainty"]["calibration"] = {"holdout_size": 10, "empirical_coverage": 0.9, "method": "none"}
+        rep = base_report()
+        rep["spec_version"] = spec_version
+        rep["checks"]["A3_uq_calibration"] = {"status": "NOT_APPLICABLE",
+                                              "reason": "the model reports no uncertainty, so there is no band"}
+        card = base_card().replace('spec_version: "1.1"', 'spec_version: "%s"' % spec_version)
+        if card_says_so:
+            card = card.replace(CARD_SECTION_TEXT["Uncertainty quantification"], POINT_PREDICTOR_UQ)
+        write_package(root, manifest=man, report=rep, card=card)
+    return apply
+
+
+#: A complete field block (contract 1.1): what a type: field output declares before any run.
+FIELD_BLOCK = {"kind": "scalar", "units": "K", "support": "node", "media_type": "application/vnd.vtk.vtp+xml",
+               "shape": [17, 17], "coordinate_ref": "nodes of a regular grid on the plate, row-major, axis order (y, x)"}
+
+#: The block a grid producer emits today: shape, coordinate reference and units alone.
+GRID_PRODUCER_BLOCK = {"shape": [64, 64],
+                       "coordinate_ref": "regular_grid_cell_centred; axis order (y, x), row-major; "
+                                         "y in [0, 0.1] m, x in [0, 0.1] m",
+                       "units": "K"}
+
+
+def _add_field_output(block=None, **extra):
+    """Add a type: field output, with its uncertainty block, to the synthetic manifest."""
+    def change(m) -> None:
+        out = {"name": "surface_temp", "type": "field", "units": "K", "viewer": "field_contour",
+               "description": "the temperature over the plate's surface"}
+        out.update(extra)
+        if block is not None:
+            out["field"] = dict(block) if isinstance(block, dict) else block
+        m["outputs"].append(out)
+        m["uncertainty"]["per_output"]["surface_temp"] = {"lower_artifact": "surface_temp_lower",
+                                                          "upper_artifact": "surface_temp_upper", "level": 0.9}
+    return change
+
+
+def _with_signature(signature, sidecar: bool = True):
+    """Declare provenance.signature on the synthetic package, with or without the sidecar file."""
+    def apply(root: Path) -> None:
+        if sidecar:
+            (root / "model.sig").write_text("a detached signature" + LF, encoding="utf-8", newline=LF)
+        _mutate_manifest(lambda m: m["provenance"].__setitem__("signature", signature))(root)
+    return apply
+
+
+#: Malformed signature declarations, each of which M017 reports and nothing else does.
+MALFORMED_SIGNATURES = [
+    ({"format": "pgp", "path": "./model.sig"}, True),
+    ({"format": "oms", "path": "./model.sig"}, False),
+    ({"format": "oms", "path": "./model_weights.json"}, True),
+    ({"format": "oms", "path": "../model.sig"}, True),
+    ({"format": "oms"}, True),
+    ("signed by the maintainer", True),
+]
+
+
+#: An entrypoint in the shape a grid field producer documents: a field and its band by reference.
+GRID_FIELD_ENTRYPOINT = Path(__file__).resolve().parent / "fixtures" / "stdio_frame" / "grid_field_predict.py"
+
+
+def grid_field_manifest(entrypoint_src: str) -> dict:
+    """A 1.1 manifest around the grid-field fixture entrypoint, its source pinned."""
+    man = base_manifest()
+    man["modality"] = "field_in_field_out"
+    man["inputs"] = [
+        {"name": "source_P_W", "type": "float", "units": "W", "range": [1.0, 25.0], "required": True},
+        {"name": "h_W_m2K", "type": "float", "units": "W/(m^2 K)", "range": [10.0, 300.0], "required": True},
+    ]
+    man["outputs"] = [{"name": "dT", "type": "field", "units": "K", "viewer": "field_contour",
+                       "field": {"kind": "scalar", "units": "K", "support": "node",
+                                 "media_type": "application/vnd.vtk.vtp+xml", "shape": [4, 4],
+                                 "coordinate_ref": "nodes of a regular 4 x 4 grid, row-major, axis order (y, x)"}}]
+    man["uncertainty"] = {"form": "predictive_interval",
+                          "per_output": {"dT": {"lower_field": "dT_lower", "upper_field": "dT_upper", "level": 0.9}}}
+    man["invocation"]["batch_supported"] = True
+    man["provenance"]["artifacts"][0].update(sha256=_sha(entrypoint_src), bytes=len(entrypoint_src.encode("utf-8")))
+    man["examples"] = [{"label": "a mid-range source", "inputs": {"source_P_W": 12.0, "h_W_m2K": 60.0}},
+                       {"label": "a strong source, weak cooling", "inputs": {"source_P_W": 25.0, "h_W_m2K": 10.0}}]
+    return man
+
+
+def _grid_field_package(defect: str = "none"):
+    """The synthetic package rebuilt around the grid-field entrypoint, with one protocol defect planted."""
+    def apply(root: Path) -> None:
+        source = GRID_FIELD_ENTRYPOINT.read_text(encoding="utf-8")
+        assert source.count('DEFECT = "none"') == 1
+        source = source.replace('DEFECT = "none"', 'DEFECT = "%s"' % defect)
+        write_package(root, manifest=grid_field_manifest(source), entrypoint=source)
+    return apply
+
+
 def _strip_units(m) -> None:
     for field in m["inputs"] + m["outputs"]:
         field.pop("units", None)
@@ -558,6 +671,61 @@ MUTATIONS = [
     ("V011", _mutate_report(_a5_bitwise_at(1e-6))),
     # The report declares the contract version its manifest declares.
     ("V002", _mutate_report(lambda r: r.__setitem__("spec_version", "1.0"))),
+    # Honest statuses (contract 1.1). B4 may report NOT_RUN with applicable: true -- the
+    # check applies and was not run -- which blocks the rollup like every NOT_RUN, and a
+    # NOT_RUN B4 still declares that it applies.
+    ("V008", _mutate_report(lambda r: r["checks"].__setitem__("B4_conservation", dict(B4_NOT_RUN)))),
+    ("V009", _mutate_report(lambda r: r["checks"].__setitem__("B4_conservation",
+                                                              dict(B4_NOT_RUN, applicable=False)))),
+    ("V009", _mutate_report(lambda r: r["checks"].__setitem__(
+        "B4_conservation", {k: v for k, v in B4_NOT_RUN.items() if k != "applicable"}))),
+    # uncertainty.form none declares a point predictor: no per_output block, no
+    # calibration, from contract 1.1, and a card that says the model reports no
+    # uncertainty. The first keeps the synthetic package's bands under form none.
+    ("M007", _mutate_manifest(lambda m: m["uncertainty"].__setitem__("form", "none"))),
+    ("M007", _point_predictor_package(calibration=True)),
+    ("M007", _point_predictor_package(spec_version="1.0")),
+    ("C005", _point_predictor_package(card_says_so=False)),
+    # A type: field output states what it holds (contract 1.1). The first is the field
+    # output the checker accepted before, declared with nothing but a description; the
+    # second is the block a grid producer emits today, which the schema accepts and
+    # which lacks kind, support and media_type.
+    ("M019", _mutate_manifest(_add_field_output())),
+    ("M019", _mutate_manifest(_add_field_output(GRID_PRODUCER_BLOCK))),
+    ("M019", _mutate_manifest(lambda m: m["outputs"][0].__setitem__("field", dict(FIELD_BLOCK)))),
+    ("M019", _mutate_manifest(_add_field_output(dict(FIELD_BLOCK, units="degC")))),
+    ("M019", _mutate_manifest(_add_field_output("a VTK file"))),
+    ("M018", _mutate_manifest(_add_field_output(dict(FIELD_BLOCK, media_type="VTK PolyData")))),
+    ("M018", _mutate_manifest(_add_field_output(dict(FIELD_BLOCK, kind="tensor")))),
+    # A declared licence block names three licences, each an SPDX expression with its
+    # text or URL, or NOASSERTION with a note (M020); a 1.1 package without one is
+    # warned (M021). The first two are defects the checker accepted before.
+    ("M020", _mutate_manifest(lambda m: m["licence"]["model"].__setitem__("spdx", "Apache 2.0"))),
+    ("M020", _mutate_manifest(lambda m: m["licence"].pop("weights"))),
+    ("M020", _mutate_manifest(lambda m: m["licence"]["model"].__setitem__("spdx", "mit or apache-2.0"))),
+    ("M020", _mutate_manifest(lambda m: m["licence"]["training_data"].pop("note"))),
+    ("M020", _mutate_manifest(lambda m: m["licence"]["weights"].pop("url"))),
+    ("M020", _mutate_manifest(lambda m: m["licence"]["weights"].update(text="../LICENSE"))),
+    ("M020", _mutate_manifest(lambda m: m["licence"]["weights"].update(text="./LICENSE.txt"))),
+    ("M020", _mutate_manifest(lambda m: m.__setitem__("licence", "Apache-2.0"))),
+    ("M021", _mutate_manifest(lambda m: m.pop("licence"))),
+    ("M018", _mutate_manifest(lambda m: m["licence"]["model"].__setitem__("url", "ftp://example.invalid/licence"))),
+    # provenance.signature, where declared, is {format: oms, path} naming a sidecar in
+    # the package that is not a pinned artifact (M017, a warning; nothing is verified).
+    *[("M017", _with_signature(signature, sidecar)) for signature, sidecar in MALFORMED_SIGNATURES],
+    # A package targeting a contract major this checker does not support is refused.
+    ("M002", _mutate_manifest(lambda m: m.__setitem__("spec_version", "2.0"))),
+    # The stdio_json frame under check --smoke (spec section 12), planted in an
+    # entrypoint that answers a field and its band by reference. S003: a reference
+    # whose file has another digest or size, is absent or outside the run's working
+    # directory, states another media type or units or no descriptor, and a declared
+    # field answered in band. S001: a declared output omitted, no status, another
+    # run_id, a line on stdout that is not a frame, one frame too many, a non-zero exit.
+    *[("S003", _grid_field_package(defect)) for defect in (
+        "wrong_digest", "wrong_size", "missing_file", "outside_path", "wrong_media", "wrong_units",
+        "no_field_descriptor", "inline_field")],
+    *[("S001", _grid_field_package(defect)) for defect in (
+        "missing_output", "no_status", "wrong_run_id", "banner", "extra_frame", "nonzero_exit")],
 ]
 
 
@@ -758,6 +926,237 @@ def test_a_measured_fail_is_still_graded_for_legibility(tmp_path: Path, key: str
     assert rules_fired(vs.check_package(pkg)) == {rule}
 
 
+def test_b4_not_run_with_applicable_true_is_an_honest_blocking_status(tmp_path: Path):
+    """The conservation check applies and was not run: conformant under an overall FAIL, never under a PASS.
+
+    Before contract 1.1, V009 demanded a measurement from this check, so a
+    producer whose model conserves a quantity it had not measured could only call
+    the check NOT_APPLICABLE, which is false.
+    """
+    pkg = _copy_reference_package(tmp_path)
+    _rewrite_report(pkg, lambda rep: (rep["checks"].__setitem__("B4_conservation", dict(B4_NOT_RUN)),
+                                      rep.__setitem__("overall", "FAIL")))
+    assert vs.check_package(pkg) == []
+    _rewrite_report(pkg, lambda rep: rep.__setitem__("overall", "PASS"))
+    findings = vs.check_package(pkg)
+    assert rules_fired(findings) == {"V008"}
+    assert "recomputing from the checks gives FAIL (1 blocking)" in findings[0].message
+
+
+def test_a_not_run_check_is_read_for_no_measurement_on_any_key(tmp_path: Path):
+    """No rule reads a measurement from NOT_RUN, whatever the key; every NOT_RUN key blocks the rollup."""
+    pkg = _copy_reference_package(tmp_path)
+
+    def every_key_not_run(rep):
+        for key in vs.LADDER:
+            rep["checks"][key] = {"status": "NOT_RUN", "reason": NOT_RUN_REASON}
+        rep["checks"]["B4_conservation"]["applicable"] = True
+        rep["overall"] = "FAIL"
+
+    _rewrite_report(pkg, every_key_not_run)
+    assert vs.check_package(pkg) == []
+
+
+def test_a_point_predictor_with_no_bands_is_conformant(tmp_path: Path):
+    """uncertainty.form none, an empty per_output, no calibration, and a card that says so."""
+    root = tmp_path / "pkg"
+    write_package(root)
+    _point_predictor_package()(root)
+    assert vs.check_package(root) == []
+
+
+def test_form_none_names_each_band_it_still_declares(tmp_path: Path):
+    root = write_package(tmp_path / "pkg")
+    _mutate_manifest(lambda m: m["uncertainty"].__setitem__("form", "none"))(root)
+    messages = [f.message for f in vs.check_package(root) if f.rule == "M007"]
+    assert messages == ["uncertainty.form is 'none', so no output carries a band, but uncertainty.per_output "
+                        "declares a block for 'life_cycles'"]
+
+
+def test_a_complete_field_block_is_conformant(tmp_path: Path):
+    root = write_package(tmp_path / "pkg")
+    _mutate_manifest(_add_field_output(FIELD_BLOCK))(root)
+    assert vs.check_package(root) == []
+
+
+def test_a_bare_field_output_keeps_conforming_in_a_contract_1_0_package(tmp_path: Path):
+    """The 1.0 shape -- a field output with no block -- conforms in a package that declares 1.0."""
+    man = base_manifest()
+    _add_field_output()(man)
+    man["spec_version"] = "1.0"
+    rep = base_report()
+    rep["spec_version"] = "1.0"
+    card = base_card().replace('spec_version: "1.1"', 'spec_version: "1.0"')
+    assert vs.check_package(write_package(tmp_path / "pkg", manifest=man, report=rep, card=card)) == []
+
+
+def test_the_grid_producers_block_passes_the_schema_and_lacks_three_keys(tmp_path: Path):
+    """What a grid producer emits today is structurally valid and, under 1.1, incomplete -- and says which keys."""
+    root = write_package(tmp_path / "pkg")
+    _mutate_manifest(_add_field_output(GRID_PRODUCER_BLOCK))(root)
+    findings = vs.check_package(root)
+    assert [(f.rule, f.where) for f in findings] == [("M019", "manifest.json outputs[1]")]
+    assert "lacks kind, support, media_type" in findings[0].message
+
+
+@pytest.mark.parametrize("expression", [
+    "MIT", "Apache-2.0", "GPL-2.0+", "GPL-2.0-only WITH Classpath-exception-2.0",
+    "(MIT OR Apache-2.0) AND BSD-3-Clause", "MIT OR Apache-2.0 AND BSD-3-Clause", "LicenseRef-proprietary",
+    "DocumentRef-spdx-tool-1.2:LicenseRef-MIT-Style-2", "  MIT  ",
+])
+def test_an_spdx_expression_is_accepted(expression: str):
+    assert vs.spdx_expression_problem(expression) is None
+
+
+@pytest.mark.parametrize("expression,why", [
+    ("", "not a non-empty string"),
+    (None, "not a non-empty string"),
+    ("Apache 2.0", "'2.0' follows a complete expression without an operator"),
+    ("MIT/Apache-2.0", "is not a licence identifier"),
+    ("MIT, Apache-2.0", "is not a licence identifier"),
+    ("mit or apache-2.0", "in upper case"),
+    ("MIT and Apache-2.0", "in upper case"),
+    ("(MIT OR Apache-2.0", "is not closed"),
+    ("MIT)", "follows a complete expression"),
+    ("MIT AND", "ends where a licence identifier is expected"),
+    ("AND MIT", "stands where a licence identifier is expected"),
+    ("GPL-2.0 WITH", "ends where an exception identifier is expected"),
+    ("MIT WITH (X)", "stands where an exception identifier is expected"),
+    ("GPL-2.0 WITH Classpath-exception-2.0+", "is not an exception identifier"),
+    ("NOASSERTION AND MIT", "is not a licence"),
+    ("NONE", "is not a licence"),
+])
+def test_a_malformed_spdx_expression_is_named(expression, why):
+    problem = vs.spdx_expression_problem(expression)
+    assert problem is not None and why in problem, problem
+
+
+def test_the_reference_package_declares_its_licences():
+    import yaml
+    man = yaml.safe_load((REFERENCE_PACKAGE / "manifest.yaml").read_text(encoding="utf-8"))
+    assert set(man["licence"]) == set(vs.LICENCE_MEMBERS)
+    assert vs.check_package(REFERENCE_PACKAGE) == []
+
+
+def test_a_1_1_package_without_a_licence_block_earns_the_warning_only(tmp_path: Path):
+    """No licence block is a warning, never an error: the package stays conformant and says what it lacks."""
+    pkg = _copy_reference_package(tmp_path)
+    _rewrite_yaml_manifest(pkg, lambda m: m.pop("licence"))
+    findings = vs.check_package(pkg)
+    assert [(f.rule, f.severity) for f in findings] == [("M021", "WARN")]
+    assert vs.summarize(findings)["conformant"]
+
+
+def test_the_warning_names_a_license_key_the_contract_does_not_read(tmp_path: Path):
+    pkg = _copy_reference_package(tmp_path)
+    _rewrite_yaml_manifest(pkg, lambda m: m.__setitem__("license", m.pop("licence")))
+    [finding] = vs.check_package(pkg)
+    assert finding.rule == "M021" and "'license' key" in finding.message
+
+
+@pytest.mark.parametrize("signature,sidecar", MALFORMED_SIGNATURES, ids=[repr(s)[:40] for s, _ in MALFORMED_SIGNATURES])
+def test_m017_fires_on_a_malformed_signature_and_nothing_else(tmp_path: Path, signature, sidecar):
+    root = write_package(tmp_path / "pkg")
+    _with_signature(signature, sidecar)(root)
+    findings = vs.check_package(root)
+    assert [(f.rule, f.severity) for f in findings] == [("M017", "WARN")], findings
+    assert vs.summarize(findings)["conformant"]
+
+
+def test_a_well_formed_signature_and_no_signature_are_both_silent(tmp_path: Path):
+    """M017 reports a malformed declaration; it neither verifies a signature nor warns about an unsigned package."""
+    root = write_package(tmp_path / "pkg")
+    assert vs.check_package(root) == []                                  # no signature, contract 1.1
+    _with_signature({"format": "oms", "path": "./model.sig"})(root)
+    assert vs.check_package(root) == []                                  # declared, sidecar present
+
+
+# --------------------------------------------------------------------------- #
+# Versioning (spec section 7): what a MINOR version newly requires binds only a
+# package that declares it; an unknown additive key is ignored; a higher major is
+# refused.
+# --------------------------------------------------------------------------- #
+def _a_package_using_nothing_1_1_adds() -> tuple:
+    """A manifest, report and card with no comparators, a bare field output and no licence block."""
+    man = base_manifest()
+    man.pop("licence")
+    _add_field_output()(man)
+    rep = base_report()
+    for check in rep["checks"].values():
+        check.pop("comparators", None)
+    return man, rep, base_card()
+
+
+def _declaring(version: str, man: dict, rep: dict, card: str) -> tuple:
+    man, rep = json.loads(json.dumps(man)), json.loads(json.dumps(rep))
+    man["spec_version"] = rep["spec_version"] = version
+    return man, rep, card.replace('spec_version: "1.1"', 'spec_version: "%s"' % version)
+
+
+def test_a_1_1_only_requirement_does_not_bind_a_1_0_package(tmp_path: Path):
+    man, rep, card = _a_package_using_nothing_1_1_adds()
+    as_1_0 = write_package(tmp_path / "v1_0", *_declaring("1.0", man, rep, card))
+    assert vs.check_package(as_1_0) == []
+    as_1_1 = write_package(tmp_path / "v1_1", *_declaring("1.1", man, rep, card))
+    assert rules_fired(vs.check_package(as_1_1)) == {"V012", "M019", "M021"}
+
+
+def test_an_unknown_additive_key_is_ignored_in_a_1_0_package(tmp_path: Path):
+    man, rep, card = _declaring("1.0", *_a_package_using_nothing_1_1_adds())
+    man["x_vendor_extension"] = {"anything": [1, 2, 3]}
+    man["outputs"][0]["x_display_hint"] = "log scale"
+    man["invocation"]["x_scheduler"] = "local"
+    man["provenance"]["x_build_host"] = "ci"
+    rep["x_report_note"] = "an additive key"
+    assert vs.check_package(write_package(tmp_path / "pkg", man, rep, card)) == []
+
+
+def test_a_package_declaring_a_major_this_checker_does_not_support_is_rejected(tmp_path: Path):
+    man, rep, card = _declaring("2.0", base_manifest(), base_report(), base_card())
+    findings = vs.check_package(write_package(tmp_path / "pkg", man, rep, card))
+    assert "M002" in rules_fired(findings)
+    assert any("targets contract major 2" in f.message for f in findings if f.rule == "M002")
+
+
+def test_every_release_in_the_changelog_has_a_row_in_the_version_map():
+    """Section 7's version map names, for each release, the contract version it implements."""
+    import re
+    repo = Path(__file__).resolve().parents[1]
+    released = re.findall(r"^## \[(\d+\.\d+\.\d+)\]", (repo / "CHANGELOG.md").read_text(encoding="utf-8"), re.M)
+    spec = (repo / "docs" / "spec" / "CONTRACT-v1.md").read_text(encoding="utf-8")
+    _, _, section_7 = spec.partition("## 7. Versioning and compatibility")
+    section_7, _, _ = section_7.partition("\n## 8.")
+    rows = dict(re.findall(r"^\| (\d+\.\d+\.\d+) \| (\d+\.\d+) \|", section_7, re.M))
+    assert released and set(released) == set(rows), (released, rows)
+    assert re.search(r"^\| unreleased[^|]*\| %s, proposed \|" % re.escape(vs.CONTRACT_VERSION), section_7, re.M)
+    assert spec.startswith("# The Contract, version %s\n" % vs.CONTRACT_VERSION)
+
+
+def test_a_field_package_answering_by_reference_passes_the_smoke_test(tmp_path: Path):
+    """Single and batch requests, each frame's references verified against the files the entrypoint wrote."""
+    root = tmp_path / "pkg"
+    write_package(root)
+    _grid_field_package()(root)
+    assert vs.check_package(root) == []
+    assert vs.check_package(root, smoke=True) == []
+    record = vs.conformance_record(root, smoke=True)
+    assert record["rules"]["S003"]["state"] == "evaluated"
+
+
+def test_the_smoke_test_runs_outside_the_package_directory(tmp_path: Path):
+    """An entrypoint that reads its files from the working directory, not from beside itself, fails --smoke."""
+    import shutil
+    pkg = tmp_path / "pkg"
+    shutil.copytree(REFERENCE_PACKAGE, pkg)
+    source = (pkg / "predict.py").read_text(encoding="utf-8").replace(
+        'WEIGHTS_PATH = Path(__file__).resolve().parent / "model_weights.json"',
+        'WEIGHTS_PATH = Path("model_weights.json")')
+    _reference_entrypoint(source)(pkg)
+    findings = vs.check_package(pkg, smoke=True)
+    assert rules_fired(findings) == {"S001"}
+    assert all("exited with code 1" in f.message for f in findings), findings
+
+
 def test_only_the_two_unmeasured_statuses_are_exempt():
     """Pins the split: exempting FAIL or PASS would make a measured verdict unreadable."""
     assert set(vs._UNMEASURED_STATUSES) == {"NOT_RUN", "NOT_APPLICABLE"}
@@ -882,7 +1281,7 @@ def test_smoke_passes_the_reference_package():
 
 
 def test_smoke_runs_from_a_relative_package_path(monkeypatch):
-    """The entrypoint is launched by absolute path, because it runs in the package directory."""
+    """The entrypoint is launched by absolute path, because it runs in a working directory of its own."""
     monkeypatch.chdir(REFERENCE_PACKAGE.parents[1])
     assert vs.main(["check", "--smoke", "examples/reference-package"]) == 0
 
