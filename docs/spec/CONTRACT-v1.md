@@ -98,6 +98,25 @@ checker that cannot apply the schema in full MUST report an error, never skip it
 `float` input or output states its `units` (`M004`, `M005`), a dimensionless one
 included, and an input's `range` is `[min, max]` with `min < max` (`M004`).
 
+**Field outputs (1.1).** A `type: field` output states, in an `outputs[].field` block,
+what a consumer needs to know about it before any run: `kind`, `scalar` or `vector`;
+`units`, the field's units, a dimensionless field included, and the same as the
+output's own `units` where both are stated; `support`, `node` or `cell`, for where the
+values live in the payload; and `media_type`, the format of the payload the entrypoint
+answers with, as a bare `type/subtype` token. VTK XML PolyData,
+`application/vnd.vtk.vtp+xml`, is the format of the worked field package
+(`examples/reference-field-package/`). A field whose node layout is fixed, such as one on
+a regular grid, may also state `shape`, a list of positive integers, and
+`coordinate_ref`, the coordinate convention that shape indexes, in words. What belongs
+to one run stays out of the block: the node count, the range of the values and the
+payload itself with its digest are facts of a run, and a field whose geometry depends on
+its input has no fixed shape to declare, so the run's answer carries them in an
+artifact reference (section 12). From 1.1 every `type: field` output declares the block
+with those four keys (`M019`); a block a package of any version declares is held to the
+same rule, and its structure is the manifest schema's (`M018`). A 1.0 package's field
+output without a block keeps conforming. A tensor-valued field has no `kind` yet; adding
+one is additive.
+
 **A point predictor (1.1).** `uncertainty.form: none` declares that the model reports
 no uncertainty: it answers with point predictions and no band. Such a package declares
 `per_output: {}`, a block for no output, and no `calibration` block (`M007`), and its
@@ -519,7 +538,10 @@ in-process fit. It declares 1.1 and states its comparators.
    categoricals. A field output's shape, mesh reference and units need a v1.1 addition
    before a field producer can describe a field model fully. This is the largest single
    hole in v1.0, and it is on the critical path for field surrogates adopting the
-   Contract.
+   Contract. *Addressed by 1.1:* a field output declares its kind, units, support and
+   payload format (section 3, "Field outputs"), and each run's answer references the
+   payload it wrote, with the payload's digest and the run's node count and value range
+   (section 12). A tensor-valued field has no `kind` yet.
 4. **No signature or attestation.** `provenance` proves the bytes have not changed since
    packaging. It does not prove who packaged them. Signing is a v2 concern.
    [PROVENANCE-SIGNING.md](PROVENANCE-SIGNING.md) designs an optional
@@ -546,6 +568,7 @@ them only where it declares comparators, which 1.0 did not define:
 | `check --json` writes a conformance record with a state for every rule (section 8) | -- | checker output | unaffected |
 | `B4_conservation` may report `NOT_RUN` with `applicable: true`, carrying no measurement and blocking `overall` (sections 5.3, 5.4) | `V009` | every package | may report it too; a report `V009` rejected for it before is accepted |
 | `uncertainty.form: none` declares a point predictor: `per_output: {}`, no `calibration` block, and a card that says the model reports no uncertainty (section 3) | `M007`, `C005` | a package that declares it, from `spec_version` 1.1 | cannot declare it (`M007`) |
+| A `type: field` output declares `field: {kind, units, support, media_type}`, with `shape` and `coordinate_ref` where its layout is fixed; the block is defined once, in both manifest schemas (section 3) | `M019`, `M018` | from `spec_version` 1.1; a declared block wherever it is declared | keeps conforming with a field output that declares no block |
 
 These bind every package, because they hold it to what 1.0 already stated -- its schema,
 its package as a directory, its byte-count pins -- or to what the rules are documented to

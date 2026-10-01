@@ -439,6 +439,31 @@ def _point_predictor_package(spec_version: str = "1.1", calibration: bool = Fals
     return apply
 
 
+#: A complete field block (contract 1.1): what a type: field output declares before any run.
+FIELD_BLOCK = {"kind": "scalar", "units": "K", "support": "node", "media_type": "application/vnd.vtk.vtp+xml",
+               "shape": [17, 17], "coordinate_ref": "nodes of a regular grid on the plate, row-major, axis order (y, x)"}
+
+#: The block a grid producer emits today: shape, coordinate reference and units alone.
+GRID_PRODUCER_BLOCK = {"shape": [64, 64],
+                       "coordinate_ref": "regular_grid_cell_centred; axis order (y, x), row-major; "
+                                         "y in [0, 0.1] m, x in [0, 0.1] m",
+                       "units": "K"}
+
+
+def _add_field_output(block=None, **extra):
+    """Add a type: field output, with its uncertainty block, to the synthetic manifest."""
+    def change(m) -> None:
+        out = {"name": "surface_temp", "type": "field", "units": "K", "viewer": "field_contour",
+               "description": "the temperature over the plate's surface"}
+        out.update(extra)
+        if block is not None:
+            out["field"] = dict(block) if isinstance(block, dict) else block
+        m["outputs"].append(out)
+        m["uncertainty"]["per_output"]["surface_temp"] = {"lower_artifact": "surface_temp_lower",
+                                                          "upper_artifact": "surface_temp_upper", "level": 0.9}
+    return change
+
+
 def _strip_units(m) -> None:
     for field in m["inputs"] + m["outputs"]:
         field.pop("units", None)
@@ -601,6 +626,17 @@ MUTATIONS = [
     ("M007", _point_predictor_package(calibration=True)),
     ("M007", _point_predictor_package(spec_version="1.0")),
     ("C005", _point_predictor_package(card_says_so=False)),
+    # A type: field output states what it holds (contract 1.1). The first is the field
+    # output the checker accepted before, declared with nothing but a description; the
+    # second is the block a grid producer emits today, which the schema accepts and
+    # which lacks kind, support and media_type.
+    ("M019", _mutate_manifest(_add_field_output())),
+    ("M019", _mutate_manifest(_add_field_output(GRID_PRODUCER_BLOCK))),
+    ("M019", _mutate_manifest(lambda m: m["outputs"][0].__setitem__("field", dict(FIELD_BLOCK)))),
+    ("M019", _mutate_manifest(_add_field_output(dict(FIELD_BLOCK, units="degC")))),
+    ("M019", _mutate_manifest(_add_field_output("a VTK file"))),
+    ("M018", _mutate_manifest(_add_field_output(dict(FIELD_BLOCK, media_type="VTK PolyData")))),
+    ("M018", _mutate_manifest(_add_field_output(dict(FIELD_BLOCK, kind="tensor")))),
 ]
 
 
@@ -846,6 +882,32 @@ def test_form_none_names_each_band_it_still_declares(tmp_path: Path):
     messages = [f.message for f in vs.check_package(root) if f.rule == "M007"]
     assert messages == ["uncertainty.form is 'none', so no output carries a band, but uncertainty.per_output "
                         "declares a block for 'life_cycles'"]
+
+
+def test_a_complete_field_block_is_conformant(tmp_path: Path):
+    root = write_package(tmp_path / "pkg")
+    _mutate_manifest(_add_field_output(FIELD_BLOCK))(root)
+    assert vs.check_package(root) == []
+
+
+def test_a_bare_field_output_keeps_conforming_in_a_contract_1_0_package(tmp_path: Path):
+    """The 1.0 shape -- a field output with no block -- conforms in a package that declares 1.0."""
+    man = base_manifest()
+    _add_field_output()(man)
+    man["spec_version"] = "1.0"
+    rep = base_report()
+    rep["spec_version"] = "1.0"
+    card = base_card().replace('spec_version: "1.1"', 'spec_version: "1.0"')
+    assert vs.check_package(write_package(tmp_path / "pkg", manifest=man, report=rep, card=card)) == []
+
+
+def test_the_grid_producers_block_passes_the_schema_and_lacks_three_keys(tmp_path: Path):
+    """What a grid producer emits today is structurally valid and, under 1.1, incomplete -- and says which keys."""
+    root = write_package(tmp_path / "pkg")
+    _mutate_manifest(_add_field_output(GRID_PRODUCER_BLOCK))(root)
+    findings = vs.check_package(root)
+    assert [(f.rule, f.where) for f in findings] == [("M019", "manifest.json outputs[1]")]
+    assert "lacks kind, support, media_type" in findings[0].message
 
 
 def test_only_the_two_unmeasured_statuses_are_exempt():

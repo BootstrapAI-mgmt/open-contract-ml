@@ -112,14 +112,20 @@ def test_a_record_agrees_with_its_own_findings(tmp_path: Path):
         assert record["conformant"] == (record["n_error"] == 0), name
 
 
+#: Rules the scalar reference package gives nothing to read: it has no field output.
+NOTHING_TO_READ = {"M019": "no output is of type field or declares a field block"}
+
+
 def test_the_reference_package_evaluates_every_rule_but_the_smoke_ones():
     record = vs.conformance_record(REFERENCE_PACKAGE)
     states = _states(record)
     assert states.get("fired", set()) == set()
-    assert states["not_evaluated"] == set(vs.SMOKE_RULES)
+    assert states["not_evaluated"] == set(vs.SMOKE_RULES) | set(NOTHING_TO_READ)
     assert all("--smoke was not requested" in record["rules"][r]["reason"] for r in vs.SMOKE_RULES)
+    assert {r: record["rules"][r]["reason"] for r in NOTHING_TO_READ} == NOTHING_TO_READ
     smoked = _states(vs.conformance_record(REFERENCE_PACKAGE, smoke=True))
-    assert smoked == {"evaluated": {r.id for r in vs.RULES}}
+    assert smoked == {"evaluated": {r.id for r in vs.RULES} - set(NOTHING_TO_READ),
+                      "not_evaluated": set(NOTHING_TO_READ)}
 
 
 def test_the_record_says_which_checker_read_which_documents_and_when():

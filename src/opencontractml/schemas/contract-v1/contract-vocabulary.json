@@ -214,6 +214,11 @@
       "title": "the manifest conforms to the contract-v1 manifest schema (required keys, types, enumerations, patterns, bounds)"
     },
     {
+      "id": "M019",
+      "severity": "ERROR",
+      "title": "a type: field output declares its field block (kind, units, support, media_type) from contract 1.1, and a declared block is complete and sits on a field output"
+    },
+    {
       "id": "C001",
       "severity": "ERROR",
       "title": "model card parses with a flat scalar front-matter"

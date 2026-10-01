@@ -245,6 +245,51 @@
             "histogram"
           ],
           "description": "How a consumer should present this output. field_contour is accepted but deferred: opencontractml.manifest.deferred_viewer_outputs lists the outputs that use it, so a consumer can flag them instead of rendering them wrongly."
+        },
+        "field": {
+          "type": "object",
+          "description": "What a type: field output holds (contract 1.1). kind, units, support and media_type are what a consumer reads before any run; shape and coordinate_ref describe a field whose node layout is fixed. A package declaring spec_version 1.1 or later gives every type: field output this block with those four keys (open-contract-ml check, rule M019). What belongs to one run -- the node count, the value range, the payload's digest -- travels in that run's answer as an artifact reference, not here.",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "scalar",
+                "vector"
+              ],
+              "description": "scalar: one value per support point; vector: one vector per support point."
+            },
+            "units": {
+              "type": "string",
+              "description": "The field's units, the same as the output's units where both are stated; a dimensionless field says so."
+            },
+            "support": {
+              "type": "string",
+              "enum": [
+                "cell",
+                "node"
+              ],
+              "description": "Where the values live in the payload: on its nodes (points) or on its cells."
+            },
+            "media_type": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.+-]*/[A-Za-z0-9][A-Za-z0-9_.+-]*$",
+              "description": "The payload format the entrypoint answers with, as a bare type/subtype token, for example application/vnd.vtk.vtp+xml for VTK XML PolyData."
+            },
+            "shape": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "description": "The fixed shape of a regular-grid field, in the axis order coordinate_ref states. Absent where the node count depends on a run's input."
+            },
+            "coordinate_ref": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The coordinate convention the shape indexes, in words: axis order, node or cell centring, extent."
+            }
+          }
         }
       }
     },

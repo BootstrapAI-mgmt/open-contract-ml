@@ -239,6 +239,8 @@ RULES: Tuple[Rule, ...] = (
     # M017 is reserved for the signature warning designed in docs/spec/PROVENANCE-SIGNING.md.
     Rule("M018", "ERROR", "the manifest conforms to the contract-v1 manifest schema "
                           "(required keys, types, enumerations, patterns, bounds)"),
+    Rule("M019", "ERROR", "a type: field output declares its field block (kind, units, support, media_type) from "
+                          "contract 1.1, and a declared block is complete and sits on a field output"),
     Rule("C001", "ERROR", "model card parses with a flat scalar front-matter"),
     Rule("C002", "ERROR", "card front-matter identity matches the manifest"),
     Rule("C003", "ERROR", "the eleven required card sections are present, first, in order"),
@@ -802,6 +804,8 @@ def check_manifest(man: Dict[str, Any], pkg: Path, where: str, findings: List[Fi
                                                 "a result anyone can read (a dimensionless one says so)"
                                     % (field.get("name"),)))
 
+    check_field_blocks(outputs, _major_minor(spec_version), where, findings)
+
     in_names = [f.get("name") for f in inputs if isinstance(f, dict)]
     out_names = [f.get("name") for f in outputs if isinstance(f, dict)]
     for kind, names in (("input", in_names), ("output", out_names)):
@@ -857,6 +861,72 @@ def check_manifest(man: Dict[str, Any], pkg: Path, where: str, findings: List[Fi
         findings.append(Finding("M010", where, "validation.report path %r does not exist" % report_ref))
 
     check_provenance(man.get("provenance"), man, pkg, where, findings)
+
+
+# A field output's declaration (contract 1.1).  ``outputs[].field`` states what a
+# ``type: field`` output holds, which a consumer reads before any run: the kind of
+# field, its units, whether its values live on the payload's nodes or its cells,
+# and the media type of the payload the entrypoint answers with; for a field whose
+# node layout is fixed, also its shape and the coordinate convention that shape
+# indexes.  What belongs to one run -- the node count, the value range, the
+# payload's digest -- travels in that run's answer, as an artifact reference
+# (spec section 12).  The block's structure is the manifest schema's (M018); its
+# presence from 1.1, and its completeness wherever it is declared, are M019's.
+FIELD_BLOCK_KEYS: Tuple[str, ...] = ("kind", "units", "support", "media_type")
+FIELD_KINDS: Tuple[str, ...] = ("scalar", "vector")
+FIELD_SUPPORTS: Tuple[str, ...] = ("cell", "node")
+#: The contract version from which every ``type: field`` output declares its field block.
+FIELD_BLOCK_REQUIRED_FROM: Tuple[int, int] = (1, 1)
+#: A media type as a bare ``type/subtype`` token: no parameters, no whitespace.  The
+#: manifest schema's ``field.media_type`` pattern is this one (a test holds them equal).
+MEDIA_TYPE_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9_.+-]*/[A-Za-z0-9][A-Za-z0-9_.+-]*$"
+#: VTK XML PolyData: the field payload format the reference field package answers with.
+VTK_POLYDATA_MEDIA_TYPE = "application/vnd.vtk.vtp+xml"
+
+
+def check_field_blocks(outputs: List[Any], version: Optional[Tuple[int, int]], where: str,
+                       findings: List[Finding]) -> None:
+    """M019: each ``type: field`` output's field block -- required from contract 1.1, complete wherever declared."""
+    required = version is not None and version >= FIELD_BLOCK_REQUIRED_FROM
+    seen = False
+    for i, out in enumerate(outputs):
+        if not isinstance(out, dict):
+            continue
+        block = out.get("field")
+        is_field = out.get("type") == "field"
+        if block is None and not is_field:
+            continue
+        seen = True
+        at = "%s outputs[%d]" % (where, i)
+        name = out.get("name")
+        if block is None:
+            if required:
+                findings.append(Finding("M019", at, "the type: field output %r declares no field block; from contract "
+                                                    "1.1 a field output states field: {kind, units, support, "
+                                                    "media_type}" % (name,)))
+            continue
+        if not is_field:
+            findings.append(Finding("M019", at, "output %r is of type %r and declares a field block; only a type: "
+                                                "field output carries one" % (name, out.get("type"))))
+            continue
+        if not isinstance(block, dict):
+            findings.append(Finding("M019", at, "field must be a mapping {kind, units, support, media_type}, got %r"
+                                    % (block,)))
+            continue
+        missing = [key for key in FIELD_BLOCK_KEYS
+                   if not isinstance(block.get(key), str) or not block.get(key).strip()]
+        if missing:
+            findings.append(Finding("M019", at, "the field block of %r lacks %s; a consumer reads kind, units, support "
+                                                "and media_type before any run" % (name, ", ".join(missing))))
+        declared, own = out.get("units"), block.get("units")
+        if (isinstance(declared, str) and declared.strip() and isinstance(own, str) and own.strip()
+                and declared.strip() != own.strip()):
+            findings.append(Finding("M019", at, "field.units %r differs from the output's units %r; one field has one "
+                                                "set of units" % (own, declared)))
+    if seen:
+        _ran("M019")
+    else:
+        _not_run("no output is of type field or declares a field block", "M019")
 
 
 # A point predictor (contract 1.1).  ``uncertainty.form: none`` declares that the

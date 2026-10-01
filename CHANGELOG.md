@@ -49,6 +49,17 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   a 1.0 package that declares it is rejected (`M007`). A consumer may refuse
   such a package by its own policy, and the package-v1 manifest schema does
   not define the value.
+- A field output's declaration, as an amendment proposed for the maintainer's
+  ratification (section 3): a `type: field` output states `field: {kind,
+  units, support, media_type}` -- `scalar` or `vector`, the field's units,
+  `node` or `cell`, and the payload's format as a bare `type/subtype` token --
+  and, where its node layout is fixed, `shape` and `coordinate_ref` (new rule
+  `M019`). It is required from contract 1.1; a 1.0 package's field output
+  without a block keeps conforming. The block is defined once, identically in
+  the contract-v1 manifest schema's outputs and in the package-v1 schema's
+  `$defs.output_field`, and a test holds the two equal. The schema accepts a
+  block of `shape`, `coordinate_ref` and `units` alone; `M019` names the keys
+  such a block lacks.
 
 ### Changed
 
