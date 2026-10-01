@@ -12,6 +12,17 @@ rather than an improvised one.
 > README.md quotes for it reads `(contract 1.1, 0 warning(s))`. A warning gated on
 > the version that adds the field leaves it, and every package declaring an
 > earlier minor, as quiet as the design intends.
+>
+> **Note (2026-10-01, later).** The field is now proposed as part of Contract 1.1
+> itself ([CONTRACT-v1.md](CONTRACT-v1.md) section 6), in the shape section 4 gives,
+> and `M017` is a warning about a malformed declaration and about nothing else. One
+> row of the table in section 4.2 is not adopted: a package declaring 1.1 or later
+> that carries no signature is **not** warned. No producer has a signing tool to use
+> yet, so that warning would fire on every 1.1 package, the reference packages
+> included, and say nothing a reader could act on; whether to warn when a package is
+> unsigned is left to the version that enforces signing. The manifest schema now
+> names the field with a description only, so it states no constraint and a
+> malformed signature is `M017` and nothing else.
 
 [CONTRACT-v1.md](CONTRACT-v1.md) §10.4 records the gap this closes:
 

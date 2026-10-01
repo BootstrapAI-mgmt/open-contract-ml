@@ -236,7 +236,8 @@ RULES: Tuple[Rule, ...] = (
     Rule("M014", "ERROR", "provenance.dataset carries a well formed sha256"),
     Rule("M015", "ERROR", "provenance.code carries repo and commit"),
     Rule("M016", "WARN", "provenance.environment names the interpreter"),
-    # M017 is reserved for the signature warning designed in docs/spec/PROVENANCE-SIGNING.md.
+    Rule("M017", "WARN", "a declared provenance.signature is {format: oms, path} naming a file in the package that "
+                         "is not a pinned artifact (the checker verifies no signature)"),
     Rule("M018", "ERROR", "the manifest conforms to the contract-v1 manifest schema "
                           "(required keys, types, enumerations, patterns, bounds)"),
     Rule("M019", "ERROR", "a type: field output declares its field block (kind, units, support, media_type) from "
@@ -1140,7 +1141,7 @@ def check_provenance(prov: Any, man: Dict[str, Any], pkg: Path, where: str, find
     _ran("M011")
     if not isinstance(prov, dict):
         findings.append(Finding("M011", where, "provenance block is missing or not a mapping"))
-        _not_run("the provenance block is missing (M011)", "M012", "M013", "M014", "M015", "M016")
+        _not_run("the provenance block is missing (M011)", "M012", "M013", "M014", "M015", "M016", "M017")
         return
     _ran("M012", "M014", "M015", "M016")
     artifacts = prov.get("artifacts")
@@ -1225,6 +1226,56 @@ def check_provenance(prov: Any, man: Dict[str, Any], pkg: Path, where: str, find
     if not isinstance(env, dict) or not str(env.get("python", "")).strip():
         findings.append(Finding("M016", where, "provenance.environment.python is not declared"))
     _not_run("no artifact reached the hash comparison and no single entrypoint was declared (M012)", "M013")
+
+    signature = prov.get("signature")
+    if signature is None:
+        _not_run("provenance declares no signature", "M017")
+    else:
+        _ran("M017")
+        check_signature(signature, artifacts, pkg, where, findings)
+
+
+# The optional signature (contract 1.1; docs/spec/PROVENANCE-SIGNING.md).
+# ``provenance.signature: {format: oms, path}`` records that a detached signature
+# over the package sits at ``path``.  The sidecar is never one of
+# ``provenance.artifacts``: the manifest would then carry the digest of a file that
+# signs the manifest, a cycle with no fixed point.  M017 warns about a malformed
+# declaration and about nothing else -- not about an unsigned package, and never
+# as an error.  The checker verifies no signature: a package that passes M017 is
+# not thereby signed.  Verifying one needs key material and a trust policy, which
+# a standard-library checker does not carry; enforcing signatures is a v2 concern.
+SIGNATURE_FORMATS: Tuple[str, ...] = ("oms",)
+
+
+def _relative(path: str) -> str:
+    return path[2:] if path.startswith("./") else path
+
+
+def check_signature(signature: Any, artifacts: List[Any], pkg: Path, where: str, findings: List[Finding]) -> None:
+    """M017: a declared ``provenance.signature`` is well formed.  It reports; it never verifies."""
+    at = "%s provenance.signature" % where
+    if not isinstance(signature, dict):
+        findings.append(Finding("M017", at, "must be a mapping {format, path}, got %r; the checker verifies no "
+                                            "signature either way" % (signature,)))
+        return
+    fmt = signature.get("format")
+    if fmt not in SIGNATURE_FORMATS:
+        findings.append(Finding("M017", at, "format %r is not one of %s" % (fmt, list(SIGNATURE_FORMATS))))
+    path = signature.get("path")
+    if not isinstance(path, str) or not path.strip():
+        findings.append(Finding("M017", at, "path is missing: the signature is a file in the package"))
+        return
+    outside = outside_package(pkg, path)
+    if outside:
+        findings.append(Finding("M017", at, "path %r %s -- the signature is a file inside the package"
+                                % (path, outside)))
+        return
+    if not (pkg / path).is_file():
+        findings.append(Finding("M017", at, "path %r names no file in the package" % (path,)))
+    pinned = {_relative(str(a.get("path"))) for a in artifacts if isinstance(a, dict)}
+    if _relative(path) in pinned:
+        findings.append(Finding("M017", at, "the signature %r is pinned in provenance.artifacts, so the manifest "
+                                            "carries the digest of a file that signs the manifest: a cycle" % (path,)))
 
 
 # --------------------------------------------------------------------------- #

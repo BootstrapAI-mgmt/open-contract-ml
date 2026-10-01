@@ -72,6 +72,24 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   reference package declares its own: Apache-2.0 for the model and the
   weights, which are files of this repository, and `NOASSERTION` for a
   training corpus that is not distributed.
+- An optional signature, as an amendment proposed for the maintainer's
+  ratification (section 6): `provenance.signature: {format: oms, path}`
+  records a detached signature beside the package, in the shape
+  `docs/spec/PROVENANCE-SIGNING.md` designed. Rule `M017`, reserved until
+  now, warns about a malformed declaration -- an unknown format, a missing
+  path, a sidecar that is absent, outside the package or pinned as an
+  artifact -- and about nothing else. The checker verifies no signature, and
+  an unsigned package is not warned; enforcing signatures stays a v2
+  concern.
+- The versioning and deprecation policy, as an amendment proposed for the
+  maintainer's ratification (section 7): what a MINOR version newly
+  requires binds only a package that declares it, and a key a later MINOR
+  defines is held to its definition wherever a package declares it; a MINOR
+  may deprecate a key or a value, which a checker then warns about, and only
+  a MAJOR removes one, not before two releases have carried the
+  deprecation. Section 7 also maps each release to the contract version it
+  implements: 0.1.0 and 0.1.1 implement 1.0, and the unreleased line 1.1,
+  proposed. `CONTRIBUTING.md` says how a change is recorded here.
 
 ### Changed
 

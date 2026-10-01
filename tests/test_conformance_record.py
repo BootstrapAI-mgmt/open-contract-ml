@@ -112,8 +112,9 @@ def test_a_record_agrees_with_its_own_findings(tmp_path: Path):
         assert record["conformant"] == (record["n_error"] == 0), name
 
 
-#: Rules the scalar reference package gives nothing to read: it has no field output.
-NOTHING_TO_READ = {"M019": "no output is of type field or declares a field block"}
+#: Rules the scalar reference package gives nothing to read: it has no field output and no signature.
+NOTHING_TO_READ = {"M017": "provenance declares no signature",
+                   "M019": "no output is of type field or declares a field block"}
 
 
 def test_the_reference_package_evaluates_every_rule_but_the_smoke_ones():

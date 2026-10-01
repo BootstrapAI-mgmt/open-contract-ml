@@ -209,6 +209,11 @@
       "title": "provenance.environment names the interpreter"
     },
     {
+      "id": "M017",
+      "severity": "WARN",
+      "title": "a declared provenance.signature is {format: oms, path} naming a file in the package that is not a pinned artifact (the checker verifies no signature)"
+    },
+    {
       "id": "M018",
       "severity": "ERROR",
       "title": "the manifest conforms to the contract-v1 manifest schema (required keys, types, enumerations, patterns, bounds)"

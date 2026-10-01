@@ -70,14 +70,25 @@ wheel, and runs the installed checker from outside the checkout. Python 3.12,
 - **The checker needs only the standard library**, so it runs from a bare
   interpreter in any CI.
 - **User-visible changes are recorded** in `CHANGELOG.md` under
-  `[Unreleased]`.
+  `[Unreleased]`: a line per change, in the section it belongs to (`Added`,
+  `Changed`, `Deprecated`, `Removed`, `Fixed`), saying what changes for
+  someone who uses the package. An amendment to the Contract is named there
+  as proposed until the maintainer ratifies it, and a deprecation names its
+  replacement and the earliest version that may remove it. When a release is
+  cut, `[Unreleased]` takes the version and the date, the entry names the
+  contract version the release implements, and the version map in section 7
+  of `docs/spec/CONTRACT-v1.md` gains its row
+  (`test_every_release_in_the_changelog_has_a_row_in_the_version_map` fails
+  otherwise).
 
 ## Amending the Contract
 
 The specification is versioned `MAJOR.MINOR` (section 7 of
 `docs/spec/CONTRACT-v1.md`): a MINOR change is additive, because consumers
 ignore keys they do not know, and a MAJOR change is breaking, because consumers
-refuse a major they do not support. To propose one, open an issue that states
+refuse a major they do not support. A MINOR change may deprecate a key or a
+value, and only a MAJOR change removes one (section 7 says how). To propose a
+change, open an issue that states
 the problem, the text you would change, whether the change is MINOR or MAJOR,
 and which packages would stop or start conforming. The pull request that makes
 it changes the specification, the checker, the schemas under

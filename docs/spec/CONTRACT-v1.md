@@ -461,6 +461,17 @@ CI from a tag does not have this problem; a package committed by hand always lag
 The contract does not try to resolve this by rule -- it would need a post-commit rewrite --
 and states it instead.
 
+**An optional signature (1.1).** `provenance.signature: {format: oms, path}` records that
+a detached signature over the package sits at `path`, a file inside the package. `oms` is
+the one format defined. The sidecar is never one of `provenance.artifacts`: the manifest
+would then carry the digest of the file that signs the manifest. A checker warns about a
+malformed declaration -- an unknown format, a missing path, a sidecar that is absent or
+outside the package, a sidecar pinned as an artifact (`M017`) -- and about nothing else:
+an unsigned package is not warned, and the checker verifies no signature, so a package
+that passes `M017` is not thereby signed. Verifying signatures and requiring them stay a
+v2 concern. [PROVENANCE-SIGNING.md](PROVENANCE-SIGNING.md) gives the design: what the
+signature covers and how a consumer would verify it.
+
 ## 7. Versioning and compatibility
 
 The manifest and the card both carry `spec_version` as `MAJOR.MINOR`. The field name is
@@ -473,11 +484,27 @@ deliberately the package-v1 manifest's existing one, not a third name.
 - Contract v1.0 is defined to be a **superset of the package-v1 manifest spec 1.0**: it
   adds `provenance` and `validation` and changes nothing existing. The two numbers can
   therefore stay aligned, and a contract-v1 manifest is a valid package-v1 manifest.
-- Contract 1.1 is a MINOR amendment of 1.0 (section 11). It adds no manifest key, so a 1.1
-  manifest is read by a package-v1 consumer as a higher minor within major 1. A 1.0
-  consumer reads a 1.1 report too: the comparators are an unknown additive key to it. A
-  1.1 checker accepts a 1.0 package that declares no comparators. What 1.1 requires newly
-  binds only a package that declares `spec_version` 1.1 or later.
+- Contract 1.1 is a MINOR amendment of 1.0 (section 11). It adds optional manifest keys --
+  `outputs[].field`, `licence`, `provenance.signature` -- which a package-v1 consumer
+  ignores as unknown additive keys, so a 1.1 manifest is read by such a consumer as a
+  higher minor within major 1. It adds one value, `uncertainty.form: none`, which
+  package-v1 does not define: a 1.1 manifest that declares it is the one kind a package-v1
+  validator rejects. A 1.0 consumer reads a 1.1 report too: the comparators are an
+  unknown additive key to it. A 1.1 checker accepts a 1.0 package that declares no
+  comparators, no field block and no licence block. What 1.1 requires newly binds only a
+  package that declares `spec_version` 1.1 or later.
+- **A MINOR adds; it does not oblige an older package.** A checker of a later MINOR holds
+  a package to the rules of the version it declares, and holds a key that a later MINOR
+  defined -- comparators, a field block, a licence block, a signature -- to that
+  definition wherever a package declares it. A key no version defines is ignored,
+  whatever version the package declares. A package whose `spec_version` major is greater
+  than the checker's is rejected (`M002`).
+- **Deprecation.** A MINOR version may deprecate a key or a value; only a MAJOR version
+  removes one. The amendment that deprecates says so in section 11's table, names the
+  replacement where there is one, and assigns the warning rule a checker reports when a
+  package uses what was deprecated; the package stays conformant. A deprecated key or
+  value is removed no earlier than the next MAJOR version, and not before two releases of
+  this package have carried the deprecation. Nothing is deprecated at 1.1.
 - The validation report declares the `spec_version` its manifest declares (`V002`), as the
   card does (`C002`): one package, one contract version.
 - A contract-v1 **card** was *not* a valid card for a nine-section package-v1 validator at
@@ -487,11 +514,24 @@ deliberately the package-v1 manifest's existing one, not a third name.
   `opencontractml.model_card`, has made that change: it enforces the same eleven sections
   as `open-contract-ml check` (it reads the checker's own list), so one card satisfies both.
 
+**Which release implements which version.** The package's version,
+`opencontractml.__version__`, and the Contract's, `opencontractml.verify.CONTRACT_VERSION`,
+are separate numbers:
+
+| Package release | Contract version | Notes |
+|---|---|---|
+| 0.1.0 | 1.0 | released 2026-09-17; its files are no longer on the Python Package Index, so this row is read from the first public snapshot of this repository, which declares version 0.1.0 and contract 1.0 |
+| 0.1.1 | 1.0 | released 2026-09-27 |
+| unreleased, after 0.1.1 | 1.1, proposed | `opencontractml.__version__` reads 0.1.1 until the next release; a conformance record's `contract_version` (section 8) tells it from a 0.1.1 checker |
+
+Each release adds its row here, and its `CHANGELOG.md` entry names the contract version it
+implements (`CONTRIBUTING.md`).
+
 ## 8. Conformance
 
-`python -m opencontractml.verify check <package>` -- exit 0 clean, 1 on findings. 41 rules
-(38 `ERROR`, 3 `WARN`); `python -m opencontractml.verify rules` prints the table. `M017`
-is reserved for the signature warning that [PROVENANCE-SIGNING.md](PROVENANCE-SIGNING.md)
+`python -m opencontractml.verify check <package>` -- exit 0 clean, 1 on findings. 45 rules
+(40 `ERROR`, 5 `WARN`); `python -m opencontractml.verify rules` prints the table. `M017`
+is the signature warning (section 6) that [PROVENANCE-SIGNING.md](PROVENANCE-SIGNING.md)
 designs.
 
 **Running the entrypoint (`check --smoke`).** The default check reads files and executes
@@ -561,7 +601,9 @@ in-process fit. It declares 1.1 and states its comparators.
    OpenSSF-Model-Signing sidecar and concludes the *field* can land additively in a
    later minor version while *enforcement* stays a v2 concern. It also records what `provenance`
    does not cover: the manifest, the card and the validation report are not
-   hashed by anything, so their contents are not tamper-evident.
+   hashed by anything, so their contents are not tamper-evident. *1.1 defines the
+   field* (section 6) *and warns about a malformed one* (`M017`); verifying a
+   signature, and warning when a package has none, stay v2 concerns.
 5. **The checker's front-matter parser accepts only flat scalars.** This is stated as a
    spec rule (4.1) rather than hidden as an implementation limit, but a future card
    needing structured front-matter would need both changed together.
@@ -569,8 +611,10 @@ in-process fit. It declares 1.1 and states its comparators.
 ## 11. Changes in 1.1
 
 Contract 1.1 is a MINOR amendment of 1.0 (section 7). These changes add what a package
-declaring 1.1 must state, or what a checker offers; a package declaring 1.0 is bound by
-them only where it declares comparators, which 1.0 did not define:
+declaring 1.1 must state, what any package may declare, or what a checker offers. A
+package declaring 1.0 is bound by them only where it declares a key that 1.1 defines --
+comparators, a field block, a licence block, a signature -- or where a row says
+otherwise:
 
 | Change | Rule | Binds | A 1.0 package |
 |---|---|---|---|
@@ -584,6 +628,8 @@ them only where it declares comparators, which 1.0 did not define:
 | A `type: field` output declares `field: {kind, units, support, media_type}`, with `shape` and `coordinate_ref` where its layout is fixed; the block is defined once, in both manifest schemas (section 3) | `M019`, `M018` | from `spec_version` 1.1; a declared block wherever it is declared | keeps conforming with a field output that declares no block |
 | An optional `licence` block names the licences of the model, the weights and the training data, each an SPDX expression with its text or URL, or `NOASSERTION` with a note (section 3) | `M020` | a block wherever it is declared | may declare one, held to the same rule |
 | A package that declares no `licence` block is warned (section 3) | `M021` (a warning) | from `spec_version` 1.1 | not warned |
+| `provenance.signature`, optional: `{format: oms, path}` naming a sidecar in the package that is not a pinned artifact; nothing is verified (section 6) | `M017` (a warning) | a signature wherever it is declared | may declare one |
+| A MINOR binds only a package that declares it; deprecation at a MINOR, removal only at a MAJOR; which release implements which version (section 7) | -- | the Contract | unaffected |
 
 These bind every package, because they hold it to what 1.0 already stated -- its schema,
 its package as a directory, its byte-count pins -- or to what the rules are documented to

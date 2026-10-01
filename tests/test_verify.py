@@ -469,6 +469,26 @@ def _add_field_output(block=None, **extra):
     return change
 
 
+def _with_signature(signature, sidecar: bool = True):
+    """Declare provenance.signature on the synthetic package, with or without the sidecar file."""
+    def apply(root: Path) -> None:
+        if sidecar:
+            (root / "model.sig").write_text("a detached signature" + LF, encoding="utf-8", newline=LF)
+        _mutate_manifest(lambda m: m["provenance"].__setitem__("signature", signature))(root)
+    return apply
+
+
+#: Malformed signature declarations, each of which M017 reports and nothing else does.
+MALFORMED_SIGNATURES = [
+    ({"format": "pgp", "path": "./model.sig"}, True),
+    ({"format": "oms", "path": "./model.sig"}, False),
+    ({"format": "oms", "path": "./model_weights.json"}, True),
+    ({"format": "oms", "path": "../model.sig"}, True),
+    ({"format": "oms"}, True),
+    ("signed by the maintainer", True),
+]
+
+
 def _strip_units(m) -> None:
     for field in m["inputs"] + m["outputs"]:
         field.pop("units", None)
@@ -655,6 +675,11 @@ MUTATIONS = [
     ("M020", _mutate_manifest(lambda m: m.__setitem__("licence", "Apache-2.0"))),
     ("M021", _mutate_manifest(lambda m: m.pop("licence"))),
     ("M018", _mutate_manifest(lambda m: m["licence"]["model"].__setitem__("url", "ftp://example.invalid/licence"))),
+    # provenance.signature, where declared, is {format: oms, path} naming a sidecar in
+    # the package that is not a pinned artifact (M017, a warning; nothing is verified).
+    *[("M017", _with_signature(signature, sidecar)) for signature, sidecar in MALFORMED_SIGNATURES],
+    # A package targeting a contract major this checker does not support is refused.
+    ("M002", _mutate_manifest(lambda m: m.__setitem__("spec_version", "2.0"))),
 ]
 
 
@@ -981,6 +1006,84 @@ def test_the_warning_names_a_license_key_the_contract_does_not_read(tmp_path: Pa
     _rewrite_yaml_manifest(pkg, lambda m: m.__setitem__("license", m.pop("licence")))
     [finding] = vs.check_package(pkg)
     assert finding.rule == "M021" and "'license' key" in finding.message
+
+
+@pytest.mark.parametrize("signature,sidecar", MALFORMED_SIGNATURES, ids=[repr(s)[:40] for s, _ in MALFORMED_SIGNATURES])
+def test_m017_fires_on_a_malformed_signature_and_nothing_else(tmp_path: Path, signature, sidecar):
+    root = write_package(tmp_path / "pkg")
+    _with_signature(signature, sidecar)(root)
+    findings = vs.check_package(root)
+    assert [(f.rule, f.severity) for f in findings] == [("M017", "WARN")], findings
+    assert vs.summarize(findings)["conformant"]
+
+
+def test_a_well_formed_signature_and_no_signature_are_both_silent(tmp_path: Path):
+    """M017 reports a malformed declaration; it neither verifies a signature nor warns about an unsigned package."""
+    root = write_package(tmp_path / "pkg")
+    assert vs.check_package(root) == []                                  # no signature, contract 1.1
+    _with_signature({"format": "oms", "path": "./model.sig"})(root)
+    assert vs.check_package(root) == []                                  # declared, sidecar present
+
+
+# --------------------------------------------------------------------------- #
+# Versioning (spec section 7): what a MINOR version newly requires binds only a
+# package that declares it; an unknown additive key is ignored; a higher major is
+# refused.
+# --------------------------------------------------------------------------- #
+def _a_package_using_nothing_1_1_adds() -> tuple:
+    """A manifest, report and card with no comparators, a bare field output and no licence block."""
+    man = base_manifest()
+    man.pop("licence")
+    _add_field_output()(man)
+    rep = base_report()
+    for check in rep["checks"].values():
+        check.pop("comparators", None)
+    return man, rep, base_card()
+
+
+def _declaring(version: str, man: dict, rep: dict, card: str) -> tuple:
+    man, rep = json.loads(json.dumps(man)), json.loads(json.dumps(rep))
+    man["spec_version"] = rep["spec_version"] = version
+    return man, rep, card.replace('spec_version: "1.1"', 'spec_version: "%s"' % version)
+
+
+def test_a_1_1_only_requirement_does_not_bind_a_1_0_package(tmp_path: Path):
+    man, rep, card = _a_package_using_nothing_1_1_adds()
+    as_1_0 = write_package(tmp_path / "v1_0", *_declaring("1.0", man, rep, card))
+    assert vs.check_package(as_1_0) == []
+    as_1_1 = write_package(tmp_path / "v1_1", *_declaring("1.1", man, rep, card))
+    assert rules_fired(vs.check_package(as_1_1)) == {"V012", "M019", "M021"}
+
+
+def test_an_unknown_additive_key_is_ignored_in_a_1_0_package(tmp_path: Path):
+    man, rep, card = _declaring("1.0", *_a_package_using_nothing_1_1_adds())
+    man["x_vendor_extension"] = {"anything": [1, 2, 3]}
+    man["outputs"][0]["x_display_hint"] = "log scale"
+    man["invocation"]["x_scheduler"] = "local"
+    man["provenance"]["x_build_host"] = "ci"
+    rep["x_report_note"] = "an additive key"
+    assert vs.check_package(write_package(tmp_path / "pkg", man, rep, card)) == []
+
+
+def test_a_package_declaring_a_major_this_checker_does_not_support_is_rejected(tmp_path: Path):
+    man, rep, card = _declaring("2.0", base_manifest(), base_report(), base_card())
+    findings = vs.check_package(write_package(tmp_path / "pkg", man, rep, card))
+    assert "M002" in rules_fired(findings)
+    assert any("targets contract major 2" in f.message for f in findings if f.rule == "M002")
+
+
+def test_every_release_in_the_changelog_has_a_row_in_the_version_map():
+    """Section 7's version map names, for each release, the contract version it implements."""
+    import re
+    repo = Path(__file__).resolve().parents[1]
+    released = re.findall(r"^## \[(\d+\.\d+\.\d+)\]", (repo / "CHANGELOG.md").read_text(encoding="utf-8"), re.M)
+    spec = (repo / "docs" / "spec" / "CONTRACT-v1.md").read_text(encoding="utf-8")
+    _, _, section_7 = spec.partition("## 7. Versioning and compatibility")
+    section_7, _, _ = section_7.partition("\n## 8.")
+    rows = dict(re.findall(r"^\| (\d+\.\d+\.\d+) \| (\d+\.\d+) \|", section_7, re.M))
+    assert released and set(released) == set(rows), (released, rows)
+    assert re.search(r"^\| unreleased[^|]*\| %s, proposed \|" % re.escape(vs.CONTRACT_VERSION), section_7, re.M)
+    assert spec.startswith("# The Contract, version %s\n" % vs.CONTRACT_VERSION)
 
 
 def test_only_the_two_unmeasured_statuses_are_exempt():

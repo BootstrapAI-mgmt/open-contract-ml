@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/BootstrapAI-mgmt/open-contract-ml/schemas/contract-v1/manifest.schema.json",
   "title": "Contract v1 manifest",
-  "description": "The machine contract of a contract package. A superset of the package-v1 manifest spec 1.0 (schemas/package-v1): it adds `provenance` and `validation` and changes nothing existing, so a contract-v1 manifest is a valid package-v1 manifest. Structural rules only -- the cross-field invariants (uncertainty.per_output coverage, the entrypoint/executable binding, hash verification) are in verify.py, which is the authority.",
+  "description": "The machine contract of a contract package. A superset of the package-v1 manifest spec 1.0 (schemas/package-v1): it adds `provenance` and `validation` and changes nothing existing, so a contract-v1 manifest is a valid package-v1 manifest -- except one declaring `uncertainty.form: none` (contract 1.1), a value package-v1 does not define. Contract 1.1 also adds the optional `outputs[].field`, `licence` and `provenance.signature`. Structural rules only -- the cross-field invariants (uncertainty.per_output coverage, the entrypoint/executable binding, hash verification, what 1.1 requires of a 1.1 package) are in verify.py, which is the authority.",
   "type": "object",
   "required": [
     "spec_version", "id", "name", "version", "owner", "domain", "modality", "purpose",
@@ -195,6 +195,9 @@
         "environment": {
           "type": "object",
           "properties": {"python": {"type": "string"}, "packages": {"type": "object"}}
+        },
+        "signature": {
+          "description": "Optional, contract 1.1: {format: oms, path} -- a detached signature over the package, at path, never listed in artifacts. open-contract-ml check warns about a malformed declaration (rule M017) and verifies no signature; this schema states no constraint on it, so a malformed one is that warning and nothing else."
         }
       }
     },
