@@ -13,7 +13,9 @@ Commands:
         Strict conformance of one contract package (manifest + card + validation
         report + the artifacts they name).  Exit 0 when clean, 1 on findings.
         ``--smoke`` also runs the entrypoint on the manifest's examples; without
-        it the check executes nothing.
+        it the check executes nothing.  ``--json`` writes the conformance record:
+        the checker's version, the digests of the documents it read, when it
+        ran, and a state for every rule (evaluated, fired, not evaluated and why).
 
     python -m opencontractml.verify rules
         Print the rule table.
@@ -47,6 +49,7 @@ apply in full is likewise an ERROR, never a skip (rule E003).
 from __future__ import annotations
 
 import argparse
+import contextvars
 import hashlib
 import json
 import os
@@ -276,6 +279,47 @@ class Finding:
 
 
 # --------------------------------------------------------------------------- #
+# Which rules a check evaluated.  The conformance record (``check --json``) says,
+# for every rule, whether it was evaluated, fired, or not evaluated and why, so a
+# reader can tell a rule that passed from one that never ran.  The checks mark a
+# rule where they test its condition; a context variable carries the ledger, so
+# the check functions keep their signatures and a plain ``check_package`` call
+# records nothing.
+# --------------------------------------------------------------------------- #
+class _Ledger:
+    __slots__ = ("evaluated", "reasons", "documents", "smoke_reason", "spec_version")
+
+    def __init__(self) -> None:
+        self.evaluated: set = set()
+        self.reasons: Dict[str, str] = {}
+        self.documents: Dict[str, Path] = {}
+        self.smoke_reason: Optional[str] = None
+        self.spec_version: Optional[str] = None
+
+
+_LEDGER: "contextvars.ContextVar[Optional[_Ledger]]" = contextvars.ContextVar("opencontractml_ledger", default=None)
+
+
+def _ran(*rules: str) -> None:
+    ledger = _LEDGER.get()
+    if ledger is not None:
+        ledger.evaluated.update(rules)
+
+
+def _not_run(reason: str, *rules: str) -> None:
+    ledger = _LEDGER.get()
+    if ledger is not None:
+        for rule in rules:
+            ledger.reasons.setdefault(rule, reason)
+
+
+def _document(kind: str, path: Path) -> None:
+    ledger = _LEDGER.get()
+    if ledger is not None:
+        ledger.documents[kind] = path
+
+
+# --------------------------------------------------------------------------- #
 # Loaders.
 # --------------------------------------------------------------------------- #
 def sha256_file(path: Path) -> str:
@@ -332,6 +376,7 @@ def load_mapping(path: Path, findings: List[Finding]) -> Optional[Dict[str, Any]
             findings.append(Finding("M001", str(path), "not valid JSON: %s" % exc))
             return None
     else:
+        _ran("E002")
         try:
             import yaml  # noqa: PLC0415 -- optional; its absence is an ERROR, never a skip
         except ImportError:
@@ -654,11 +699,14 @@ def load_manifest_schema() -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
 
 def check_manifest_schema(man: Dict[str, Any], where: str, findings: List[Finding]) -> None:
     """M018: the manifest against the contract-v1 schema; E003 when the schema cannot be applied."""
+    _ran("E003")
     schema, problem = load_manifest_schema()
     if schema is None:
         findings.append(Finding("E003", where, "%s -- the manifest's structure is unchecked, which is an error, "
                                                "never a skip" % problem))
+        _not_run("the contract-v1 manifest schema could not be applied (E003)", "M018")
         return
+    _ran("M018")
     for location, message in schema_errors(man, schema):
         findings.append(Finding("M018", "%s %s" % (where, location) if location else where, message))
 
@@ -674,7 +722,11 @@ _IDENTITY = ("id", "name", "version", "domain", "modality", "purpose")
 
 def check_manifest(man: Dict[str, Any], pkg: Path, where: str, findings: List[Finding]) -> None:
     check_manifest_schema(man, where, findings)
+    _ran("M002", "M003", "M004", "M005", "M006", "M007", "M008", "M009", "M010")
     spec_version = man.get("spec_version")
+    ledger = _LEDGER.get()
+    if ledger is not None and isinstance(spec_version, str):
+        ledger.spec_version = spec_version
     if not isinstance(spec_version, str) or not _MAJOR_MINOR.match(spec_version):
         findings.append(Finding("M002", where, "spec_version must be a MAJOR.MINOR string, got %r" % (spec_version,)))
     else:
@@ -804,9 +856,12 @@ _ARTIFACT_ROLES = {"entrypoint", "weights", "asset"}
 
 
 def check_provenance(prov: Any, man: Dict[str, Any], pkg: Path, where: str, findings: List[Finding]) -> None:
+    _ran("M011")
     if not isinstance(prov, dict):
         findings.append(Finding("M011", where, "provenance block is missing or not a mapping"))
+        _not_run("the provenance block is missing (M011)", "M012", "M013", "M014", "M015", "M016")
         return
+    _ran("M012", "M014", "M015", "M016")
     artifacts = prov.get("artifacts")
     if not isinstance(artifacts, list) or not artifacts:
         findings.append(Finding("M012", where, "provenance.artifacts must be a non-empty list"))
@@ -841,6 +896,7 @@ def check_provenance(prov: Any, man: Dict[str, Any], pkg: Path, where: str, find
                                                 "the checker hashes nothing outside it" % (rel, outside)))
             continue
         target = pkg / rel
+        _ran("M013")
         if not target.is_file():
             findings.append(Finding("M013", at, "declared artifact %r does not exist on disk" % rel))
             continue
@@ -862,6 +918,7 @@ def check_provenance(prov: Any, man: Dict[str, Any], pkg: Path, where: str, find
         findings.append(Finding("M012", where, "provenance.artifacts must declare exactly one role 'entrypoint', "
                                                "found %d" % len(entrypoints)))
     elif isinstance(executable, str):
+        _ran("M013")
         want = executable[2:] if executable.startswith("./") else executable
         have = entrypoints[0][2:] if entrypoints[0].startswith("./") else entrypoints[0]
         if want != have:
@@ -886,16 +943,21 @@ def check_provenance(prov: Any, man: Dict[str, Any], pkg: Path, where: str, find
     env = prov.get("environment")
     if not isinstance(env, dict) or not str(env.get("python", "")).strip():
         findings.append(Finding("M016", where, "provenance.environment.python is not declared"))
+    _not_run("no artifact reached the hash comparison and no single entrypoint was declared (M012)", "M013")
 
 
 # --------------------------------------------------------------------------- #
 # Model-card checks.
 # --------------------------------------------------------------------------- #
 def check_card(text: str, man: Optional[Dict[str, Any]], where: str, findings: List[Finding]) -> None:
+    _ran("C001", "C003")
     front, body, error = split_front_matter(text)
     if error is not None:
         findings.append(Finding("C001", where, error))
+    if front is None or man is None:
+        _not_run("the card's front-matter did not parse (C001)", "C002")
     if front is not None and man is not None:
+        _ran("C002")
         for card_key, man_key in (("model_id", "id"), ("version", "version"), ("spec_version", "spec_version")):
             have, want = front.get(card_key), man.get(man_key)
             if have is None:
@@ -911,7 +973,9 @@ def check_card(text: str, man: Optional[Dict[str, Any]], where: str, findings: L
         findings.append(Finding("C003", where, "card has %d H2 section(s); all %d required sections must come first, "
                                                "in order (missing: %s)"
                                 % (len(headings), need, ", ".join(missing) or "none -- check ordering")))
+        _not_run("the card has fewer H2 sections than the eleven required (C003)", "C006")
     else:
+        _ran("C006")
         for i, expected in enumerate(CARD_SECTIONS):
             if headings[i] != expected:
                 findings.append(Finding("C003", where, "H2 section #%d must be '## %s' but is '## %s'"
@@ -925,14 +989,19 @@ def check_card(text: str, man: Optional[Dict[str, Any]], where: str, findings: L
     for name in CARD_SECTIONS:
         if name not in bodies:
             continue
+        _ran("C004")
         content = "".join(bodies[name].split())
         if len(content) < MIN_SECTION_CHARS:
             findings.append(Finding("C004", where, "section '## %s' has %d non-whitespace characters; a required "
                                                    "section must be written, not stubbed (minimum %d)"
                                     % (name, len(content), MIN_SECTION_CHARS)))
 
+    _not_run("no required section is present to measure (C003)", "C004")
     uq = bodies.get("Uncertainty quantification", "")
+    if not uq:
+        _not_run("the card has no Uncertainty quantification section to read (C003)", "C005")
     if uq:
+        _ran("C005")
         if not _NUMERAL.search(uq):
             findings.append(Finding("C005", where, "section '## Uncertainty quantification' states no number; "
                                                    "a UQ section must report a level or a measured coverage"))
@@ -946,15 +1015,19 @@ def check_card(text: str, man: Optional[Dict[str, Any]], where: str, findings: L
 # Validation-report checks.
 # --------------------------------------------------------------------------- #
 def check_report(rep: Dict[str, Any], man: Optional[Dict[str, Any]], where: str, findings: List[Finding]) -> None:
+    _ran("V001")
     for key in ("spec_version", "produced_by", "model_id", "model_version"):
         if not str(rep.get(key, "")).strip():
             findings.append(Finding("V001", where, "missing or empty required key %r" % key))
     checks = rep.get("checks")
     if not isinstance(checks, dict):
         findings.append(Finding("V001", where, "checks must be a mapping of ladder key -> check object"))
+        _not_run("the report has no checks mapping (V001)", *[r.id for r in RULES if r.id.startswith("V")])
         return
+    _ran("V004", "V005", "V008")
 
     if man is not None:
+        _ran("V002")
         if rep.get("model_id") != man.get("id"):
             findings.append(Finding("V002", where, "model_id %r does not match manifest id %r"
                                     % (rep.get("model_id"), man.get("id"))))
@@ -963,6 +1036,10 @@ def check_report(rep: Dict[str, Any], man: Optional[Dict[str, Any]], where: str,
                                     % (rep.get("model_version"), man.get("version"))))
         prov = man.get("provenance")
         declared = (prov.get("dataset") or {}).get("sha256") if isinstance(prov, dict) else None
+        if declared is None:
+            _not_run("the manifest declares no provenance dataset sha256 to compare with (M014)", "V003")
+        else:
+            _ran("V003")
         if declared is not None and rep.get("dataset_sha256") != declared:
             findings.append(Finding("V003", where, "dataset_sha256 %r does not match the manifest's provenance "
                                                    "dataset sha256 %r -- the report describes a different corpus "
@@ -991,6 +1068,10 @@ def check_report(rep: Dict[str, Any], man: Optional[Dict[str, Any]], where: str,
             continue
         if status in BLOCKING_STATUSES:
             blocking += 1
+        if status == "NOT_APPLICABLE":
+            _ran("V007")
+        if status == "PASS":
+            _ran("V006")
         if status == "NOT_APPLICABLE" and not str(check.get("reason", "")).strip():
             findings.append(Finding("V007", at, "NOT_APPLICABLE must state a reason"))
         if status == "PASS":
@@ -1001,6 +1082,8 @@ def check_report(rep: Dict[str, Any], man: Optional[Dict[str, Any]], where: str,
                 findings.append(Finding("V006", at, "PASS with no numeric value in 'thresholds' -- a check that "
                                                     "compares against nothing cannot fail"))
 
+    _not_run("no check reports PASS", "V006")
+    _not_run("no check reports NOT_APPLICABLE", "V007")
     recomputed = "FAIL" if blocking else "PASS"
     declared = rep.get("overall")
     if declared not in ("PASS", "FAIL"):
@@ -1025,7 +1108,9 @@ def check_b4(check: Any, where: str, findings: List[Finding]) -> None:
     """
     at = "%s checks.B4_conservation" % where
     if check is None:
+        _not_run("B4_conservation is absent (V004)", "V009")
         return  # V004 already reported the absence
+    _ran("V009")
     if not isinstance(check, dict):
         findings.append(Finding("V009", at, "B4 must be a check object, got %s -- a declaration string is not a "
                                             "conservation measurement" % type(check).__name__))
@@ -1078,7 +1163,9 @@ _UNMEASURED_STATUSES: Tuple[str, ...] = ("NOT_APPLICABLE", "NOT_RUN")
 def check_a3(check: Any, where: str, findings: List[Finding]) -> None:
     at = "%s checks.A3_uq_calibration" % where
     if not isinstance(check, dict) or check.get("status") in _UNMEASURED_STATUSES:
+        _not_run("A3_uq_calibration carries no measurement to read (NOT_RUN, NOT_APPLICABLE or absent)", "V010")
         return
+    _ran("V010")
     metrics = check.get("metrics") if isinstance(check.get("metrics"), dict) else {}
     for key in ("nominal", "empirical_coverage"):
         value = metrics.get(key)
@@ -1096,7 +1183,9 @@ def check_a3(check: Any, where: str, findings: List[Finding]) -> None:
 def check_a5(check: Any, where: str, findings: List[Finding]) -> None:
     at = "%s checks.A5_reproducibility" % where
     if not isinstance(check, dict) or check.get("status") in _UNMEASURED_STATUSES:
+        _not_run("A5_reproducibility carries no measurement to read (NOT_RUN, NOT_APPLICABLE or absent)", "V011")
         return
+    _ran("V011")
     if check.get("determinism_class") not in ("bitwise", "seeded_tolerance"):
         findings.append(Finding("V011", at, "A5 must declare determinism_class 'bitwise' or 'seeded_tolerance', "
                                             "got %r -- the two ladders use tolerances four orders of magnitude "
@@ -1254,9 +1343,11 @@ def check_package(pkg: Path, smoke: bool = False) -> List[Finding]:
     and S002); without it nothing is executed.
     """
     findings: List[Finding] = []
+    _ran("E001")
     if not pkg.is_dir():
         findings.append(Finding("E001", str(pkg), "not a directory"))
         return findings
+    _ran("M001")
     manifest_path = find_manifest(pkg)
     if manifest_path is None:
         findings.append(Finding("M001", str(pkg), "no manifest.yaml / manifest.yml / manifest.json in the package"))
@@ -1265,6 +1356,7 @@ def check_package(pkg: Path, smoke: bool = False) -> List[Finding]:
     man = load_mapping(manifest_path, findings)
     if man is None:
         return findings
+    _document("manifest", manifest_path)
     check_manifest(man, pkg, manifest_path.name, findings)
 
     card_ref = man.get("model_card")
@@ -1274,6 +1366,7 @@ def check_package(pkg: Path, smoke: bool = False) -> List[Finding]:
         except OSError as exc:
             findings.append(Finding("C001", card_ref, "cannot read: %s" % exc))
         else:
+            _document("model_card", pkg / card_ref)
             check_card(text, man, card_ref, findings)
 
     val = man.get("validation")
@@ -1281,12 +1374,19 @@ def check_package(pkg: Path, smoke: bool = False) -> List[Finding]:
     if isinstance(report_ref, str) and not outside_package(pkg, report_ref) and (pkg / report_ref).is_file():
         rep = load_mapping(pkg / report_ref, findings)
         if rep is not None:
+            _document("validation_report", pkg / report_ref)
             check_report(rep, man, report_ref, findings)
 
     if smoke:
+        _ran("S002")
         reason = smoke_test(man, pkg, manifest_path.name, findings)
-        if reason is not None:
+        if reason is None:
+            _ran("S001")
+        else:
             findings.append(Finding("S002", manifest_path.name, "the smoke test could not run: %s" % reason))
+            ledger = _LEDGER.get()
+            if ledger is not None:
+                ledger.smoke_reason = reason
     return findings
 
 
@@ -1304,16 +1404,116 @@ def summarize(findings: Sequence[Finding]) -> Dict[str, Any]:
 
 
 # --------------------------------------------------------------------------- #
+# The conformance record: what ``check --json`` writes.
+#
+# One record per package: the package and contract versions, the checker and its
+# version, when the check ran, whether ``--smoke`` was asked for, the sha256 and
+# size of the manifest, card and report it read, the verdict, a state for every
+# rule this checker has -- ``evaluated``, ``fired`` (with how many findings) or
+# ``not_evaluated`` (with the reason) -- and the findings.  Its JSON Schema ships
+# as ``schemas/contract-v1/conformance-record.schema.json``.
+# --------------------------------------------------------------------------- #
+RECORD_VERSION = "1.0"
+RULE_STATES: Tuple[str, ...] = ("evaluated", "fired", "not_evaluated")
+
+
+def checker_version() -> str:
+    """This checker's own version: the package's ``__version__``, else the installed distribution's."""
+    package = sys.modules.get(__package__ or "")
+    version = getattr(package, "__version__", None)
+    if isinstance(version, str) and version:
+        return version
+    try:
+        from importlib.metadata import version as installed_version  # noqa: PLC0415
+        return installed_version("open-contract-ml")
+    except Exception:  # noqa: BLE001 -- a loose copy of this file has no distribution
+        return "unknown"
+
+
+def _fallback_reason(rule: str, ledger: _Ledger, smoke: bool) -> str:
+    if rule in SMOKE_RULES:
+        if not smoke:
+            return "check --smoke was not requested; the default check runs nothing"
+        return ledger.smoke_reason or "the manifest could not be read"
+    if "manifest" not in ledger.documents:
+        return "the manifest could not be found or read"
+    if rule.startswith("C"):
+        return "the model card was not read"
+    if rule.startswith("V"):
+        return "the validation report was not read"
+    if rule == "E002":
+        return "no file the checker read is YAML"
+    return "not reached"
+
+
+def _describe(path: Optional[Path], pkg: Path) -> Optional[Dict[str, Any]]:
+    if path is None or not path.is_file():
+        return None
+    try:
+        rel = path.resolve().relative_to(pkg.resolve()).as_posix()
+    except ValueError:
+        return None
+    return {"path": rel, "sha256": sha256_file(path), "bytes": path.stat().st_size}
+
+
+def check_package_with_record(pkg: Path, smoke: bool = False,
+                              now: Optional[Any] = None) -> Tuple[List[Finding], Dict[str, Any]]:
+    """``check_package`` and the conformance record of the same run."""
+    import datetime  # noqa: PLC0415
+    ledger = _Ledger()
+    token = _LEDGER.set(ledger)
+    try:
+        findings = check_package(pkg, smoke=smoke)
+    finally:
+        _LEDGER.reset(token)
+    fired: Dict[str, int] = {}
+    for f in findings:
+        fired[f.rule] = fired.get(f.rule, 0) + 1
+    rules: Dict[str, Dict[str, Any]] = {}
+    for rule in RULES:
+        if rule.id in fired:
+            rules[rule.id] = {"severity": rule.severity, "state": "fired", "findings": fired[rule.id]}
+        elif rule.id in ledger.evaluated:
+            rules[rule.id] = {"severity": rule.severity, "state": "evaluated"}
+        else:
+            reason = ledger.reasons.get(rule.id) or _fallback_reason(rule.id, ledger, smoke)
+            rules[rule.id] = {"severity": rule.severity, "state": "not_evaluated", "reason": reason}
+    stamp = now if now is not None else datetime.datetime.now(datetime.timezone.utc)
+    record = {
+        "record_version": RECORD_VERSION,
+        "package": str(pkg),
+        "contract_version": CONTRACT_VERSION,
+        "spec_version": ledger.spec_version,
+        "checker": {"name": "open-contract-ml", "version": checker_version()},
+        "checked_at": stamp.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "smoke": bool(smoke),
+        "documents": {kind: _describe(ledger.documents.get(kind), pkg)
+                      for kind in ("manifest", "model_card", "validation_report")},
+    }
+    summary = summarize(findings)
+    for key in ("conformant", "n_error", "n_warn", "rules_failed"):
+        record[key] = summary[key]
+    record["rules"] = rules
+    record["findings"] = summary["findings"]
+    return findings, record
+
+
+def conformance_record(pkg: Path, smoke: bool = False, now: Optional[Any] = None) -> Dict[str, Any]:
+    """The conformance record of checking ``pkg`` (what ``check --json`` writes for it)."""
+    return check_package_with_record(pkg, smoke=smoke, now=now)[1]
+
+
+# --------------------------------------------------------------------------- #
 # CLI.
 # --------------------------------------------------------------------------- #
 def _cmd_check(args: argparse.Namespace) -> int:
     exit_code = 0
+    records: List[Dict[str, Any]] = []
     for raw in args.packages:
         pkg = Path(raw)
-        findings = check_package(pkg, smoke=args.smoke)
+        findings, record = check_package_with_record(pkg, smoke=args.smoke)
+        records.append(record)
         summary = summarize(findings)
-        if args.json:
-            write_lf(Path(args.json), json.dumps({"package": str(pkg), **summary}, indent=2) + "\n")
         if summary["conformant"]:
             print("OK   %s  (contract %s, %d warning(s))" % (pkg, CONTRACT_VERSION, summary["n_warn"]))
         else:
@@ -1321,6 +1521,10 @@ def _cmd_check(args: argparse.Namespace) -> int:
             exit_code = 1
         for f in findings:
             print("  [%s %s] %s: %s" % (f.severity, f.rule, f.where, f.message))
+    if args.json:
+        # one record for one package; an array of records, in argument order, for several
+        payload: Any = records[0] if len(records) == 1 else records
+        write_lf(Path(args.json), json.dumps(payload, indent=2) + "\n")
     return exit_code
 
 
@@ -1381,7 +1585,8 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     p_check = sub.add_parser("check", help="validate contract package(s)")
     p_check.add_argument("packages", nargs="+")
-    p_check.add_argument("--json", help="write the machine-readable report here")
+    p_check.add_argument("--json", help="write the conformance record here: one record for one package, an array "
+                                         "of records for several")
     p_check.add_argument("--smoke", action="store_true",
                          help="also run the entrypoint on the manifest's examples[] under stdio_json (rules S001, "
                               "S002); this executes the package's code, so use it only on a package you would run")

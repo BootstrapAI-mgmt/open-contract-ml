@@ -20,8 +20,20 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   (new rule `S002`) and never counts that as a pass. Without `--smoke` the
   check executes nothing, as before. `check_package` takes the same switch as
   `smoke=True`.
+- `open-contract-ml check --json` writes a conformance record: the checker's
+  version, the contract version it implements and the one the package
+  declares, when the check ran (UTC), whether `--smoke` ran, the sha256 and
+  size of the manifest, card and report it read, and, for every rule, whether
+  it was `evaluated`, `fired` (with how many findings) or `not_evaluated`
+  (with the reason), beside the verdict and the findings it wrote before. Its
+  JSON Schema ships as `schemas/contract-v1/conformance-record.schema.json`;
+  `opencontractml.verify.conformance_record()` returns the same record.
 
 ### Changed
+
+- `open-contract-ml check --json` with several packages writes an array of
+  records, one per package in the order given. Before, each package's report
+  overwrote the previous one, so only the last package's survived.
 
 - `open-contract-ml check` holds every manifest to the contract-v1 manifest
   schema this package ships, `schemas/contract-v1/manifest.schema.json`, which

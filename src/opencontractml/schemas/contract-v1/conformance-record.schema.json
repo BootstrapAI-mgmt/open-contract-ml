@@ -1,0 +1,294 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/BootstrapAI-mgmt/open-contract-ml/schemas/contract-v1/conformance-record.schema.json",
+  "title": "Conformance record of open-contract-ml check",
+  "description": "What `open-contract-ml check --json` writes: one record for one package, or an array of records, one per package in the order given. A record says which checker checked which documents and when, and for every rule of that checker whether it was evaluated, fired, or not evaluated and why. `rules` must name every rule id below; a checker with more rules adds them.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/record"
+    },
+    {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "$ref": "#/$defs/record"
+      }
+    }
+  ],
+  "$defs": {
+    "record": {
+      "type": "object",
+      "required": [
+        "record_version",
+        "package",
+        "contract_version",
+        "spec_version",
+        "checker",
+        "checked_at",
+        "smoke",
+        "documents",
+        "conformant",
+        "n_error",
+        "n_warn",
+        "rules_failed",
+        "rules",
+        "findings"
+      ],
+      "properties": {
+        "record_version": {
+          "const": "1.0"
+        },
+        "package": {
+          "type": "string",
+          "description": "The package path as given to the checker."
+        },
+        "contract_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+$",
+          "description": "The version of the Contract this checker implements."
+        },
+        "spec_version": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The spec_version the package's manifest declares; null when the manifest was not read or declares none."
+        },
+        "checker": {
+          "type": "object",
+          "required": [
+            "name",
+            "version"
+          ],
+          "properties": {
+            "name": {
+              "const": "open-contract-ml"
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "checked_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+          "description": "When the check ran, UTC."
+        },
+        "smoke": {
+          "type": "boolean",
+          "description": "Whether check --smoke ran the entrypoint."
+        },
+        "documents": {
+          "type": "object",
+          "required": [
+            "manifest",
+            "model_card",
+            "validation_report"
+          ],
+          "description": "Each document the checker read, as it was read; null for one it did not read.",
+          "properties": {
+            "manifest": {
+              "$ref": "#/$defs/document"
+            },
+            "model_card": {
+              "$ref": "#/$defs/document"
+            },
+            "validation_report": {
+              "$ref": "#/$defs/document"
+            }
+          }
+        },
+        "conformant": {
+          "type": "boolean"
+        },
+        "n_error": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "n_warn": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rules_failed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rules": {
+          "type": "object",
+          "required": [
+            "E001",
+            "E002",
+            "E003",
+            "M001",
+            "M002",
+            "M003",
+            "M004",
+            "M005",
+            "M006",
+            "M007",
+            "M008",
+            "M009",
+            "M010",
+            "M011",
+            "M012",
+            "M013",
+            "M014",
+            "M015",
+            "M016",
+            "M018",
+            "C001",
+            "C002",
+            "C003",
+            "C004",
+            "C005",
+            "C006",
+            "V001",
+            "V002",
+            "V003",
+            "V004",
+            "V005",
+            "V006",
+            "V007",
+            "V008",
+            "V009",
+            "V010",
+            "V011",
+            "S001",
+            "S002"
+          ],
+          "additionalProperties": {
+            "$ref": "#/$defs/rule_state"
+          }
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/finding"
+          }
+        }
+      }
+    },
+    "document": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "required": [
+            "path",
+            "sha256",
+            "bytes"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Relative to the package directory."
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      ]
+    },
+    "rule_state": {
+      "type": "object",
+      "required": [
+        "severity",
+        "state"
+      ],
+      "properties": {
+        "severity": {
+          "enum": [
+            "ERROR",
+            "WARN"
+          ]
+        },
+        "state": {
+          "enum": [
+            "evaluated",
+            "fired",
+            "not_evaluated"
+          ]
+        },
+        "findings": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How many findings the rule reported; present when it fired."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why the rule was not evaluated; present when it was not."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "fired"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "findings"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "not_evaluated"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "reason"
+            ]
+          }
+        }
+      ]
+    },
+    "finding": {
+      "type": "object",
+      "required": [
+        "rule",
+        "severity",
+        "where",
+        "message"
+      ],
+      "properties": {
+        "rule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "severity": {
+          "enum": [
+            "ERROR",
+            "WARN"
+          ]
+        },
+        "where": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
