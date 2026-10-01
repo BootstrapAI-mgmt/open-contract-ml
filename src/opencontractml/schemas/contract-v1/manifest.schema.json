@@ -207,6 +207,87 @@
         "overall": {"type": "string", "enum": ["PASS", "FAIL"]}
       }
     },
+    "licence": {
+      "type": "object",
+      "description": "Optional, contract 1.1: the licence the model (its code), its weights and its training data are each offered under -- an SPDX license expression with the licence's text or a URL to it, or NOASSERTION with a note. open-contract-ml check holds a declared block to that (rule M020) and warns when a package declaring 1.1 or later declares none (M021). Which licences a package carries is its publisher's policy.",
+      "properties": {
+        "model": {
+          "type": "object",
+          "properties": {
+            "spdx": {
+              "type": "string",
+              "minLength": 1,
+              "description": "An SPDX license expression, or NOASSERTION."
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The licence text: a file in the package, by its path."
+            },
+            "url": {
+              "type": "string",
+              "pattern": "^https?://\\S+$",
+              "description": "Where the licence text is published."
+            },
+            "note": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Why no licence is asserted, beside NOASSERTION."
+            }
+          }
+        },
+        "weights": {
+          "type": "object",
+          "properties": {
+            "spdx": {
+              "type": "string",
+              "minLength": 1,
+              "description": "An SPDX license expression, or NOASSERTION."
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The licence text: a file in the package, by its path."
+            },
+            "url": {
+              "type": "string",
+              "pattern": "^https?://\\S+$",
+              "description": "Where the licence text is published."
+            },
+            "note": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Why no licence is asserted, beside NOASSERTION."
+            }
+          }
+        },
+        "training_data": {
+          "type": "object",
+          "properties": {
+            "spdx": {
+              "type": "string",
+              "minLength": 1,
+              "description": "An SPDX license expression, or NOASSERTION."
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The licence text: a file in the package, by its path."
+            },
+            "url": {
+              "type": "string",
+              "pattern": "^https?://\\S+$",
+              "description": "Where the licence text is published."
+            },
+            "note": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Why no licence is asserted, beside NOASSERTION."
+            }
+          }
+        }
+      }
+    },
     "examples": {"type": "array", "items": {"type": "object"}}
   }
 }

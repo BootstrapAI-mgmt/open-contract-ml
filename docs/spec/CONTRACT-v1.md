@@ -117,6 +117,19 @@ same rule, and its structure is the manifest schema's (`M018`). A 1.0 package's 
 output without a block keeps conforming. A tensor-valued field has no `kind` yet; adding
 one is additive.
 
+**Licences (1.1).** An optional `licence` block names the licence under which a package
+offers the model (its code), its weights and its training data, as three members:
+`model`, `weights` and `training_data`. Each states an SPDX license expression (`spdx`)
+with the licence's `text`, a file in the package named by its path, or a `url` where the
+text is published; or `spdx: NOASSERTION` with a `note` saying why no licence is
+asserted. A declared block is held to that in a package of any version (`M020`). The
+checker reads the expression's grammar -- licence identifiers, `LicenseRef-` references,
+`WITH` an exception, `AND`, `OR` and parentheses, with the operators in upper case -- and
+does not carry the SPDX licence list, so an identifier that is well formed but not on
+the list passes. A package declaring 1.1 or later that declares no block is warned
+(`M021`), never failed. Which licences a package should carry is its publisher's policy;
+the Contract asks only that they be stated, and that a licence stated be legible.
+
 **A point predictor (1.1).** `uncertainty.form: none` declares that the model reports
 no uncertainty: it answers with point predictions and no band. Such a package declares
 `per_output: {}`, a block for no output, and no `calibration` block (`M007`), and its
@@ -569,6 +582,8 @@ them only where it declares comparators, which 1.0 did not define:
 | `B4_conservation` may report `NOT_RUN` with `applicable: true`, carrying no measurement and blocking `overall` (sections 5.3, 5.4) | `V009` | every package | may report it too; a report `V009` rejected for it before is accepted |
 | `uncertainty.form: none` declares a point predictor: `per_output: {}`, no `calibration` block, and a card that says the model reports no uncertainty (section 3) | `M007`, `C005` | a package that declares it, from `spec_version` 1.1 | cannot declare it (`M007`) |
 | A `type: field` output declares `field: {kind, units, support, media_type}`, with `shape` and `coordinate_ref` where its layout is fixed; the block is defined once, in both manifest schemas (section 3) | `M019`, `M018` | from `spec_version` 1.1; a declared block wherever it is declared | keeps conforming with a field output that declares no block |
+| An optional `licence` block names the licences of the model, the weights and the training data, each an SPDX expression with its text or URL, or `NOASSERTION` with a note (section 3) | `M020` | a block wherever it is declared | may declare one, held to the same rule |
+| A package that declares no `licence` block is warned (section 3) | `M021` (a warning) | from `spec_version` 1.1 | not warned |
 
 These bind every package, because they hold it to what 1.0 already stated -- its schema,
 its package as a directory, its byte-count pins -- or to what the rules are documented to

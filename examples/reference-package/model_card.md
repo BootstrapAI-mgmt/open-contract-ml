@@ -135,6 +135,7 @@ optimistic one.
 | Dataset | sha256 `7bd50c57ac6251e6011f4612ba75da49d4e48d320afbcb923f1aa94b6f140d64` (600 samples) |
 | Code | not recorded: built before this repository's public history began |
 | Environment | Python 3.13.3, numpy 2.4.2 |
+| Licences | the model and the weights: Apache-2.0, the licence of this repository; the training data: none asserted, because the synthetic corpus is not distributed |
 
 The two hashes above are re-verified against the files on disk every time
 `python -m opencontractml.verify check` runs (rules M013 and C3), so a package whose entrypoint

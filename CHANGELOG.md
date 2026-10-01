@@ -60,6 +60,18 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   `$defs.output_field`, and a test holds the two equal. The schema accepts a
   block of `shape`, `coordinate_ref` and `units` alone; `M019` names the keys
   such a block lacks.
+- A licence block, as an amendment proposed for the maintainer's
+  ratification (section 3): `licence` names the licence of the model, of
+  its weights and of its training data, each as an SPDX license expression
+  with the licence's text or a URL to it, or as `NOASSERTION` with a note. A
+  malformed block is an error (new rule `M020`); a package declaring 1.1 or
+  later that declares none is warned (new rule `M021`), never failed.
+  `opencontractml.verify.spdx_expression_problem()` reads an expression's
+  grammar with the standard library; it does not carry the SPDX licence
+  list. Which licences a package should carry is left to its publisher. The
+  reference package declares its own: Apache-2.0 for the model and the
+  weights, which are files of this repository, and `NOASSERTION` for a
+  training corpus that is not distributed.
 
 ### Changed
 

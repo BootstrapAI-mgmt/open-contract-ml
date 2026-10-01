@@ -128,6 +128,21 @@ validation:
 
 model_card: ./model_card.md
 
+# --- the licences, contract 1.1 --------------------------------------------- #
+# The entrypoint and the weights are files of this repository, which is
+# Apache-2.0. The corpus the fit was drawn from is not distributed with the
+# package or the repository, so no licence is asserted for it.
+licence:
+  model:
+    spdx: Apache-2.0
+    url: "http://www.apache.org/licenses/LICENSE-2.0"
+  weights:
+    spdx: Apache-2.0
+    url: "http://www.apache.org/licenses/LICENSE-2.0"
+  training_data:
+    spdx: NOASSERTION
+    note: "the synthetic corpus contract-reference-corpus-1.0 is not distributed with this package or this repository; the package pins it by sha256 and asserts no licence for it"
+
 examples:
   - label: "Mid-range commuter brake"
     inputs:

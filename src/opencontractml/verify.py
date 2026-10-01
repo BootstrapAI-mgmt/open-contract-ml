@@ -241,6 +241,9 @@ RULES: Tuple[Rule, ...] = (
                           "(required keys, types, enumerations, patterns, bounds)"),
     Rule("M019", "ERROR", "a type: field output declares its field block (kind, units, support, media_type) from "
                           "contract 1.1, and a declared block is complete and sits on a field output"),
+    Rule("M020", "ERROR", "a declared licence block names the model, the weights and the training data, each by an "
+                          "SPDX license expression with its text or URL, or by NOASSERTION with a note"),
+    Rule("M021", "WARN", "a package declaring contract 1.1 or later declares a licence block"),
     Rule("C001", "ERROR", "model card parses with a flat scalar front-matter"),
     Rule("C002", "ERROR", "card front-matter identity matches the manifest"),
     Rule("C003", "ERROR", "the eleven required card sections are present, first, in order"),
@@ -805,6 +808,7 @@ def check_manifest(man: Dict[str, Any], pkg: Path, where: str, findings: List[Fi
                                     % (field.get("name"),)))
 
     check_field_blocks(outputs, _major_minor(spec_version), where, findings)
+    check_licence(man, pkg, _major_minor(spec_version), where, findings)
 
     in_names = [f.get("name") for f in inputs if isinstance(f, dict)]
     out_names = [f.get("name") for f in outputs if isinstance(f, dict)]
@@ -927,6 +931,165 @@ def check_field_blocks(outputs: List[Any], version: Optional[Tuple[int, int]], w
         _ran("M019")
     else:
         _not_run("no output is of type field or declares a field block", "M019")
+
+
+# The licence block (contract 1.1).  ``licence`` names, for the model (its code),
+# its weights and its training data, the licence each is offered under: an SPDX
+# license expression with the licence's text (a file in the package) or a URL
+# where the text is published, or ``NOASSERTION`` with a note saying why no
+# licence is asserted.  A declared block is held to that at any version (M020); a
+# package declaring 1.1 or later that declares none is warned (M021).  Which
+# licences a package should carry is its publisher's policy, not the Contract's.
+LICENCE_MEMBERS: Tuple[str, ...] = ("model", "weights", "training_data")
+LICENCE_NOASSERTION = "NOASSERTION"
+#: The contract version from which a package that declares no licence block is warned.
+LICENCE_WARNED_FROM: Tuple[int, int] = (1, 1)
+_SPDX_TOKEN = re.compile(r"\s*(\(|\)|[^\s()]+)")
+_SPDX_IDSTRING = re.compile(r"^[A-Za-z0-9.-]+$")
+_SPDX_LICENSE_REF = re.compile(r"^(?:DocumentRef-[A-Za-z0-9.-]+:)?LicenseRef-[A-Za-z0-9.-]+$")
+_SPDX_OPERATORS: Tuple[str, ...] = ("AND", "OR", "WITH")
+
+
+class _SpdxError(ValueError):
+    pass
+
+
+def spdx_expression_problem(expression: Any) -> Optional[str]:
+    """Why ``expression`` is not an SPDX license expression, or None when it is one.
+
+    Checks the expression's grammar: licence identifiers (letters, digits, ``.``
+    and ``-``, optionally ending in ``+``), ``LicenseRef-`` references (optionally
+    behind ``DocumentRef-<id>:``), ``WITH`` an exception identifier, ``AND``,
+    ``OR`` and parentheses, with ``WITH`` binding tightest and ``OR`` loosest, and
+    the three operators in upper case.  It does not carry the SPDX licence list,
+    so an identifier that is well formed but not on the list is not caught.
+    ``NOASSERTION`` and ``NONE`` are not licences and are refused inside an
+    expression; a member that asserts no licence says ``NOASSERTION`` alone.
+    """
+    if not isinstance(expression, str) or not expression.strip():
+        return "it is not a non-empty string"
+    tokens: List[str] = []
+    pos = 0
+    while pos < len(expression):
+        match = _SPDX_TOKEN.match(expression, pos)
+        if match is None:
+            break                                   # only whitespace remains
+        tokens.append(match.group(1))
+        pos = match.end()
+    state = {"i": 0}
+
+    def peek() -> Optional[str]:
+        return tokens[state["i"]] if state["i"] < len(tokens) else None
+
+    def take() -> Optional[str]:
+        token = peek()
+        state["i"] += 1
+        return token
+
+    def identifier(kind: str, allow_plus: bool) -> None:
+        token = take()
+        if token is None:
+            raise _SpdxError("it ends where %s is expected" % kind)
+        if token in ("(", ")") or token in _SPDX_OPERATORS:
+            raise _SpdxError("%r stands where %s is expected" % (token, kind))
+        if token.upper() in _SPDX_OPERATORS:
+            raise _SpdxError("%r: the operators are AND, OR and WITH, in upper case" % token)
+        if token in (LICENCE_NOASSERTION, "NONE"):
+            raise _SpdxError("%r is not a licence; a member that asserts no licence says NOASSERTION alone" % token)
+        if allow_plus and _SPDX_LICENSE_REF.match(token):
+            return
+        body = token[:-1] if allow_plus and token.endswith("+") else token
+        if not _SPDX_IDSTRING.match(body):
+            raise _SpdxError("%r is not %s: letters, digits, '.' and '-'%s" % (
+                token, kind, ", with an optional trailing '+'" if allow_plus else ""))
+
+    def term() -> None:
+        if peek() == "(":
+            take()
+            disjunction()
+            if take() != ")":
+                raise _SpdxError("an opening '(' is not closed")
+            return
+        identifier("a licence identifier", allow_plus=True)
+        if peek() == "WITH":
+            take()
+            identifier("an exception identifier", allow_plus=False)
+
+    def conjunction() -> None:
+        term()
+        while peek() == "AND":
+            take()
+            term()
+
+    def disjunction() -> None:
+        conjunction()
+        while peek() == "OR":
+            take()
+            conjunction()
+
+    try:
+        disjunction()
+        if peek() is not None:
+            token = peek()
+            if token.upper() in _SPDX_OPERATORS:
+                raise _SpdxError("%r: the operators are AND, OR and WITH, in upper case" % token)
+            raise _SpdxError("%r follows a complete expression without an operator" % token)
+    except _SpdxError as exc:
+        return str(exc)
+    return None
+
+
+def check_licence(man: Dict[str, Any], pkg: Path, version: Optional[Tuple[int, int]], where: str,
+                  findings: List[Finding]) -> None:
+    """M020 for a declared licence block; M021 when a package declaring 1.1 or later declares none."""
+    licence = man.get("licence")
+    if licence is None:
+        _not_run("the package declares no licence block", "M020")
+        if version is not None and version >= LICENCE_WARNED_FROM:
+            _ran("M021")
+            hint = (" (it carries a 'license' key, which the Contract does not read: its key is 'licence')"
+                    if "license" in man else "")
+            findings.append(Finding("M021", where, "the package declares no licence block%s; a reader cannot tell "
+                                                   "under which terms the model, its weights and its training data "
+                                                   "may be used" % hint))
+        else:
+            _not_run("the package declares contract 1.0, which defines no licence block", "M021")
+        return
+    _ran("M020", "M021")
+    if not isinstance(licence, dict):
+        findings.append(Finding("M020", "%s licence" % where, "licence must be a mapping of model, weights and "
+                                                              "training_data, got %r" % (licence,)))
+        return
+    for member in LICENCE_MEMBERS:
+        at = "%s licence.%s" % (where, member)
+        entry = licence.get(member)
+        if entry is None:
+            findings.append(Finding("M020", at, "missing: a licence block names the licence of the model, of the "
+                                                "weights and of the training data"))
+            continue
+        if not isinstance(entry, dict):
+            findings.append(Finding("M020", at, "must be a mapping {spdx, text or url}, got %r" % (entry,)))
+            continue
+        spdx = entry.get("spdx")
+        if spdx == LICENCE_NOASSERTION:
+            if not isinstance(entry.get("note"), str) or not entry["note"].strip():
+                findings.append(Finding("M020", at, "NOASSERTION asserts no licence and needs a note saying why"))
+            continue
+        problem = spdx_expression_problem(spdx)
+        if problem:
+            findings.append(Finding("M020", at, "spdx %r is not an SPDX license expression: %s" % (spdx, problem)))
+        text, url = entry.get("text"), entry.get("url")
+        has_text = isinstance(text, str) and bool(text.strip())
+        if not has_text and not (isinstance(url, str) and url.strip()):
+            findings.append(Finding("M020", at, "a licence states its text (a file in the package) or a url where "
+                                                "the text is published"))
+        if has_text:
+            outside = outside_package(pkg, text)
+            if outside:
+                findings.append(Finding("M020", at, "text %r %s -- the licence text is a file inside the package"
+                                        % (text, outside)))
+            elif not (pkg / text).is_file():
+                findings.append(Finding("M020", at, "text %r does not name a file in the package" % (text,)))
 
 
 # A point predictor (contract 1.1).  ``uncertainty.form: none`` declares that the

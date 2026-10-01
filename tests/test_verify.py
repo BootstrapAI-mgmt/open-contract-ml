@@ -80,6 +80,11 @@ def base_manifest() -> dict:
         },
         "validation": {"report": "./validation_report.json", "overall": "PASS"},
         "model_card": "./model_card.md",
+        "licence": {
+            "model": {"spdx": "Apache-2.0", "url": "http://www.apache.org/licenses/LICENSE-2.0"},
+            "weights": {"spdx": "Apache-2.0", "url": "http://www.apache.org/licenses/LICENSE-2.0"},
+            "training_data": {"spdx": "NOASSERTION", "note": "a constant function has no training data"},
+        },
     }
 
 
@@ -637,6 +642,19 @@ MUTATIONS = [
     ("M019", _mutate_manifest(_add_field_output("a VTK file"))),
     ("M018", _mutate_manifest(_add_field_output(dict(FIELD_BLOCK, media_type="VTK PolyData")))),
     ("M018", _mutate_manifest(_add_field_output(dict(FIELD_BLOCK, kind="tensor")))),
+    # A declared licence block names three licences, each an SPDX expression with its
+    # text or URL, or NOASSERTION with a note (M020); a 1.1 package without one is
+    # warned (M021). The first two are defects the checker accepted before.
+    ("M020", _mutate_manifest(lambda m: m["licence"]["model"].__setitem__("spdx", "Apache 2.0"))),
+    ("M020", _mutate_manifest(lambda m: m["licence"].pop("weights"))),
+    ("M020", _mutate_manifest(lambda m: m["licence"]["model"].__setitem__("spdx", "mit or apache-2.0"))),
+    ("M020", _mutate_manifest(lambda m: m["licence"]["training_data"].pop("note"))),
+    ("M020", _mutate_manifest(lambda m: m["licence"]["weights"].pop("url"))),
+    ("M020", _mutate_manifest(lambda m: m["licence"]["weights"].update(text="../LICENSE"))),
+    ("M020", _mutate_manifest(lambda m: m["licence"]["weights"].update(text="./LICENSE.txt"))),
+    ("M020", _mutate_manifest(lambda m: m.__setitem__("licence", "Apache-2.0"))),
+    ("M021", _mutate_manifest(lambda m: m.pop("licence"))),
+    ("M018", _mutate_manifest(lambda m: m["licence"]["model"].__setitem__("url", "ftp://example.invalid/licence"))),
 ]
 
 
@@ -908,6 +926,61 @@ def test_the_grid_producers_block_passes_the_schema_and_lacks_three_keys(tmp_pat
     findings = vs.check_package(root)
     assert [(f.rule, f.where) for f in findings] == [("M019", "manifest.json outputs[1]")]
     assert "lacks kind, support, media_type" in findings[0].message
+
+
+@pytest.mark.parametrize("expression", [
+    "MIT", "Apache-2.0", "GPL-2.0+", "GPL-2.0-only WITH Classpath-exception-2.0",
+    "(MIT OR Apache-2.0) AND BSD-3-Clause", "MIT OR Apache-2.0 AND BSD-3-Clause", "LicenseRef-proprietary",
+    "DocumentRef-spdx-tool-1.2:LicenseRef-MIT-Style-2", "  MIT  ",
+])
+def test_an_spdx_expression_is_accepted(expression: str):
+    assert vs.spdx_expression_problem(expression) is None
+
+
+@pytest.mark.parametrize("expression,why", [
+    ("", "not a non-empty string"),
+    (None, "not a non-empty string"),
+    ("Apache 2.0", "'2.0' follows a complete expression without an operator"),
+    ("MIT/Apache-2.0", "is not a licence identifier"),
+    ("MIT, Apache-2.0", "is not a licence identifier"),
+    ("mit or apache-2.0", "in upper case"),
+    ("MIT and Apache-2.0", "in upper case"),
+    ("(MIT OR Apache-2.0", "is not closed"),
+    ("MIT)", "follows a complete expression"),
+    ("MIT AND", "ends where a licence identifier is expected"),
+    ("AND MIT", "stands where a licence identifier is expected"),
+    ("GPL-2.0 WITH", "ends where an exception identifier is expected"),
+    ("MIT WITH (X)", "stands where an exception identifier is expected"),
+    ("GPL-2.0 WITH Classpath-exception-2.0+", "is not an exception identifier"),
+    ("NOASSERTION AND MIT", "is not a licence"),
+    ("NONE", "is not a licence"),
+])
+def test_a_malformed_spdx_expression_is_named(expression, why):
+    problem = vs.spdx_expression_problem(expression)
+    assert problem is not None and why in problem, problem
+
+
+def test_the_reference_package_declares_its_licences():
+    import yaml
+    man = yaml.safe_load((REFERENCE_PACKAGE / "manifest.yaml").read_text(encoding="utf-8"))
+    assert set(man["licence"]) == set(vs.LICENCE_MEMBERS)
+    assert vs.check_package(REFERENCE_PACKAGE) == []
+
+
+def test_a_1_1_package_without_a_licence_block_earns_the_warning_only(tmp_path: Path):
+    """No licence block is a warning, never an error: the package stays conformant and says what it lacks."""
+    pkg = _copy_reference_package(tmp_path)
+    _rewrite_yaml_manifest(pkg, lambda m: m.pop("licence"))
+    findings = vs.check_package(pkg)
+    assert [(f.rule, f.severity) for f in findings] == [("M021", "WARN")]
+    assert vs.summarize(findings)["conformant"]
+
+
+def test_the_warning_names_a_license_key_the_contract_does_not_read(tmp_path: Path):
+    pkg = _copy_reference_package(tmp_path)
+    _rewrite_yaml_manifest(pkg, lambda m: m.__setitem__("license", m.pop("licence")))
+    [finding] = vs.check_package(pkg)
+    assert finding.rule == "M021" and "'license' key" in finding.message
 
 
 def test_only_the_two_unmeasured_statuses_are_exempt():
