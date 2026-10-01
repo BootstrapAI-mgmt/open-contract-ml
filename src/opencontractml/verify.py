@@ -9,9 +9,11 @@ given artifact complies, and it says exactly which rule failed and why.
 
 Commands:
 
-    python -m opencontractml.verify check <package-dir> [--json report.json]
+    python -m opencontractml.verify check <package-dir> [--smoke] [--json report.json]
         Strict conformance of one contract package (manifest + card + validation
         report + the artifacts they name).  Exit 0 when clean, 1 on findings.
+        ``--smoke`` also runs the entrypoint on the manifest's examples; without
+        it the check executes nothing.
 
     python -m opencontractml.verify rules
         Print the rule table.
@@ -47,6 +49,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import sys
 from pathlib import Path, PureWindowsPath
@@ -248,6 +251,10 @@ RULES: Tuple[Rule, ...] = (
     Rule("V009", "ERROR", "B4 conservation is measured, not declared"),
     Rule("V010", "ERROR", "A3 uq_calibration reports nominal, empirical coverage, n and method"),
     Rule("V011", "ERROR", "A5 reproducibility declares a determinism class and a tolerance"),
+    Rule("S001", "ERROR", "check --smoke: the entrypoint answers every declared example within its timeout, with "
+                          "every declared output and uncertainty field"),
+    Rule("S002", "WARN", "check --smoke: the smoke test could run (examples declared, the entrypoint verified and "
+                         "launchable here)"),
 )
 RULES_BY_ID: Dict[str, Rule] = {r.id: r for r in RULES}
 
@@ -1101,6 +1108,136 @@ def check_a5(check: Any, where: str, findings: List[Finding]) -> None:
 
 
 # --------------------------------------------------------------------------- #
+# The smoke test: ``check --smoke`` runs the entrypoint on the manifest's examples.
+#
+# The default check reads files and runs nothing.  ``--smoke`` also runs the
+# package's entrypoint the way a consumer dispatches it under ``stdio_json``: once
+# per ``examples[]`` entry, with that example's inputs as the request, in the
+# package directory, within ``invocation.timeout_s``.  Each answer must carry every
+# declared output and every uncertainty field the manifest's ``per_output`` blocks
+# name (S001).  A smoke test that cannot run -- no examples, an entrypoint the static
+# check did not verify, a host that cannot launch it, a module the entrypoint
+# imports missing from the checking environment -- is reported as a warning with
+# its reason (S002), never as a pass.
+#
+# It runs only an entrypoint the static check verified: inside the package, its
+# bytes matching their pin.  It still executes the package's code, so run it only
+# on a package you would run.
+# --------------------------------------------------------------------------- #
+SMOKE_RULES: Tuple[str, ...] = ("S001", "S002")
+#: Static findings after which the entrypoint is not one the checker will run.
+_SMOKE_BLOCKERS: Tuple[str, ...] = ("M008", "M012", "M013")
+_MODULE_NOT_FOUND = re.compile(r"ModuleNotFoundError: No module named '([^']+)'")
+
+
+def _last_json_object(text: str) -> Optional[Dict[str, Any]]:
+    """The answer frame: all of stdout as one JSON object, else its last line that is one."""
+    try:
+        whole = json.loads(text)
+    except ValueError:
+        whole = None
+    if isinstance(whole, dict):
+        return whole
+    for line in reversed([ln for ln in text.splitlines() if ln.strip()]):
+        try:
+            frame = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(frame, dict):
+            return frame
+    return None
+
+
+def _tail(text: str, limit: int = 200) -> str:
+    lines = [ln.strip() for ln in (text or "").splitlines() if ln.strip()]
+    if not lines:
+        return ""
+    last = lines[-1]
+    return ": " + (last if len(last) <= limit else last[:limit] + "...")
+
+
+def _smoke_command(pkg: Path, executable: str) -> Tuple[Optional[List[str]], Optional[str]]:
+    # absolute, because the process runs with the package directory as its cwd
+    target = (pkg / executable).resolve()
+    if target.suffix.lower() == ".py":
+        return [sys.executable, str(target)], None
+    if os.access(str(target), os.X_OK) and not target.is_dir():
+        return [str(target)], None
+    return None, "the checker cannot launch a %r entrypoint on this host" % (target.suffix or target.name)
+
+
+def smoke_test(man: Dict[str, Any], pkg: Path, where: str, findings: List[Finding]) -> Optional[str]:
+    """Run S001 over the manifest's examples.  Returns None, or why the smoke test could not run."""
+    blockers = sorted({f.rule for f in findings if f.rule in _SMOKE_BLOCKERS})
+    if blockers:
+        return ("the static check did not verify the entrypoint (%s), and the smoke test runs only a verified one"
+                % ", ".join(blockers))
+    inv = man.get("invocation") if isinstance(man.get("invocation"), dict) else {}
+    executable = inv.get("executable")
+    timeout = inv.get("timeout_s")
+    if not isinstance(executable, str) or outside_package(pkg, executable):
+        return "invocation.executable does not name a file inside the package"
+    if not isinstance(timeout, int) or isinstance(timeout, bool) or timeout <= 0:
+        return "invocation.timeout_s is not a positive integer"
+    examples = man.get("examples")
+    if not isinstance(examples, list) or not examples:
+        return "the manifest declares no examples[] to run"
+    argv, problem = _smoke_command(pkg, executable)
+    if argv is None:
+        return problem
+    outputs = [f.get("name") for f in man.get("outputs") or [] if isinstance(f, dict)]
+    unc = man.get("uncertainty") if isinstance(man.get("uncertainty"), dict) else {}
+    per_output = unc.get("per_output") if isinstance(unc.get("per_output"), dict) else {}
+    uq_fields = sorted({value for block in per_output.values() if isinstance(block, dict)
+                        for key, value in block.items() if key.endswith("_field") and isinstance(value, str)})
+    env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONIOENCODING="utf-8")
+    import subprocess  # noqa: PLC0415 -- imported only when --smoke asks for a run
+    for i, example in enumerate(examples):
+        at = "%s examples[%d]" % (where, i)
+        if not isinstance(example, dict) or not isinstance(example.get("inputs"), dict):
+            findings.append(Finding("S001", at, "the example has no inputs mapping to send"))
+            continue
+        request = json.dumps({"inputs": example["inputs"]}) + "\n"
+        try:
+            proc = subprocess.run(argv, input=request, capture_output=True, text=True, encoding="utf-8",
+                                  errors="replace", timeout=timeout, cwd=str(pkg.resolve()), env=env)
+        except subprocess.TimeoutExpired:
+            findings.append(Finding("S001", at, "no answer within invocation.timeout_s = %d s" % timeout))
+            continue
+        except OSError as exc:
+            return "the entrypoint could not be launched here (%s: %s)" % (type(exc).__name__, exc)
+        if proc.returncode != 0:
+            missing = _MODULE_NOT_FOUND.search(proc.stderr or "")
+            if missing and not proc.stdout.strip():
+                return ("the entrypoint imports %r, which is not installed in the checking environment"
+                        % missing.group(1))
+            findings.append(Finding("S001", at, "the entrypoint exited with code %d%s"
+                                    % (proc.returncode, _tail(proc.stdout) or _tail(proc.stderr))))
+            continue
+        frame = _last_json_object(proc.stdout)
+        if frame is None:
+            findings.append(Finding("S001", at, "the answer on stdout is not a JSON object%s" % _tail(proc.stdout)))
+            continue
+        if "status" in frame and frame["status"] != "ok":
+            said = frame.get("error") or frame.get("reason") or ""
+            findings.append(Finding("S001", at, "the entrypoint declined the example: status %r%s"
+                                    % (frame["status"], _tail(said if isinstance(said, str) else json.dumps(said)))))
+            continue
+        answer = frame.get("outputs")
+        if not isinstance(answer, dict):
+            findings.append(Finding("S001", at, "the answer carries no outputs mapping"))
+            continue
+        missing_outputs = [name for name in outputs if name not in answer]
+        if missing_outputs:
+            findings.append(Finding("S001", at, "the answer omits declared output(s) %s" % missing_outputs))
+        missing_uq = [name for name in uq_fields if name not in answer]
+        if missing_uq:
+            findings.append(Finding("S001", at, "the answer omits the uncertainty field(s) %s that "
+                                                "uncertainty.per_output names" % missing_uq))
+    return None
+
+
+# --------------------------------------------------------------------------- #
 # Package orchestration.
 # --------------------------------------------------------------------------- #
 def find_manifest(pkg: Path) -> Optional[Path]:
@@ -1110,8 +1247,12 @@ def find_manifest(pkg: Path) -> Optional[Path]:
     return None
 
 
-def check_package(pkg: Path) -> List[Finding]:
-    """Validate one contract package.  Returns every finding; empty means conformant."""
+def check_package(pkg: Path, smoke: bool = False) -> List[Finding]:
+    """Validate one contract package.  Returns every finding; empty means conformant.
+
+    ``smoke=True`` also runs the entrypoint on the manifest's examples (rules S001
+    and S002); without it nothing is executed.
+    """
     findings: List[Finding] = []
     if not pkg.is_dir():
         findings.append(Finding("E001", str(pkg), "not a directory"))
@@ -1141,6 +1282,11 @@ def check_package(pkg: Path) -> List[Finding]:
         rep = load_mapping(pkg / report_ref, findings)
         if rep is not None:
             check_report(rep, man, report_ref, findings)
+
+    if smoke:
+        reason = smoke_test(man, pkg, manifest_path.name, findings)
+        if reason is not None:
+            findings.append(Finding("S002", manifest_path.name, "the smoke test could not run: %s" % reason))
     return findings
 
 
@@ -1164,7 +1310,7 @@ def _cmd_check(args: argparse.Namespace) -> int:
     exit_code = 0
     for raw in args.packages:
         pkg = Path(raw)
-        findings = check_package(pkg)
+        findings = check_package(pkg, smoke=args.smoke)
         summary = summarize(findings)
         if args.json:
             write_lf(Path(args.json), json.dumps({"package": str(pkg), **summary}, indent=2) + "\n")
@@ -1236,6 +1382,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     p_check = sub.add_parser("check", help="validate contract package(s)")
     p_check.add_argument("packages", nargs="+")
     p_check.add_argument("--json", help="write the machine-readable report here")
+    p_check.add_argument("--smoke", action="store_true",
+                         help="also run the entrypoint on the manifest's examples[] under stdio_json (rules S001, "
+                              "S002); this executes the package's code, so use it only on a package you would run")
     p_check.set_defaults(func=_cmd_check)
 
     p_rules = sub.add_parser("rules", help="print the rule table")

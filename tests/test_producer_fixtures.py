@@ -89,3 +89,34 @@ def test_the_untrained_packages_still_report_tier_a_as_not_run(pkg: Path):
     """These are the packages V010 / V011 were narrowed for: an honest NOT_RUN on A3 and A5."""
     checks = _report(pkg)["checks"]
     assert {key: checks[key]["status"] for key in vs.TIER_A} == {key: "NOT_RUN" for key in vs.TIER_A}
+
+
+# --------------------------------------------------------------------------- #
+# Under check --smoke. None of these copies can answer its examples here, each
+# for a stated reason, and the checker must say which rather than pass them.
+# --------------------------------------------------------------------------- #
+def _smoke_findings(pkg: Path) -> list:
+    return [f for f in vs.check_package(pkg, smoke=True) if f.rule in vs.SMOKE_RULES]
+
+
+@pytest.mark.parametrize("pkg", [p for p in PACKAGES if p.name.startswith("brake_disc_")], ids=lambda p: p.name)
+def test_the_untrained_packages_declare_no_examples_so_the_smoke_test_cannot_run(pkg: Path):
+    pytest.importorskip("yaml", reason="the fixture packages ship manifest.yaml")
+    assert [(f.rule, f.message) for f in _smoke_findings(pkg)] == [
+        ("S002", "the smoke test could not run: the manifest declares no examples[] to run")]
+
+
+def test_the_plate_copy_cannot_answer_its_examples_because_its_weights_are_a_stub():
+    """The copy's weights file is a text stub (see its README), so its entrypoint reports an internal error.
+
+    Where numpy is not installed the entrypoint cannot even start, and the smoke
+    test reports that it could not run instead.
+    """
+    import importlib.util
+    pytest.importorskip("yaml", reason="the fixture packages ship manifest.yaml")
+    found = _smoke_findings(FIXTURES / "plate_heat_fno")
+    if importlib.util.find_spec("numpy") is None:
+        assert [f.rule for f in found] == ["S002"] and "'numpy'" in found[0].message
+    else:
+        assert [f.rule for f in found] == ["S001", "S001"]
+        assert all("cannot load the packaged weights" in f.message for f in found), found

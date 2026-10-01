@@ -297,6 +297,16 @@
       "id": "V011",
       "severity": "ERROR",
       "title": "A5 reproducibility declares a determinism class and a tolerance"
+    },
+    {
+      "id": "S001",
+      "severity": "ERROR",
+      "title": "check --smoke: the entrypoint answers every declared example within its timeout, with every declared output and uncertainty field"
+    },
+    {
+      "id": "S002",
+      "severity": "WARN",
+      "title": "check --smoke: the smoke test could run (examples declared, the entrypoint verified and launchable here)"
     }
   ]
 }

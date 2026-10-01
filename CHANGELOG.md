@@ -7,6 +7,20 @@ implements are separate numbers: `opencontractml.__version__` is the first,
 
 ## [Unreleased]
 
+### Added
+
+- `open-contract-ml check --smoke` also runs a package's entrypoint the way
+  a consumer dispatches it under `stdio_json`: once per `examples[]` entry,
+  within `invocation.timeout_s`, in the package directory. Each answer must
+  carry every declared output and every uncertainty field the manifest's
+  `per_output` blocks name (new rule `S001`). It runs only an entrypoint the
+  static check verified. When it cannot run -- no examples, an unverified
+  entrypoint, a host that cannot launch it, a module the entrypoint imports
+  that is missing from the checking environment -- it says why as a warning
+  (new rule `S002`) and never counts that as a pass. Without `--smoke` the
+  check executes nothing, as before. `check_package` takes the same switch as
+  `smoke=True`.
+
 ### Changed
 
 - `open-contract-ml check` holds every manifest to the contract-v1 manifest

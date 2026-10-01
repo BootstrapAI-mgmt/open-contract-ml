@@ -227,6 +227,9 @@ jobs:
         run: |
           "$RUNNER_TEMP/clean/bin/python" -c "import opencontractml.verify as v; print('checker under test:', v.__file__)"
           "$RUNNER_TEMP/clean/bin/open-contract-ml" check "$GITHUB_WORKSPACE/examples/reference-package"
+          # --smoke also runs the entrypoint on the manifest's two examples; the
+          # reference entrypoint needs only the standard library
+          "$RUNNER_TEMP/clean/bin/open-contract-ml" check --smoke "$GITHUB_WORKSPACE/examples/reference-package"
 
       # tests/fixtures/producer_packages/ holds copies of packages that real
       # producers emit (its README says what each copy changed). Checking them

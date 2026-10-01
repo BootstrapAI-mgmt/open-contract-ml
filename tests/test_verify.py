@@ -355,6 +355,22 @@ def _report_beside_the_package(root: Path):
     _mutate_manifest(lambda m: m["validation"].__setitem__("report", "../validation_report.json"))(root)
 
 
+def _reference_entrypoint(source: str, manifest_fn=None):
+    """The reference package with its entrypoint replaced and re-pinned, so only its behaviour differs."""
+    def change(root: Path):
+        import hashlib
+        body = source.encode("utf-8")
+        (root / "predict.py").write_bytes(body)
+
+        def repin(m):
+            m["provenance"]["artifacts"][0]["sha256"] = hashlib.sha256(body).hexdigest()
+            m["provenance"]["artifacts"][0]["bytes"] = len(body)
+            if manifest_fn is not None:
+                manifest_fn(m)
+        _rewrite_yaml_manifest(root, repin)
+    return _reference_package(change)
+
+
 def _strip_units(m) -> None:
     for field in m["inputs"] + m["outputs"]:
         field.pop("units", None)
@@ -462,6 +478,19 @@ MUTATIONS = [
     ("M004", _mutate_manifest(lambda m: m["inputs"][0].pop("units"))),
     ("M004", _mutate_manifest(lambda m: m["inputs"][0].__setitem__("range", [500.0, 500.0]))),
     ("M005", _mutate_manifest(lambda m: m["outputs"][0].__setitem__("units", " "))),
+    # check --smoke runs the entrypoint on the manifest's examples. The first is a
+    # defect the checker accepted before: an entrypoint that cannot run, re-pinned
+    # so its hash is right. The others answer wrongly in each way S001 names.
+    ("S001", _reference_entrypoint('import sys' + LF + 'sys.exit("this model does not run")' + LF)),
+    ("S001", _reference_entrypoint('print("not a JSON object")' + LF)),
+    ("S001", _reference_entrypoint('import json' + LF + 'print(json.dumps({"status": "error", "error": '
+                                   '{"code": "OUT_OF_RANGE", "message": "refused"}}))' + LF)),
+    ("S001", _reference_entrypoint('import json' + LF + 'print(json.dumps({"outputs": {"life_cycles": 1.0}}))' + LF)),
+    ("S001", _reference_entrypoint('import time' + LF + 'time.sleep(30)' + LF,
+                                   lambda m: m["invocation"].__setitem__("timeout_s", 1))),
+    ("S001", _reference_manifest(lambda m: m["examples"][0].pop("inputs"))),
+    # S002 is a warning: the smoke test could not run, and says why instead of passing.
+    ("S002", _reference_manifest(lambda m: m.pop("examples"))),
 ]
 
 
@@ -470,7 +499,7 @@ def test_each_rule_can_fail(tmp_path: Path, rule: str, mutate):
     pkg = write_package(tmp_path / "pkg")
     assert vs.check_package(pkg) == [], "fixture must start clean"
     mutate(pkg)
-    findings = vs.check_package(pkg)
+    findings = vs.check_package(pkg, smoke=rule in vs.SMOKE_RULES)
     assert rule in rules_fired(findings), (
         "mutation for %s did not fire it; fired=%s" % (rule, sorted(rules_fired(findings))))
 
@@ -705,6 +734,67 @@ def test_a_symbolic_link_out_of_the_package_is_outside_it(tmp_path: Path):
 ])
 def test_outside_package_names_what_is_wrong(tmp_path: Path, rel: str, reason):
     assert vs.outside_package(tmp_path, rel) == reason
+
+
+# --------------------------------------------------------------------------- #
+# check --smoke: what it runs, what it never runs, and what it reports when it
+# cannot run.
+# --------------------------------------------------------------------------- #
+def _no_processes(monkeypatch):
+    import subprocess
+
+    def refuse(*args, **kwargs):
+        raise AssertionError("the checker started a process: %r" % (args,))
+    monkeypatch.setattr(subprocess, "Popen", refuse)
+
+
+def test_the_default_check_executes_nothing(tmp_path: Path, monkeypatch):
+    """Without --smoke the check reads files and runs nothing, the entrypoint included."""
+    import shutil
+    pkg = tmp_path / "pkg"
+    shutil.copytree(REFERENCE_PACKAGE, pkg)
+    _no_processes(monkeypatch)
+    assert vs.check_package(pkg) == []
+    assert vs.main(["check", str(pkg)]) == 0
+
+
+def test_smoke_passes_the_reference_package():
+    assert vs.check_package(REFERENCE_PACKAGE, smoke=True) == []
+
+
+def test_smoke_runs_from_a_relative_package_path(monkeypatch):
+    """The entrypoint is launched by absolute path, because it runs in the package directory."""
+    monkeypatch.chdir(REFERENCE_PACKAGE.parents[1])
+    assert vs.main(["check", "--smoke", "examples/reference-package"]) == 0
+
+
+def test_smoke_without_examples_is_a_warning_with_its_reason(good: Path):
+    findings = vs.check_package(good, smoke=True)
+    assert [(f.rule, f.severity) for f in findings] == [("S002", "WARN")]
+    assert "declares no examples" in findings[0].message
+    assert vs.summarize(findings)["conformant"]
+
+
+def test_smoke_never_runs_an_entrypoint_the_static_check_did_not_verify(tmp_path: Path, monkeypatch):
+    import shutil
+    pkg = tmp_path / "pkg"
+    shutil.copytree(REFERENCE_PACKAGE, pkg)
+    with open(pkg / "predict.py", "a", encoding="utf-8", newline=LF) as fh:
+        fh.write("# edited after packaging" + LF)
+    _no_processes(monkeypatch)
+    findings = vs.check_package(pkg, smoke=True)
+    assert rules_fired(findings) == {"M013", "S002"}
+    assert any("did not verify the entrypoint" in f.message for f in findings if f.rule == "S002")
+
+
+def test_smoke_reports_a_module_missing_here_as_not_run_rather_than_failed(tmp_path: Path):
+    """An environment without a model's dependency cannot judge the model; it says so instead."""
+    root = tmp_path / "pkg"
+    write_package(root)
+    _reference_entrypoint("import zz_a_module_no_environment_has" + LF)(root)
+    findings = vs.check_package(root, smoke=True)
+    assert rules_fired(findings) == {"S002"}
+    assert "zz_a_module_no_environment_has" in findings[0].message
 
 
 def test_numeric_leaves_ignores_booleans():

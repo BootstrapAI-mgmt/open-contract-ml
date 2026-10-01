@@ -35,6 +35,13 @@ and message, and why it is the producer's to fix. A JSON input file has no file
 kind in either schema, so link 3's first finding needs the producer to declare a
 listed kind or an amendment that adds one.
 
+Under `open-contract-ml check --smoke`, which runs a package's entrypoint on its
+manifest's examples, none of the copies answers: the three brake-disc manifests
+declare no examples, so the smoke test cannot run (`S002`), and the plate copy's
+weights file is a stub, so its entrypoint reports an internal error and exits 1
+for each example (`S001`; where numpy is not installed it cannot start, and the
+smoke test reports `S002` instead). The suite pins both outcomes.
+
 ## What CI runs
 
 - `tests/test_producer_fixtures.py`, part of the suite: the pinned set is
