@@ -1,9 +1,11 @@
-# The Contract, version 1.0
+# The Contract, version 1.1
 
 **Status:** normative. **Spec authority:** this repository; the text below is
 self-contained. **Checker:** `opencontractml.verify` in this repository
 (`open-contract-ml check`). **Roles:** a *producer* emits contract packages; a
 *consumer* (a dispatching GUI, a registry, a checker) reads and enforces them.
+**Version:** 1.1, a MINOR amendment of 1.0. Section 11 lists every change and
+what it means for a package that conformed to 1.0.
 
 ---
 
@@ -78,6 +80,24 @@ pinned by byte hash; an EOL-normalising VCS silently changes the bytes on checko
 rule `M013` fires on a package that was conformant when it was built. This rule was
 learned the hard way: the first build of the reference package in this repo tripped it.
 
+**Everything inside the directory.** Every path the manifest names --
+`invocation.executable`, each `provenance.artifacts[].path`, `model_card` and
+`validation.report` -- is relative and resolves inside the package directory. A path
+that is absolute, or that leaves the directory through `..` or a symbolic link, names a
+file the package does not carry: it is an error (`M009`, `M010`, `M012`), and a checker
+neither hashes nor reads that file. An artifact's `bytes` is a non-negative integer
+(`M012`): a byte count that cannot be compared is a pin that is never checked.
+
+**The manifest's structure.** `schemas/contract-v1/manifest.schema.json`, shipped with
+the checker, states the manifest's required keys, types, enumerations, patterns and
+bounds, and is part of the Contract: a manifest it rejects is not conformant (`M018`).
+The rules a JSON Schema cannot state -- every output covered by an uncertainty block,
+the entrypoint bound to its hash, the hashes re-verified -- are the checker's own. A
+checker that cannot apply the schema in full MUST report an error, never skip it
+(`E003`), as it must for a manifest it cannot parse (`E002`). Beyond the schema, a
+`float` input or output states its `units` (`M004`, `M005`), a dimensionless one
+included, and an input's `range` is `[min, max]` with `min < max` (`M004`).
+
 ## 4. The model card
 
 ### 4.1 Front-matter
@@ -91,7 +111,7 @@ version was reconciled against already satisfies it.
 ---
 model_id: contract_reference_tmf_v1
 version: 1.0.0
-spec_version: "1.0"
+spec_version: "1.1"
 ---
 ```
 
@@ -217,6 +237,30 @@ numeric value in `metrics` *and* at least one in `thresholds`. Booleans do not c
 numbers. A check that compares against nothing cannot fail, and a check that cannot fail
 is not a check.
 
+**The status follows from the numbers (1.1).** `V006` makes a `PASS` carry a measurement
+and a bar, but it cannot tell which bar governs which measurement, so it cannot tell a
+`PASS` from a misreported `FAIL`. From 1.1 a check reporting `PASS` or `FAIL` states its
+comparison as `comparators`, a non-empty list of entries such as
+
+```json
+{"metric": "r2", "op": ">=", "bar": "r2_min"}
+```
+
+each read *metric op bar*: `metric` names a number in the check's `metrics`, `bar` a
+number in its `thresholds`, and `op` is one of `<`, `<=`, `>`, `>=` and `==`. A band is
+two comparators against its two bounds. The status is recomputable from them -- `PASS`
+when every comparator holds, `FAIL` when any does not -- and a report whose declared
+status disagrees with the recomputation, in either direction, is rejected (`V013`), as
+`V008` rejects a rollup that disagrees with its checks. A comparator that names no
+number in its check, or an unknown operator, is an error (`V012`).
+
+A package declaring `spec_version` 1.1 or later MUST give every `PASS` and `FAIL` check
+at least one comparator (`V012`). In a 1.0 package comparators are optional, and held to
+the same rules where they are declared. `NOT_RUN` and `NOT_APPLICABLE` carry no
+measurement, so comparators on them are not read. `B4`'s comparators compare
+`relative_imbalance` with its threshold using `<=` or `<` (`V009`), because that
+comparison is what section 5.4 defines.
+
 ### 5.4 One definition of conservation
 
 This is where the two ladders most need a single answer, and where one of them is
@@ -284,7 +328,10 @@ re-trained scikit-learn model at `tol = 1e-6` -- effectively bitwise. The field 
 compares a re-trained network at `rel_tol = 2e-2`, because GPU kernels are not
 deterministic. Four orders of magnitude apart under one name. The contract does not pick a
 winner: `A5` MUST declare `determinism_class` as `bitwise` or `seeded_tolerance` and
-state its `tolerance` (`V011`). A reader can then see which claim is being made.
+state its `tolerance` (`V011`). A reader can then see which claim is being made. From 1.1,
+`bitwise` means a tolerance of exactly 0: a package declaring 1.1 or later that states
+`bitwise` with a non-zero tolerance is rejected (`V011`), because any tolerance is the
+`seeded_tolerance` claim. A scalar ladder comparing at `1e-6` states that from 1.1.
 
 **(c) UQ calibration uses different instruments.** The scalar ladder uses a declared
 band `[0.85, 0.95]` widened by a sample-size term. The field ladder uses `[0.85, 0.96]`
@@ -371,6 +418,13 @@ deliberately the package-v1 manifest's existing one, not a third name.
 - Contract v1.0 is defined to be a **superset of the package-v1 manifest spec 1.0**: it
   adds `provenance` and `validation` and changes nothing existing. The two numbers can
   therefore stay aligned, and a contract-v1 manifest is a valid package-v1 manifest.
+- Contract 1.1 is a MINOR amendment of 1.0 (section 11). It adds no manifest key, so a 1.1
+  manifest is read by a package-v1 consumer as a higher minor within major 1. A 1.0
+  consumer reads a 1.1 report too: the comparators are an unknown additive key to it. A
+  1.1 checker accepts a 1.0 package that declares no comparators. What 1.1 requires newly
+  binds only a package that declares `spec_version` 1.1 or later.
+- The validation report declares the `spec_version` its manifest declares (`V002`), as the
+  card does (`C002`): one package, one contract version.
 - A contract-v1 **card** was *not* a valid card for a nine-section package-v1 validator at
   contract 1.0, for exactly one reason: that validator required its nine sections to be
   the *first nine*, and the contract inserts two. The change is two inserted strings in
@@ -380,8 +434,29 @@ deliberately the package-v1 manifest's existing one, not a third name.
 
 ## 8. Conformance
 
-`python -m opencontractml.verify check <package>` -- exit 0 clean, 1 on findings. 35 rules;
-`python -m opencontractml.verify rules` prints the table. Machine-readable output with `--json`.
+`python -m opencontractml.verify check <package>` -- exit 0 clean, 1 on findings. 41 rules
+(38 `ERROR`, 3 `WARN`); `python -m opencontractml.verify rules` prints the table. `M017`
+is reserved for the signature warning that [PROVENANCE-SIGNING.md](PROVENANCE-SIGNING.md)
+designs.
+
+**Running the entrypoint (`check --smoke`).** The default check reads files and executes
+nothing. `check --smoke` also runs the entrypoint the way a consumer dispatches it under
+`stdio_json`: once per `examples[]` entry of the manifest, with that example's `inputs` as
+the request, in the package directory, within `invocation.timeout_s`. Each answer MUST exit
+0 with a JSON object on stdout that carries every declared output and every uncertainty
+field the manifest's `per_output` blocks name (`*_field`) (`S001`). The smoke test runs only
+an entrypoint the static check verified (no `M008`, `M012` or `M013` finding). When it cannot
+run -- the manifest declares no examples, the entrypoint is not verified, the host cannot
+launch it, or a module it imports is not installed in the checking environment -- it says
+so as a warning (`S002`), never as a pass.
+
+**The conformance record (`check --json`).** `--json` writes, per package, the record
+version, the checker and its version, the contract version it implements and the
+`spec_version` the package declares, when the check ran (UTC), whether `--smoke` ran, the
+sha256 and size of the manifest, card and report it read, the verdict and the findings,
+and for every rule a state: `evaluated`, `fired` (with how many findings) or
+`not_evaluated` (with the reason). Several packages give an array of records. The
+record's JSON Schema is `schemas/contract-v1/conformance-record.schema.json`.
 
 Every `ERROR` rule has a negative test in `tests/test_verify.py`, and
 `test_every_error_rule_has_a_negative_test` fails the build if a rule is added without
@@ -392,8 +467,9 @@ test red, and the checker was restored byte-exact afterwards.
 
 The worked conformant instance is `examples/reference-package/`. Every number in
 its `validation_report.json` was measured, every hash is real, its entrypoint really
-runs under `stdio_json`, and its `C2_serve_parity` check really shells out to that
-entrypoint and compares against the in-process fit.
+runs under `stdio_json` (`check --smoke` runs it on the manifest's two examples), and its
+`C2_serve_parity` check really shells out to that entrypoint and compares against the
+in-process fit. It declares 1.1 and states its comparators.
 
 ## 9. What this spec is careful not to do
 
@@ -403,7 +479,8 @@ entrypoint and compares against the in-process fit.
 - **It does not build a generator.** Turning a producer's training run into a contract
   package is the producer's job. This spec makes the target unambiguous.
 - **It does not assume a running consumer.** Nothing here requires dispatch to work;
-  conformance is checkable entirely offline.
+  conformance is checkable entirely offline. `check --smoke` runs the entrypoint only when
+  asked, and never as part of the default check.
 
 ## 10. Known limitations of v1.0
 
@@ -423,10 +500,38 @@ entrypoint and compares against the in-process fit.
 4. **No signature or attestation.** `provenance` proves the bytes have not changed since
    packaging. It does not prove who packaged them. Signing is a v2 concern.
    [PROVENANCE-SIGNING.md](PROVENANCE-SIGNING.md) designs an optional
-   OpenSSF-Model-Signing sidecar and concludes the *field* can land additively at
-   1.1 while *enforcement* stays a v2 concern. It also records what `provenance`
+   OpenSSF-Model-Signing sidecar and concludes the *field* can land additively in a
+   later minor version while *enforcement* stays a v2 concern. It also records what `provenance`
    does not cover: the manifest, the card and the validation report are not
    hashed by anything, so their contents are not tamper-evident.
 5. **The checker's front-matter parser accepts only flat scalars.** This is stated as a
    spec rule (4.1) rather than hidden as an implementation limit, but a future card
    needing structured front-matter would need both changed together.
+
+## 11. Changes in 1.1
+
+Contract 1.1 is a MINOR amendment of 1.0 (section 7). These changes add what a package
+declaring 1.1 must state, or what a checker offers; a package declaring 1.0 is bound by
+them only where it declares comparators, which 1.0 did not define:
+
+| Change | Rule | Binds | A 1.0 package |
+|---|---|---|---|
+| A measured check states its comparison as `comparators`, and its status is recomputed from them (section 5.3) | `V012`, `V013` | from `spec_version` 1.1; checked where a 1.0 package declares comparators | keeps conforming without comparators |
+| `B4`'s comparators compare `relative_imbalance` with `<=` or `<` (section 5.3) | `V009` | wherever `B4` declares comparators | unaffected |
+| `bitwise` reproducibility means a tolerance of 0 (section 5.5) | `V011` | from `spec_version` 1.1 | unaffected |
+| `check --smoke` runs the entrypoint on the manifest's examples (section 8) | `S001`, `S002` | only when asked for | unaffected by the default check |
+| `check --json` writes a conformance record with a state for every rule (section 8) | -- | checker output | unaffected |
+
+These bind every package, because they hold it to what 1.0 already stated -- its schema,
+its package as a directory, its byte-count pins -- or to what the rules are documented to
+cover:
+
+| Change | Rule | Packages in this repository that stop conforming |
+|---|---|---|
+| The manifest conforms to `schemas/contract-v1/manifest.schema.json`; a schema the checker cannot apply is an error (section 3) | `M018`, `E003` | three producer fixture copies, whose manifests break the schema: `tests/fixtures/producer_packages/README.md` says how |
+| Every path the manifest names is inside the package; `bytes` is a non-negative integer (section 3) | `M009`, `M010`, `M012` | none |
+| A `float` input or output states its units; an input `range` is `[min, max]` with `min < max` (section 3) | `M004`, `M005` | none |
+| The report declares the `spec_version` its manifest declares (section 7) | `V002` | none |
+
+No package starts conforming. The reference package (`examples/reference-package/`)
+declares 1.1, states its comparators, and passes `check` and `check --smoke`.

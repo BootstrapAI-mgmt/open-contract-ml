@@ -21,6 +21,7 @@ and copies of producer packages the checker must keep accepting
 python -m pip install -e ".[dev]"     # Python 3.11+: pytest, build and the [gate] extra
 python -m pytest -q -rs               # the suite; -rs prints each skip and its reason
 python -m opencontractml.verify check examples/reference-package tests/fixtures/producer_packages/*/
+python -m opencontractml.verify check --smoke examples/reference-package   # also runs the entrypoint
 python -m opencontractml.verify rules
 python -m opencontractml.manifest examples/brake_disc_tmf_v1
 python -m build
@@ -40,6 +41,16 @@ yours to explain.
   test run, not only before the commit.
 - **Negative tests.** Every `ERROR` rule of the checker has a mutation in
   `tests/test_verify.py` that makes it fire.
+- **One rule table.** A rule added to `verify.RULES` is also added to the
+  required rule list of `schemas/contract-v1/conformance-record.schema.json`,
+  and the vocabulary is regenerated (`tests/test_conformance_record.py`,
+  `tests/test_verify.py`).
+- **The schema walker.** `verify` applies `schemas/contract-v1/manifest.schema.json`
+  with its own walker; a keyword the schema gains must be one the walker applies
+  (`tests/test_contract_schema.py` compares it with the `jsonschema` package).
+- **Producer findings.** A producer fixture the checker rejects is recorded in
+  `tests/fixtures/producer_packages/known-findings.json`, not edited; each copy
+  must produce exactly the findings recorded for it.
 - **Pinned artifacts.** The files of `examples/reference-package/` and
   `tests/fixtures/producer_packages/` are pinned by sha256 and byte count in
   their manifests (rule `M013`), and `.gitattributes` keeps them LF. An edit

@@ -1,5 +1,5 @@
 {
-  "contract_version": "1.0",
+  "contract_version": "1.1",
   "supported_major": 1,
   "card_sections_required": [
     "TL;DR",
@@ -251,7 +251,7 @@
     {
       "id": "V002",
       "severity": "ERROR",
-      "title": "validation report identity matches the manifest"
+      "title": "validation report identity (model_id, model_version, spec_version) matches the manifest"
     },
     {
       "id": "V003",
@@ -296,7 +296,17 @@
     {
       "id": "V011",
       "severity": "ERROR",
-      "title": "A5 reproducibility declares a determinism class and a tolerance"
+      "title": "A5 reproducibility declares a determinism class and a tolerance (bitwise means tolerance 0, from contract 1.1)"
+    },
+    {
+      "id": "V012",
+      "severity": "ERROR",
+      "title": "comparators are well formed, and every PASS or FAIL check has one from contract 1.1"
+    },
+    {
+      "id": "V013",
+      "severity": "ERROR",
+      "title": "each measured check's declared status agrees with the status its comparators give"
     },
     {
       "id": "S001",

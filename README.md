@@ -14,7 +14,7 @@ is, what data it came from, and what was measured to justify shipping it — and
 ```console
 $ pip install open-contract-ml
 $ open-contract-ml check examples/reference-package
-OK   examples/reference-package  (contract 1.0, 0 warning(s))
+OK   examples/reference-package  (contract 1.1, 0 warning(s))
 ```
 
 Exit code 0 means conformant. 1 means it told you exactly which rule failed and why.
@@ -63,6 +63,19 @@ exists because a real scalar validation ladder green-stamped a model whose card
 declared the conservation check unimplemented — the check tested that a
 free-text field was a non-empty string, and a test enshrined the pass.
 
+From contract 1.1 the status must also follow from the numbers. A check that
+reports `PASS` or `FAIL` names its comparison — `{metric: r2, op: ">=", bar:
+r2_min}` — and the checker recomputes the status from it, so a `PASS` whose `r2`
+misses its `r2_min` is rejected (`V013`).
+
+Two switches go further. `open-contract-ml check --smoke` runs the package's
+entrypoint on the examples its manifest declares and checks every answer carries
+the declared outputs and uncertainty fields; it executes the package's code, so
+it is off by default and the plain check runs nothing. `--json <file>` writes a
+conformance record: the checker's version, the digests of the documents it read,
+when it ran, and for every rule whether it was evaluated, fired, or not evaluated
+and why.
+
 ## Installing
 
 ```console
@@ -96,7 +109,7 @@ src/opencontractml/
   manifest.py, model_card.py        the validation library
   gate.py, corpus_gate.py           the gate engine
   safe_artifact.py, safeload.py     safe deserialization
-  schemas/contract-v1/              manifest schema + the machine-readable vocabulary
+  schemas/contract-v1/              manifest schema, conformance-record schema, machine-readable vocabulary
 examples/reference-package/         a worked conformant instance
 examples/worked-cells/              nine worked data contracts with synthetic datasets
 examples/falsifier-benchmark/       the adversarial benchmark

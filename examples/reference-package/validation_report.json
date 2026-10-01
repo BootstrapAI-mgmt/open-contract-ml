@@ -1,5 +1,5 @@
 {
-  "spec_version": "1.0",
+  "spec_version": "1.1",
   "produced_by": "the reference package's build script (not shipped with this repository)",
   "model_id": "contract_reference_tmf_v1",
   "model_version": "1.0.0",
@@ -24,7 +24,19 @@
       "thresholds": {
         "r2_min": 0.9,
         "mae_max": 0.2
-      }
+      },
+      "comparators": [
+        {
+          "metric": "r2",
+          "op": ">=",
+          "bar": "r2_min"
+        },
+        {
+          "metric": "mae",
+          "op": "<=",
+          "bar": "mae_max"
+        }
+      ]
     },
     "A2_extrapolation": {
       "status": "PASS",
@@ -40,7 +52,19 @@
       "thresholds": {
         "degradation_max": 3.0,
         "rmse_extrap_max": 0.4
-      }
+      },
+      "comparators": [
+        {
+          "metric": "degradation_ratio",
+          "op": "<=",
+          "bar": "degradation_max"
+        },
+        {
+          "metric": "rmse",
+          "op": "<=",
+          "bar": "rmse_extrap_max"
+        }
+      ]
     },
     "A3_uq_calibration": {
       "status": "PASS",
@@ -55,7 +79,19 @@
       "thresholds": {
         "coverage_band_lo": 0.85,
         "coverage_band_hi": 0.96
-      }
+      },
+      "comparators": [
+        {
+          "metric": "empirical_coverage",
+          "op": ">=",
+          "bar": "coverage_band_lo"
+        },
+        {
+          "metric": "empirical_coverage",
+          "op": "<=",
+          "bar": "coverage_band_hi"
+        }
+      ]
     },
     "A4_baseline_beat": {
       "status": "PASS",
@@ -69,6 +105,13 @@
       "thresholds": {
         "beat_mean_max_ratio": 0.5
       },
+      "comparators": [
+        {
+          "metric": "ratio_vs_mean",
+          "op": "<=",
+          "bar": "beat_mean_max_ratio"
+        }
+      ],
       "note": "the champion IS the linear model, so no linear-baseline clause applies"
     },
     "A5_reproducibility": {
@@ -82,7 +125,14 @@
       },
       "thresholds": {
         "tolerance": 0.0
-      }
+      },
+      "comparators": [
+        {
+          "metric": "max_abs_coefficient_delta",
+          "op": "<=",
+          "bar": "tolerance"
+        }
+      ]
     },
     "B1_monotonicity": {
       "status": "PASS",
@@ -95,6 +145,18 @@
       "thresholds": {
         "violation_fraction_max": 0.0
       },
+      "comparators": [
+        {
+          "metric": "violation_fraction_peak_temp",
+          "op": "<=",
+          "bar": "violation_fraction_max"
+        },
+        {
+          "metric": "violation_fraction_cycle_count",
+          "op": "<=",
+          "bar": "violation_fraction_max"
+        }
+      ],
       "declared": [
         {
           "feature": "peak_temp_K",
@@ -119,7 +181,19 @@
       "thresholds": {
         "lower_bound_life_cycles": 0.0,
         "max_violations": 0
-      }
+      },
+      "comparators": [
+        {
+          "metric": "min_predicted_life_cycles",
+          "op": ">=",
+          "bar": "lower_bound_life_cycles"
+        },
+        {
+          "metric": "n_violations",
+          "op": "<=",
+          "bar": "max_violations"
+        }
+      ]
     },
     "B3_residual": {
       "status": "NOT_APPLICABLE",
@@ -149,7 +223,19 @@
       "thresholds": {
         "min_pass_fraction_id": 0.95,
         "far_out_must_refuse": 1
-      }
+      },
+      "comparators": [
+        {
+          "metric": "pass_fraction_test_id",
+          "op": ">=",
+          "bar": "min_pass_fraction_id"
+        },
+        {
+          "metric": "far_out_design_refused",
+          "op": ">=",
+          "bar": "far_out_must_refuse"
+        }
+      ]
     },
     "C2_serve_parity": {
       "status": "PASS",
@@ -160,7 +246,14 @@
       },
       "thresholds": {
         "max_rel_diff_allowed": 1e-09
-      }
+      },
+      "comparators": [
+        {
+          "metric": "max_rel_diff",
+          "op": "<=",
+          "bar": "max_rel_diff_allowed"
+        }
+      ]
     },
     "C3_provenance_integrity": {
       "status": "PASS",
@@ -171,7 +264,14 @@
       },
       "thresholds": {
         "max_hash_mismatches": 0
-      }
+      },
+      "comparators": [
+        {
+          "metric": "hash_mismatches",
+          "op": "<=",
+          "bar": "max_hash_mismatches"
+        }
+      ]
     },
     "C4_deployment_readiness": {
       "status": "PASS",
@@ -184,6 +284,18 @@
         "declarations_required": 4,
         "timeout_s": 60
       },
+      "comparators": [
+        {
+          "metric": "declarations_present",
+          "op": ">=",
+          "bar": "declarations_required"
+        },
+        {
+          "metric": "measured_runtime_s",
+          "op": "<=",
+          "bar": "timeout_s"
+        }
+      ],
       "declarations": {
         "validation_anchor": "illustrative: this is a contract fixture, not a validated surrogate",
         "inference_target": "workstation, single call",

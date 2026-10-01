@@ -45,7 +45,7 @@ def _sha(text: str) -> str:
 
 def base_manifest() -> dict:
     return {
-        "spec_version": "1.0",
+        "spec_version": "1.1",
         "id": "fixture_model_v1",
         "name": "Fixture Model",
         "version": "1.0.0",
@@ -82,14 +82,19 @@ def base_manifest() -> dict:
     }
 
 
+def _compare(*triples) -> list:
+    return [{"metric": metric, "op": op, "bar": bar} for metric, op, bar in triples]
+
+
 def base_report() -> dict:
     def passing(**extra):
-        base = {"status": "PASS", "metrics": {"value": 1.0, "n": 10}, "thresholds": {"limit": 2.0}}
+        base = {"status": "PASS", "metrics": {"value": 1.0, "n": 10}, "thresholds": {"limit": 2.0},
+                "comparators": _compare(("value", "<=", "limit"))}
         base.update(extra)
         return base
 
     return {
-        "spec_version": "1.0",
+        "spec_version": "1.1",
         "produced_by": "contract test fixture",
         "model_id": "fixture_model_v1",
         "model_version": "1.0.0",
@@ -100,10 +105,13 @@ def base_report() -> dict:
             "A3_uq_calibration": passing(
                 method="split conformal",
                 metrics={"nominal": 0.9, "empirical_coverage": 0.91, "n": 108},
-                thresholds={"coverage_band_lo": 0.85, "coverage_band_hi": 0.96}),
+                thresholds={"coverage_band_lo": 0.85, "coverage_band_hi": 0.96},
+                comparators=_compare(("empirical_coverage", ">=", "coverage_band_lo"),
+                                     ("empirical_coverage", "<=", "coverage_band_hi"))),
             "A4_baseline_beat": passing(),
             "A5_reproducibility": passing(determinism_class="bitwise", metrics={"delta": 0.0},
-                                          thresholds={"tolerance": 0.0}),
+                                          thresholds={"tolerance": 0.0},
+                                          comparators=_compare(("delta", "<=", "tolerance"))),
             "B1_monotonicity": passing(),
             "B2_bounds": passing(),
             "B3_residual": {"status": "NOT_APPLICABLE", "reason": "scalar model, no field to take a residual of"},
@@ -113,6 +121,7 @@ def base_report() -> dict:
                 "scope": "control_volume",
                 "metrics": {"relative_imbalance": 0.012, "n": 64},
                 "thresholds": {"imbalance_max": 0.05},
+                "comparators": _compare(("relative_imbalance", "<=", "imbalance_max")),
             },
             "B5_invariance": {"status": "NOT_APPLICABLE", "reason": "no mesh or sampling to be invariant to"},
             "B6_integrated_quantities": {"status": "NOT_APPLICABLE", "reason": "no field to re-derive from"},
@@ -141,7 +150,7 @@ CARD_SECTION_TEXT = {
 
 
 def base_card() -> str:
-    lines = ["---", "model_id: fixture_model_v1", "version: 1.0.0", 'spec_version: "1.0"', "---", "",
+    lines = ["---", "model_id: fixture_model_v1", "version: 1.0.0", 'spec_version: "1.1"', "---", "",
              "# Fixture Model", ""]
     for name in vs.CARD_SECTIONS:
         lines += ["## " + name, "", CARD_SECTION_TEXT[name], ""]
@@ -371,6 +380,36 @@ def _reference_entrypoint(source: str, manifest_fn=None):
     return _reference_package(change)
 
 
+def _a1_misses_its_bars(r) -> None:
+    r["checks"]["A1_accuracy"]["metrics"]["r2"] = 0.10        # its threshold r2_min is 0.9
+    r["checks"]["A1_accuracy"]["metrics"]["mae"] = 9.0        # its threshold mae_max is 0.2
+
+
+def _b4_passes_over_its_bar(comparators: bool):
+    def plant(r) -> None:
+        check = {"status": "PASS", "applicable": True, "quantity": "energy", "control_volume": "disc",
+                 "scope": "control_volume", "metrics": {"relative_imbalance": 0.90, "n": 10},
+                 "thresholds": {"imbalance_max": 0.05}}
+        if comparators:
+            check["comparators"] = _compare(("relative_imbalance", "<=", "imbalance_max"))
+        r["checks"]["B4_conservation"] = check
+    return plant
+
+
+def _fail_whose_comparators_hold(r) -> None:
+    """The other direction: a FAIL that its own numbers call a PASS."""
+    r["checks"]["A1_accuracy"]["status"] = "FAIL"
+    r["overall"] = "FAIL"
+
+
+def _a5_bitwise_at(tolerance: float):
+    def plant(r) -> None:
+        a5 = r["checks"]["A5_reproducibility"]
+        a5["determinism_class"] = "bitwise"
+        a5["thresholds"]["tolerance"] = tolerance
+    return plant
+
+
 def _strip_units(m) -> None:
     for field in m["inputs"] + m["outputs"]:
         field.pop("units", None)
@@ -491,6 +530,33 @@ MUTATIONS = [
     ("S001", _reference_manifest(lambda m: m["examples"][0].pop("inputs"))),
     # S002 is a warning: the smoke test could not run, and says why instead of passing.
     ("S002", _reference_manifest(lambda m: m.pop("examples"))),
+    # A measured check's status follows from its comparators (V013), which must be
+    # well formed and, in a contract 1.1 package, present (V012). The first five are
+    # defects the checker accepted before, planted in the reference package: a PASS
+    # whose r2 and mae miss their bars, a PASS whose only metric is a sample count,
+    # a coverage of 0.50 under a band of [0.85, 0.96], and a conservation PASS with
+    # an imbalance of 0.90 over a bar of 0.05 -- reported without comparators, and
+    # with one.
+    ("V013", _reference_report(_a1_misses_its_bars)),
+    ("V012", _reference_report(lambda r: r["checks"]["A4_baseline_beat"].__setitem__("metrics", {"n": 5}))),
+    ("V013", _reference_report(lambda r: r["checks"]["A3_uq_calibration"]["metrics"].__setitem__(
+        "empirical_coverage", 0.50))),
+    ("V012", _reference_report(_b4_passes_over_its_bar(comparators=False))),
+    ("V013", _reference_report(_b4_passes_over_its_bar(comparators=True))),
+    ("V012", _mutate_report(lambda r: r["checks"]["A1_accuracy"].pop("comparators"))),
+    ("V012", _mutate_report(lambda r: r["checks"]["A1_accuracy"].__setitem__("comparators", []))),
+    ("V012", _mutate_report(lambda r: r["checks"]["A1_accuracy"]["comparators"][0].__setitem__("op", "<<"))),
+    ("V012", _mutate_report(lambda r: r["checks"]["A1_accuracy"]["comparators"][0].__setitem__("bar", "no_such"))),
+    ("V013", _mutate_report(lambda r: r["checks"]["A1_accuracy"]["metrics"].__setitem__("value", 9.0))),
+    ("V013", _mutate_report(_fail_whose_comparators_hold)),
+    ("V009", _mutate_report(lambda r: r["checks"]["B4_conservation"].__setitem__(
+        "comparators", _compare(("n", ">=", "imbalance_max"))))),
+    # From contract 1.1, bitwise reproducibility means a tolerance of 0. The first is
+    # the defect the checker accepted before, planted in the reference package.
+    ("V011", _reference_report(_a5_bitwise_at(0.02))),
+    ("V011", _mutate_report(_a5_bitwise_at(1e-6))),
+    # The report declares the contract version its manifest declares.
+    ("V002", _mutate_report(lambda r: r.__setitem__("spec_version", "1.0"))),
 ]
 
 
@@ -683,7 +749,8 @@ def test_a_measured_fail_is_still_graded_for_legibility(tmp_path: Path, key: str
     pkg = _copy_reference_package(tmp_path)
 
     def fail_without_its_instrument(rep):
-        rep["checks"][key] = {"status": "FAIL", "metrics": {"value": 0.5}, "thresholds": {"limit": 0.9}}
+        rep["checks"][key] = {"status": "FAIL", "metrics": {"value": 0.5}, "thresholds": {"limit": 0.9},
+                              "comparators": _compare(("value", ">=", "limit"))}
         rep["overall"] = "FAIL"
 
     _rewrite_report(pkg, fail_without_its_instrument)
@@ -694,6 +761,55 @@ def test_only_the_two_unmeasured_statuses_are_exempt():
     """Pins the split: exempting FAIL or PASS would make a measured verdict unreadable."""
     assert set(vs._UNMEASURED_STATUSES) == {"NOT_RUN", "NOT_APPLICABLE"}
     assert set(vs._UNMEASURED_STATUSES) == set(vs.STATUSES) - {"PASS", "FAIL"}
+
+
+# --------------------------------------------------------------------------- #
+# The comparator convention: required from contract 1.1, optional before, and
+# read only where a check carries a measurement.
+# --------------------------------------------------------------------------- #
+def _as_contract_1_0(root: Path, report=None) -> Path:
+    man = base_manifest()
+    man["spec_version"] = "1.0"
+    rep = base_report() if report is None else report
+    rep["spec_version"] = "1.0"
+    card = base_card().replace('spec_version: "1.1"', 'spec_version: "1.0"')
+    return write_package(root, manifest=man, report=rep, card=card)
+
+
+def test_a_contract_1_0_package_needs_no_comparators(tmp_path: Path):
+    rep = base_report()
+    for check in rep["checks"].values():
+        check.pop("comparators", None)
+    assert vs.check_package(_as_contract_1_0(tmp_path / "pkg", rep)) == []
+
+
+def test_a_contract_1_0_package_is_held_to_the_comparators_it_declares(tmp_path: Path):
+    rep = base_report()
+    rep["checks"]["A1_accuracy"]["metrics"]["value"] = 9.0      # value <= limit (2.0) no longer holds
+    assert rules_fired(vs.check_package(_as_contract_1_0(tmp_path / "pkg", rep))) == {"V013"}
+
+
+def test_bitwise_at_a_small_tolerance_is_still_accepted_in_a_contract_1_0_package(tmp_path: Path):
+    """Contract 1.0 called the scalar ladder's 1e-6 'effectively bitwise'; 1.1 changes that only for 1.1."""
+    rep = base_report()
+    _a5_bitwise_at(1e-6)(rep)
+    assert vs.check_package(_as_contract_1_0(tmp_path / "pkg", rep)) == []
+
+
+def test_comparators_on_an_unmeasured_check_are_not_read(tmp_path: Path):
+    rep = base_report()
+    rep["checks"]["C2_serve_parity"] = {"status": "NOT_APPLICABLE", "reason": "no export exists for this estimator",
+                                        "comparators": "not even a list"}
+    assert vs.check_package(write_package(tmp_path / "pkg", report=rep)) == []
+
+
+def test_v013_names_the_comparison_that_does_not_hold(tmp_path: Path):
+    rep = base_report()
+    rep["checks"]["A1_accuracy"]["metrics"]["value"] = 9.0
+    findings = vs.check_package(write_package(tmp_path / "pkg", report=rep))
+    [finding] = [f for f in findings if f.rule == "V013"]
+    assert "value = 9.0 <= limit = 2.0 does not hold" in finding.message
+    assert finding.where.endswith("validation_report.json checks.A1_accuracy")
 
 
 def test_unhashed_entrypoint_is_rejected(tmp_path: Path):

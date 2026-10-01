@@ -47,6 +47,15 @@ wheel, and runs the installed checker from outside the checkout. Python 3.12,
 - **A gate must be able to fail.** A new `ERROR` rule comes with a mutation in
   `tests/test_verify.py` that makes exactly that rule fire;
   `test_every_error_rule_has_a_negative_test` fails otherwise.
+- **A new rule is reported.** A rule added to the checker also joins the rule
+  list that `schemas/contract-v1/conformance-record.schema.json` requires, and
+  the regenerated `contract-vocabulary.json`;
+  `tests/test_conformance_record.py` fails otherwise.
+- **A producer fixture is never edited to pass.** A copy in
+  `tests/fixtures/producer_packages/` that the checker rejects for a reason that
+  is its producer's to fix stays as it is, with its findings recorded in
+  `known-findings.json` beside it; the suite and CI hold each copy to exactly
+  those.
 - **Every file has a provenance record.** Adding, editing or removing a file
   means adding, re-pinning or removing its record in `PROVENANCE.yaml`: the
   sha256 of its committed bytes and why it is here. `tests/test_provenance.py`

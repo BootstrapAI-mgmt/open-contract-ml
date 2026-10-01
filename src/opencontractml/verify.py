@@ -52,13 +52,14 @@ import argparse
 import contextvars
 import hashlib
 import json
+import operator
 import os
 import re
 import sys
 from pathlib import Path, PureWindowsPath
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-CONTRACT_VERSION = "1.0"
+CONTRACT_VERSION = "1.1"
 SUPPORTED_CONTRACT_MAJOR = 1
 
 # --------------------------------------------------------------------------- #
@@ -244,7 +245,7 @@ RULES: Tuple[Rule, ...] = (
     Rule("C005", "ERROR", "the uncertainty section states a method and a number"),
     Rule("C006", "WARN", "extra H2 sections use reserved names"),
     Rule("V001", "ERROR", "validation report parses and declares its identity"),
-    Rule("V002", "ERROR", "validation report identity matches the manifest"),
+    Rule("V002", "ERROR", "validation report identity (model_id, model_version, spec_version) matches the manifest"),
     Rule("V003", "ERROR", "validation report dataset hash matches the manifest provenance"),
     Rule("V004", "ERROR", "every ladder key is present"),
     Rule("V005", "ERROR", "every check declares a known status"),
@@ -253,7 +254,10 @@ RULES: Tuple[Rule, ...] = (
     Rule("V008", "ERROR", "the declared overall verdict matches the recomputed one"),
     Rule("V009", "ERROR", "B4 conservation is measured, not declared"),
     Rule("V010", "ERROR", "A3 uq_calibration reports nominal, empirical coverage, n and method"),
-    Rule("V011", "ERROR", "A5 reproducibility declares a determinism class and a tolerance"),
+    Rule("V011", "ERROR", "A5 reproducibility declares a determinism class and a tolerance (bitwise means "
+                          "tolerance 0, from contract 1.1)"),
+    Rule("V012", "ERROR", "comparators are well formed, and every PASS or FAIL check has one from contract 1.1"),
+    Rule("V013", "ERROR", "each measured check's declared status agrees with the status its comparators give"),
     Rule("S001", "ERROR", "check --smoke: the entrypoint answers every declared example within its timeout, with "
                           "every declared output and uncertainty field"),
     Rule("S002", "WARN", "check --smoke: the smoke test could run (examples declared, the entrypoint verified and "
@@ -1014,6 +1018,92 @@ def check_card(text: str, man: Optional[Dict[str, Any]], where: str, findings: L
 # --------------------------------------------------------------------------- #
 # Validation-report checks.
 # --------------------------------------------------------------------------- #
+# A check reporting PASS or FAIL states how its measurement was compared with
+# its bar, as comparators: ``{"metric": <key of metrics>, "op": <operator>,
+# "bar": <key of thresholds>}``, read "metric op bar".  The status follows from
+# them -- PASS when every comparator holds, FAIL when one does not -- and a check
+# whose declared status disagrees is rejected (V013), as V008 rejects a rollup
+# that disagrees with its checks.  A package declaring contract 1.1 or later must
+# give every PASS and FAIL check at least one (V012); in a 1.0 package they are
+# optional and checked when present.  NOT_RUN and NOT_APPLICABLE carry no
+# measurement, so comparators on them are not read.
+COMPARATOR_OPS: Dict[str, Any] = {
+    "<": operator.lt, "<=": operator.le, ">": operator.gt, ">=": operator.ge, "==": operator.eq,
+}
+#: The contract version from which a measured check must carry comparators and
+#: ``bitwise`` reproducibility means a tolerance of exactly 0.
+COMPARATORS_REQUIRED_FROM: Tuple[int, int] = (1, 1)
+
+
+def _major_minor(value: Any) -> Optional[Tuple[int, int]]:
+    if isinstance(value, str) and _MAJOR_MINOR.match(value):
+        major, minor = value.split(".")
+        return int(major), int(minor)
+    return None
+
+
+def _declared_version(rep: Dict[str, Any], man: Optional[Dict[str, Any]]) -> Optional[Tuple[int, int]]:
+    """The contract version the package declares: its manifest's, else its report's."""
+    version = _major_minor(man.get("spec_version")) if isinstance(man, dict) else None
+    return version if version is not None else _major_minor(rep.get("spec_version"))
+
+
+def check_comparators(check: Dict[str, Any], required: bool, at: str, findings: List[Finding]) -> None:
+    """V012 and V013 for one check whose status is PASS or FAIL."""
+    status = check.get("status")
+    comparators = check.get("comparators")
+    if comparators is None:
+        if required:
+            _ran("V012")
+            findings.append(Finding("V012", at, "a %s check in a contract 1.1 package must state its comparators: "
+                                                "a list of {metric, op, bar} naming the measurement and the "
+                                                "threshold it was compared with" % status))
+        return
+    _ran("V012")
+    if not isinstance(comparators, list) or not comparators:
+        findings.append(Finding("V012", at, "comparators must be a non-empty list of {metric, op, bar}, got %r"
+                                % (comparators,)))
+        return
+    metrics = check.get("metrics") if isinstance(check.get("metrics"), dict) else {}
+    thresholds = check.get("thresholds") if isinstance(check.get("thresholds"), dict) else {}
+    outcomes: List[Tuple[str, bool]] = []
+    well_formed = True
+    for i, comparator in enumerate(comparators):
+        cat = "%s comparators[%d]" % (at, i)
+        if not isinstance(comparator, dict):
+            findings.append(Finding("V012", cat, "a comparator must be a mapping {metric, op, bar}, got %r"
+                                    % (comparator,)))
+            well_formed = False
+            continue
+        metric, op, bar = comparator.get("metric"), comparator.get("op"), comparator.get("bar")
+        value = metrics.get(metric) if isinstance(metric, str) else None
+        bound = thresholds.get(bar) if isinstance(bar, str) else None
+        problems = []
+        if op not in COMPARATOR_OPS:
+            problems.append("op %r is not one of %s" % (op, list(COMPARATOR_OPS)))
+        if not _is_number(value):
+            problems.append("metric %r names no number in this check's metrics" % (metric,))
+        if not _is_number(bound):
+            problems.append("bar %r names no number in this check's thresholds" % (bar,))
+        if problems:
+            findings.append(Finding("V012", cat, "; ".join(problems)))
+            well_formed = False
+            continue
+        holds = bool(COMPARATOR_OPS[op](value, bound))
+        outcomes.append(("%s = %r %s %s = %r" % (metric, value, op, bar, bound), holds))
+    if not well_formed:
+        return
+    _ran("V013")
+    recomputed = "PASS" if all(holds for _, holds in outcomes) else "FAIL"
+    if recomputed != status:
+        if recomputed == "FAIL":
+            detail = "; ".join("%s does not hold" % text for text, holds in outcomes if not holds)
+        else:
+            detail = "every comparator holds"
+        findings.append(Finding("V013", at, "declares %s, but its comparators give %s: %s -- the status must "
+                                            "follow from the numbers" % (status, recomputed, detail)))
+
+
 def check_report(rep: Dict[str, Any], man: Optional[Dict[str, Any]], where: str, findings: List[Finding]) -> None:
     _ran("V001")
     for key in ("spec_version", "produced_by", "model_id", "model_version"):
@@ -1025,6 +1115,8 @@ def check_report(rep: Dict[str, Any], man: Optional[Dict[str, Any]], where: str,
         _not_run("the report has no checks mapping (V001)", *[r.id for r in RULES if r.id.startswith("V")])
         return
     _ran("V004", "V005", "V008")
+    version = _declared_version(rep, man)
+    comparators_required = version is not None and version >= COMPARATORS_REQUIRED_FROM
 
     if man is not None:
         _ran("V002")
@@ -1034,6 +1126,10 @@ def check_report(rep: Dict[str, Any], man: Optional[Dict[str, Any]], where: str,
         if rep.get("model_version") != man.get("version"):
             findings.append(Finding("V002", where, "model_version %r does not match manifest version %r"
                                     % (rep.get("model_version"), man.get("version"))))
+        if rep.get("spec_version") != man.get("spec_version"):
+            findings.append(Finding("V002", where, "spec_version %r does not match manifest spec_version %r -- the "
+                                                   "report and the package must declare one contract version"
+                                    % (rep.get("spec_version"), man.get("spec_version"))))
         prov = man.get("provenance")
         declared = (prov.get("dataset") or {}).get("sha256") if isinstance(prov, dict) else None
         if declared is None:
@@ -1074,6 +1170,8 @@ def check_report(rep: Dict[str, Any], man: Optional[Dict[str, Any]], where: str,
             _ran("V006")
         if status == "NOT_APPLICABLE" and not str(check.get("reason", "")).strip():
             findings.append(Finding("V007", at, "NOT_APPLICABLE must state a reason"))
+        if status in ("PASS", "FAIL"):
+            check_comparators(check, comparators_required, at, findings)
         if status == "PASS":
             if not numeric_leaves(check.get("metrics")):
                 findings.append(Finding("V006", at, "PASS with no numeric measurement in 'metrics' -- presence is "
@@ -1084,6 +1182,9 @@ def check_report(rep: Dict[str, Any], man: Optional[Dict[str, Any]], where: str,
 
     _not_run("no check reports PASS", "V006")
     _not_run("no check reports NOT_APPLICABLE", "V007")
+    _not_run("the package declares contract 1.0, where comparators are optional, and no measured check "
+             "declares any", "V012")
+    _not_run("no measured check declares well-formed comparators to recompute its status from", "V013")
     recomputed = "FAIL" if blocking else "PASS"
     declared = rep.get("overall")
     if declared not in ("PASS", "FAIL"):
@@ -1094,7 +1195,7 @@ def check_report(rep: Dict[str, Any], man: Optional[Dict[str, Any]], where: str,
 
     check_b4(checks.get("B4_conservation"), where, findings)
     check_a3(checks.get("A3_uq_calibration"), where, findings)
-    check_a5(checks.get("A5_reproducibility"), where, findings)
+    check_a5(checks.get("A5_reproducibility"), where, findings, version=version)
 
 
 def check_b4(check: Any, where: str, findings: List[Finding]) -> None:
@@ -1142,6 +1243,12 @@ def check_b4(check: Any, where: str, findings: List[Finding]) -> None:
         findings.append(Finding("V009", at, "B4 metrics.relative_imbalance must be non-negative, got %r" % imbalance))
     if not numeric_leaves(check.get("thresholds")):
         findings.append(Finding("V009", at, "B4 applicable: true must state a numeric threshold"))
+    comparators = check.get("comparators")
+    if check.get("status") in ("PASS", "FAIL") and isinstance(comparators, list) and not any(
+            isinstance(c, dict) and c.get("metric") == "relative_imbalance" and c.get("op") in ("<", "<=")
+            for c in comparators):
+        findings.append(Finding("V009", at, "B4's comparators must compare metrics.relative_imbalance against its "
+                                            "threshold with '<=' or '<' -- that comparison is what B4 measures"))
 
 
 # Statuses under which the per-key legibility rules V010 and V011 have nothing
@@ -1180,7 +1287,8 @@ def check_a3(check: Any, where: str, findings: List[Finding]) -> None:
         findings.append(Finding("V010", at, "A3 must name the UQ method it calibrated"))
 
 
-def check_a5(check: Any, where: str, findings: List[Finding]) -> None:
+def check_a5(check: Any, where: str, findings: List[Finding],
+             version: Optional[Tuple[int, int]] = None) -> None:
     at = "%s checks.A5_reproducibility" % where
     if not isinstance(check, dict) or check.get("status") in _UNMEASURED_STATUSES:
         _not_run("A5_reproducibility carries no measurement to read (NOT_RUN, NOT_APPLICABLE or absent)", "V011")
@@ -1194,6 +1302,11 @@ def check_a5(check: Any, where: str, findings: List[Finding]) -> None:
     tol = thresholds.get("tolerance")
     if not isinstance(tol, (int, float)) or isinstance(tol, bool) or tol < 0:
         findings.append(Finding("V011", at, "A5 thresholds.tolerance must be a non-negative number, got %r" % (tol,)))
+    elif (check.get("determinism_class") == "bitwise" and tol != 0
+          and version is not None and version >= COMPARATORS_REQUIRED_FROM):
+        findings.append(Finding("V011", at, "A5 declares determinism_class 'bitwise' at tolerance %r; from contract "
+                                            "1.1 bitwise means a tolerance of 0, and a non-zero tolerance is "
+                                            "'seeded_tolerance'" % (tol,)))
 
 
 # --------------------------------------------------------------------------- #
@@ -1461,11 +1574,11 @@ def check_package_with_record(pkg: Path, smoke: bool = False,
     """``check_package`` and the conformance record of the same run."""
     import datetime  # noqa: PLC0415
     ledger = _Ledger()
-    token = _LEDGER.set(ledger)
+    previous = _LEDGER.set(ledger)
     try:
         findings = check_package(pkg, smoke=smoke)
     finally:
-        _LEDGER.reset(token)
+        _LEDGER.reset(previous)
     fired: Dict[str, int] = {}
     for f in findings:
         fired[f.rule] = fired.get(f.rule, 0) + 1

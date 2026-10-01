@@ -111,7 +111,9 @@ executable is verified when the model is loaded for dispatch.
 
 For a contract package, run `open-contract-ml check <package>` as well: it adds
 the provenance hashes, the validation report and the rest of the Contract's
-rules.
+rules. `open-contract-ml check --smoke <package>` also runs the entrypoint on
+the manifest's `examples[]` and checks each answer, which is the nearest the
+checker comes to the dispatcher's own load-time check.
 
 ---
 

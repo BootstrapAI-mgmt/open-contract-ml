@@ -9,6 +9,18 @@ implements are separate numbers: `opencontractml.__version__` is the first,
 
 ### Added
 
+- Contract 1.1, an amendment proposed for the maintainer's ratification
+  (`docs/spec/CONTRACT-v1.md`, sections 5.3 and 11): a check that reports
+  `PASS` or `FAIL` states its comparison as `comparators`, entries of the form
+  `{metric, op, bar}` naming a number in its `metrics`, an operator and a
+  number in its `thresholds`, and its status must follow from them (new rules
+  `V012` and `V013`). Every `PASS` and `FAIL` check of a package declaring
+  `spec_version` 1.1 needs at least one; a 1.0 package's comparators are
+  checked where it declares them, and a 1.0 package without any keeps
+  conforming. From 1.1 `bitwise` reproducibility means a tolerance of 0
+  (`V011`), and `B4`'s comparators compare `relative_imbalance` with `<=` or
+  `<` (`V009`). `opencontractml.verify.CONTRACT_VERSION` is now `"1.1"`; the
+  package version is unchanged.
 - `open-contract-ml check --smoke` also runs a package's entrypoint the way
   a consumer dispatches it under `stdio_json`: once per `examples[]` entry,
   within `invocation.timeout_s`, in the package directory. Each answer must
@@ -31,10 +43,15 @@ implements are separate numbers: `opencontractml.__version__` is the first,
 
 ### Changed
 
+- The validation report must declare the `spec_version` its manifest declares
+  (`V002`), as the model card already must (`C002`).
+- The reference package (`examples/reference-package/`) declares contract 1.1
+  and states the comparators of its eleven measured checks; its model, its
+  artifacts and every number in it are unchanged. The model-card template
+  declares `spec_version` 1.1.
 - `open-contract-ml check --json` with several packages writes an array of
   records, one per package in the order given. Before, each package's report
   overwrote the previous one, so only the last package's survived.
-
 - `open-contract-ml check` holds every manifest to the contract-v1 manifest
   schema this package ships, `schemas/contract-v1/manifest.schema.json`, which
   it did not read before. A manifest the schema rejects is no longer

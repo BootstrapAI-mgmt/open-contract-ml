@@ -5,6 +5,14 @@ and no code in this repository signs or verifies anything. This document exists
 so that when signing is implemented it is implemented against a decided shape
 rather than an improvised one.
 
+> **Note (2026-10-01).** Contract 1.1 has since been taken by another amendment,
+> comparators and recomputed statuses ([CONTRACT-v1.md](CONTRACT-v1.md) section
+> 11). Read "1.1" below as the minor version that adds `provenance.signature`; the
+> reasoning is unchanged. The reference package now declares 1.1, and the output
+> README.md quotes for it reads `(contract 1.1, 0 warning(s))`. A warning gated on
+> the version that adds the field leaves it, and every package declaring an
+> earlier minor, as quiet as the design intends.
+
 [CONTRACT-v1.md](CONTRACT-v1.md) §10.4 records the gap this closes:
 
 > **No signature or attestation.** `provenance` proves the bytes have not changed

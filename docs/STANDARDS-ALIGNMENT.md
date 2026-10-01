@@ -171,7 +171,7 @@ so the mapping is structural rather than numerical:
 | Hierarchical decomposition of a system into subsystem and component validation problems | **Absent.** A Contract package describes one model. The worked chain in `examples/worked-model-cards/` (thermal → thermo-mechanical → fatigue) is three independent packages, not a validation hierarchy — nothing in the manifest expresses that one link's output is another's input, or propagates uncertainty across the join. |
 | Validation experiment planning and hierarchy | **Out of scope**, for the same reason as §3.2. |
 | Documented modelling assumptions and their rationale | `model_card.md` §3 `Out of scope`, §9 `Known failure modes`, and the reserved `Alternatives considered` / `Disclosure` sections |
-| Accuracy requirements agreed before the comparison | **Partly.** The ladder requires a `threshold` alongside every measurement, and `V006` rejects a `PASS` carrying a measurement with no threshold or a threshold with no measurement. It does **not** recompute the comparison — see the caveat below. |
+| Accuracy requirements agreed before the comparison | **Partly.** The ladder requires a `threshold` alongside every measurement, and `V006` rejects a `PASS` carrying a measurement with no threshold or a threshold with no measurement. From contract 1.1 a check states which threshold governs which measurement (`comparators`) and the checker recomputes its status (`V013`); a 1.0 package that declares no comparators is still taken on trust — see the caveat below. |
 | Sensitivity of the prediction to inputs | `B1_monotonicity`, `B2_bounds`, `B5_invariance` | Directional and bound checks on probe sets, not a formal sensitivity analysis. Probe geometry is unspecified in v1.0 — two packages can both comply and not be comparable. |
 
 **Where the Contract adds something.** V&V 10's requirement that accuracy
@@ -189,6 +189,13 @@ check. The Contract turns that principle into a non-zero exit code.
 > measurement"; the checker enforces *stated* and takes *compared* on trust from
 > the producer. That distance is small, but it is the same distance that produced
 > `V009`, and it is recorded here rather than left to be discovered.
+>
+> **Since contract 1.1** a check that reports `PASS` or `FAIL` names its comparison:
+> `comparators` such as `{metric: r2, op: ">=", bar: r2_min}`, required of every
+> measured check in a package that declares 1.1 (`V012`). The checker recomputes the
+> status from them and rejects a report whose status disagrees (`V013`), so the
+> `r2_min: 900.0` report above fails once it states its comparator. The caveat still
+> holds for a 1.0 package that declares no comparators.
 
 **Where it falls short.** The hierarchy — V&V 10's central organising idea — has
 no representation at all, and the chained worked example is precisely the case
@@ -222,7 +229,8 @@ standard does arrive.
   `outputs`; `M004`, `M005`.
 - **What its uncertainty contract is, per output** — `M007`, and `A3`'s
   `nominal` / `empirical_coverage` / `n` / `method` under `V010`.
-- **Whether a reported pass was measured** — `V006`, `V009`.
+- **Whether a reported pass was measured** — `V006`, `V009`; from contract 1.1,
+  whether its status follows from its numbers — `V012`, `V013`.
 - **Whether a skipped check was noticed** — `NOT_RUN` blocks the rollup always;
   `NOT_APPLICABLE` requires a stated reason (`V007`).
 - **What data and code produced it, with digests that re-verify** — the
@@ -374,7 +382,7 @@ PhysicsNeMo-CFD evaluation is the obvious way to find out.
 |---|---|---|---|---|---|---|---|---|
 | Machine-checkable artifact | yes | no | no | no | yes | yes | partly | no |
 | Rejects non-conformance | yes | — | — | — | yes | yes | no | no |
-| Requires a threshold per measurement | declared only | — | yes | yes | yes | no | no | **no** |
+| Requires a threshold per measurement | declared; compared from 1.1 | — | yes | yes | yes | no | no | **no** |
 | Experimental comparison / `u_val` | **no** | defines | **yes** | yes | no | no | no | no |
 | Numerical (solver) uncertainty | **no** | defines | **yes** | yes | no | no | no | no |
 | Per-output uncertainty contract | yes | defines | yes | yes | partly | no | no | **no** |

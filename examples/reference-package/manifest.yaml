@@ -10,7 +10,7 @@
 # fit -- it runs, and its gates really pass -- but it is not a trained surrogate
 # and must not be read as one.
 
-spec_version: "1.0"
+spec_version: "1.1"
 
 id: contract_reference_tmf_v1
 name: "Contract Reference -- Brake Disc TMF Life"
