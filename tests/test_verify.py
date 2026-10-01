@@ -1,7 +1,8 @@
 """Tests for the Contract v1 conformance checker.
 
 The shape of this suite is the point. Every ERROR rule gets a *negative* test: a
-one-line mutation of a known-good package that must make exactly that rule fire.
+one-line mutation of a known-good package that must make that rule fire (a defect
+that breaks the manifest schema too also fires M018 beside it).
 ``test_every_error_rule_has_a_negative_test`` then asserts that the mutation
 table covers the rule table, so adding a rule without proving it can fail breaks
 the build.

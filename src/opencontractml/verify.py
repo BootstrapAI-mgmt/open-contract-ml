@@ -1627,8 +1627,11 @@ def _cmd_check(args: argparse.Namespace) -> int:
         findings, record = check_package_with_record(pkg, smoke=args.smoke)
         records.append(record)
         summary = summarize(findings)
+        versions = "contract %s" % CONTRACT_VERSION
+        if record["spec_version"] not in (None, CONTRACT_VERSION):
+            versions += ", package declares %s" % record["spec_version"]
         if summary["conformant"]:
-            print("OK   %s  (contract %s, %d warning(s))" % (pkg, CONTRACT_VERSION, summary["n_warn"]))
+            print("OK   %s  (%s, %d warning(s))" % (pkg, versions, summary["n_warn"]))
         else:
             print("FAIL %s  (%d error(s), %d warning(s))" % (pkg, summary["n_error"], summary["n_warn"]))
             exit_code = 1

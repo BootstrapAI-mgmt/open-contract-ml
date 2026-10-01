@@ -45,7 +45,7 @@ wheel, and runs the installed checker from outside the checkout. Python 3.12,
 ## What a change must keep true
 
 - **A gate must be able to fail.** A new `ERROR` rule comes with a mutation in
-  `tests/test_verify.py` that makes exactly that rule fire;
+  `tests/test_verify.py` that makes that rule fire;
   `test_every_error_rule_has_a_negative_test` fails otherwise.
 - **A new rule is reported.** A rule added to the checker also joins the rule
   list that `schemas/contract-v1/conformance-record.schema.json` requires, and

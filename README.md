@@ -38,8 +38,8 @@ validation report was measured, so it is a fixture you can check the checker aga
 
 **A gate must be able to fail.** A conformance checker that has only ever been
 seen passing is indistinguishable from one that returns `OK` unconditionally, so
-the suite plants a defect for every `ERROR` rule and asserts that exactly that
-rule fires. `test_every_error_rule_has_a_negative_test` then asserts the mutation
+the suite plants a defect for every `ERROR` rule and asserts that the rule
+fires. `test_every_error_rule_has_a_negative_test` then asserts the mutation
 table covers the rule table — adding a rule without proving it can fail breaks
 the build.
 

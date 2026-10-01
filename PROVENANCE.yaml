@@ -24,13 +24,13 @@ authored:
   sha256: 38c5a9d7013ee239145bf21a49ac5006eb48f7f5b2f1057a5e6aef6a44fbd44a
 - path: CHANGELOG.md
   why: what changed in each release, newest first; the sdist carries it
-  sha256: eb17d2ea74ede5b675813d198637d14dfa49a1be294d726a089794b26258d6f8
+  sha256: 729ce7ff20c354023a15da16ba5395749632b11ab70f841229c749c03fc9be11
 - path: CLAUDE.md
   why: notes for coding agents - the commands, what the tests enforce and what never to do here
   sha256: 291cadcd097d64e170116f1bc5e91d410f08e6955d32e277953431fa70c8a698
 - path: CONTRIBUTING.md
   why: how to set up, run the checks and propose a change, including an amendment to the Contract
-  sha256: 0fecd051016fe82aaf33433004009c6ab0e4ea486885e242c7f6483b412be81e
+  sha256: 3a1fd89580274f6bdc605bf9cc2265aab255a898290f8ec7db182038a7b0ea18
 - path: LICENSE
   why: Apache-2.0, verbatim from apache.org (sha256 cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30)
   sha256: cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30
@@ -46,10 +46,10 @@ authored:
   sha256: null
 - path: README.md
   why: what the Contract is and how to verify a package
-  sha256: 80d85b788831022772788398961f1040848509912d3710238a9db6f54333cef3
+  sha256: 95888c256d349f75f207c05f408ee954d1dfe25efe3e4319dae919c0cc56fc0f
 - path: SECURITY.md
   why: how to report a vulnerability, and the safe-loading policy
-  sha256: 251451df7a88dee10a2bca04fcd98f5731df566e1226875b1607f57d254433e5
+  sha256: 37760f352de77e945dcc3ceb8a4320edaa7f1989cb75d85e35c0e13a7a473af7
 - path: docs/EXTRACTION.md
   why: where the files came from, and the known gaps in what is here
   sha256: 647523051337ca26c93d8b1ac245151b20a5dd9da11f6f2b4b1eb2d268c470e9
@@ -101,7 +101,7 @@ authored:
 - path: tests/test_conformance_record.py
   why: holds the conformance record to its schema and to its own findings, pins the rule states the checker
     reports where a rule cannot apply, and plants defects the schema must reject
-  sha256: c0c7af80ffd44b94d38a557ad83b871263e408af7c5a9e38fdda17184d1a3d69
+  sha256: dc4e8a1cc1ab71c3c61423aac1e32dbedeb4ac6067e613687aeeef75451c01ad
 - path: tests/test_contract_schema.py
   why: holds the standard-library schema walker of the checker to the published contract-v1 manifest schema
     - every keyword applied, every constraint rejected where an independent validator rejects it, and an
@@ -424,7 +424,7 @@ extracted:
 - path: src/opencontractml/verify.py
   transformed: true
   why: the conformance checker and the machine-readable contract vocabulary
-  sha256: 4e564fa385fd5f53e050d9d7bddc38976e90f12a04e8f977e86fd067fed15219
+  sha256: 54df3cc5ff1df5e6b2ee475ea55f8d44977e607bb873d5f749bee5f084518702
 - path: tests/fixtures/model_packages/conformant/manifest.yaml
   transformed: true
   why: 'a conformant package-v1 fixture: its manifest'
@@ -460,7 +460,7 @@ extracted:
 - path: tests/test_verify.py
   transformed: true
   why: tests of the conformance checker, one planted defect per ERROR rule
-  sha256: 6c24e6580425d60d2e1efa52932930be184c71cc148f3f88b20ba6bf2fa74a49
+  sha256: dc7c3214078e4bf30cdf95f386cf9b4dfd6af6ab69dcdbab0f8402ecb592ea0a
 modified_copies:
 - path: tests/fixtures/producer_packages/brake_disc_link1_thermal_fno/manifest.yaml
   copy_of: brake_disc_link1_thermal_fno

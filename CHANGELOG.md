@@ -49,6 +49,9 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   and states the comparators of its eleven measured checks; its model, its
   artifacts and every number in it are unchanged. The model-card template
   declares `spec_version` 1.1.
+- `open-contract-ml check` names the contract version a package declares
+  when it is not the checker's own: a 1.0 package now reads
+  `OK <package>  (contract 1.1, package declares 1.0, 0 warning(s))`.
 - `open-contract-ml check --json` with several packages writes an array of
   records, one per package in the order given. Before, each package's report
   overwrote the previous one, so only the last package's survived.

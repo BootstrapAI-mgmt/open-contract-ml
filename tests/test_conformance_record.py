@@ -200,3 +200,11 @@ def test_check_json_writes_every_package_when_several_are_checked(tmp_path: Path
     assert isinstance(records, list) and _errors(records) == []
     assert [r["package"] for r in records] == [str(p) for p in packages]
     assert [r["conformant"] for r in records] == [True, True, False]
+
+
+def test_the_ok_line_names_the_version_a_package_declares_when_it_is_not_the_checkers(capsys):
+    """A 1.0 package checked by a 1.1 checker must not read as a 1.1 package."""
+    assert vs.main(["check", str(REFERENCE_PACKAGE)]) == 0
+    assert "(contract %s, 0 warning(s))" % vs.CONTRACT_VERSION in capsys.readouterr().out
+    assert vs.main(["check", str(PRODUCER_PACKAGES / "plate_heat_fno")]) == 0
+    assert "(contract %s, package declares 1.0, 0 warning(s))" % vs.CONTRACT_VERSION in capsys.readouterr().out

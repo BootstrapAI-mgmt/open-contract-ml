@@ -35,3 +35,15 @@ has verified: that load is unrestricted, announces itself on stderr and through
 the warnings module, and fails closed if the file's bytes no longer match. No
 flag or environment variable opens it. A way to run code through either module
 without such a pin is a vulnerability; please report it as described above.
+
+## Running a package's entrypoint
+
+`open-contract-ml check` reads and hashes a package's files and runs none of
+them; it hashes no artifact, and reads no model card or validation report, that
+lies outside the package directory.
+`open-contract-ml check --smoke` is different: it runs the package's
+entrypoint on the examples its manifest declares, which is running the
+package's code with the checker's own permissions. It does so only after the
+entrypoint's bytes match the digest the manifest pins, which proves the file is
+the one the package declares, not that it is safe. Use `--smoke` only on a
+package you would run.
