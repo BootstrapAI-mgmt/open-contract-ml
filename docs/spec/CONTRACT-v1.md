@@ -98,6 +98,18 @@ checker that cannot apply the schema in full MUST report an error, never skip it
 `float` input or output states its `units` (`M004`, `M005`), a dimensionless one
 included, and an input's `range` is `[min, max]` with `min < max` (`M004`).
 
+**A point predictor (1.1).** `uncertainty.form: none` declares that the model reports
+no uncertainty: it answers with point predictions and no band. Such a package declares
+`per_output: {}`, a block for no output, and no `calibration` block (`M007`), and its
+card's `Uncertainty quantification` section says that the model reports no uncertainty
+where another card names a method and a number (`C005`). Its `A3_uq_calibration` check
+has no band to calibrate and reports `NOT_APPLICABLE` with that reason; the checker
+does not enforce that yet. The value is defined from 1.1, so a package declaring it
+declares `spec_version` 1.1 or later (`M007`). It is an honest declaration and not a
+pass: whether to dock a model without bars is a consumer's policy, and a consumer that
+holds every prediction to its bars refuses such a package. The package-v1 manifest
+schema does not define the value, so a package-v1 validator rejects it.
+
 ## 4. The model card
 
 ### 4.1 Front-matter
@@ -223,7 +235,9 @@ disagrees with the recomputation is rejected (`V008`). This catches a lying roll
 `V010` and `V011` grade the instrument of an `A3` or `A5` check that was run: `PASS`
 or `FAIL`. A `NOT_RUN` or `NOT_APPLICABLE` check carries no measurement for them to
 read, so neither rule applies to it. A `NOT_RUN` key still blocks `overall`, and `V008`
-rejects a report that claims otherwise.
+rejects a report that claims otherwise. The same holds on every key (1.1): no rule
+reads a measurement from a `NOT_RUN` check, `B4`'s `V009` included (section 5.4), and
+every `NOT_RUN` key blocks `overall`.
 
 The `NOT_RUN` / `NOT_APPLICABLE` split replaces the field producer's `allow_not_run`
 allow-list. An allow-list records *that* a skip was tolerated; it does not record *why*,
@@ -280,6 +294,15 @@ currently vacuous.
 >
 > A model that conserves nothing MUST declare `applicable: false` **with a reason**, and
 > carry status `NOT_APPLICABLE`. That is not a `PASS` and it is visible in the rollup.
+
+**A conservation check that applies and was not run (1.1)** reports `status: NOT_RUN`
+with `applicable: true` and no measurement. The model's physics conserves a quantity, so
+`NOT_APPLICABLE` would be false, and nothing was measured, so any number would be
+invented. Like every `NOT_RUN` it blocks `overall` (section 5.3). `V009` reads no
+measurement from it, and still rejects a `NOT_RUN` check that declares `applicable:
+false` or no `applicable` at all. Before 1.1, `V009` demanded a measurement here, so a
+producer whose model conserves a quantity it had not yet measured could only report the
+check as `NOT_APPLICABLE`, which is the false claim this ladder exists to refuse.
 
 Consequences, stated plainly:
 
@@ -521,6 +544,8 @@ them only where it declares comparators, which 1.0 did not define:
 | `bitwise` reproducibility means a tolerance of 0 (section 5.5) | `V011` | from `spec_version` 1.1 | unaffected |
 | `check --smoke` runs the entrypoint on the manifest's examples (section 8) | `S001`, `S002` | only when asked for | unaffected by the default check |
 | `check --json` writes a conformance record with a state for every rule (section 8) | -- | checker output | unaffected |
+| `B4_conservation` may report `NOT_RUN` with `applicable: true`, carrying no measurement and blocking `overall` (sections 5.3, 5.4) | `V009` | every package | may report it too; a report `V009` rejected for it before is accepted |
+| `uncertainty.form: none` declares a point predictor: `per_output: {}`, no `calibration` block, and a card that says the model reports no uncertainty (section 3) | `M007`, `C005` | a package that declares it, from `spec_version` 1.1 | cannot declare it (`M007`) |
 
 These bind every package, because they hold it to what 1.0 already stated -- its schema,
 its package as a directory, its byte-count pins -- or to what the rules are documented to

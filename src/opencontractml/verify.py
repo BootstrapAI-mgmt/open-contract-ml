@@ -224,7 +224,8 @@ RULES: Tuple[Rule, ...] = (
                           "min < max)"),
     Rule("M005", "ERROR", "outputs declared and well formed (float outputs state units)"),
     Rule("M006", "ERROR", "no duplicate input or output names"),
-    Rule("M007", "ERROR", "every output is covered by an uncertainty.per_output block"),
+    Rule("M007", "ERROR", "every output is covered by an uncertainty.per_output block; uncertainty.form none "
+                          "(from contract 1.1) declares no block and no calibration"),
     Rule("M008", "ERROR", "invocation block complete and protocol is supported"),
     Rule("M009", "ERROR", "model_card path declared, inside the package, and the file exists"),
     Rule("M010", "ERROR", "validation.report path declared, inside the package, and the file exists"),
@@ -242,7 +243,8 @@ RULES: Tuple[Rule, ...] = (
     Rule("C002", "ERROR", "card front-matter identity matches the manifest"),
     Rule("C003", "ERROR", "the eleven required card sections are present, first, in order"),
     Rule("C004", "ERROR", "no required card section is a stub"),
-    Rule("C005", "ERROR", "the uncertainty section states a method and a number"),
+    Rule("C005", "ERROR", "the uncertainty section states a method and a number, or, under uncertainty.form none, "
+                          "that the model reports no uncertainty"),
     Rule("C006", "WARN", "extra H2 sections use reserved names"),
     Rule("V001", "ERROR", "validation report parses and declares its identity"),
     Rule("V002", "ERROR", "validation report identity (model_id, model_version, spec_version) matches the manifest"),
@@ -252,7 +254,8 @@ RULES: Tuple[Rule, ...] = (
     Rule("V006", "ERROR", "a PASS carries a numeric measurement and a numeric threshold"),
     Rule("V007", "ERROR", "NOT_APPLICABLE states a reason"),
     Rule("V008", "ERROR", "the declared overall verdict matches the recomputed one"),
-    Rule("V009", "ERROR", "B4 conservation is measured, not declared"),
+    Rule("V009", "ERROR", "B4 conservation is measured, not declared (a NOT_RUN check declares applicable: true and "
+                          "carries no measurement)"),
     Rule("V010", "ERROR", "A3 uq_calibration reports nominal, empirical coverage, n and method"),
     Rule("V011", "ERROR", "A5 reproducibility declares a determinism class and a tolerance (bitwise means "
                           "tolerance 0, from contract 1.1)"),
@@ -811,6 +814,8 @@ def check_manifest(man: Dict[str, Any], pkg: Path, where: str, findings: List[Fi
     unc = man.get("uncertainty")
     if not isinstance(unc, dict) or not isinstance(unc.get("per_output"), dict) or not str(unc.get("form", "")).strip():
         findings.append(Finding("M007", where, "uncertainty must declare form and a per_output mapping"))
+    elif unc.get("form") == UNCERTAINTY_FORM_NONE:
+        check_point_predictor(unc, _major_minor(spec_version), where, findings)
     else:
         covered = set(unc["per_output"])
         for name in out_names:
@@ -852,6 +857,43 @@ def check_manifest(man: Dict[str, Any], pkg: Path, where: str, findings: List[Fi
         findings.append(Finding("M010", where, "validation.report path %r does not exist" % report_ref))
 
     check_provenance(man.get("provenance"), man, pkg, where, findings)
+
+
+# A point predictor (contract 1.1).  ``uncertainty.form: none`` declares that the
+# model reports no uncertainty: no output carries a band, so ``per_output`` is the
+# empty mapping and there is no calibration block to state (M007), and the card's
+# uncertainty section says so instead of naming a method and a number (C005).  It
+# is an honest declaration, not a pass: whether to dock a model without bars is a
+# consumer's policy, and a consumer that holds every prediction to its bars
+# refuses it.  The value is defined from contract 1.1.
+UNCERTAINTY_FORM_NONE = "none"
+#: The contract version from which ``uncertainty.form`` may be ``none``.
+FORM_NONE_FROM: Tuple[int, int] = (1, 1)
+#: Phrases one of which a point predictor's uncertainty section uses to say it reports none (C005).
+NO_UNCERTAINTY_PHRASES: Tuple[str, ...] = (
+    "no uncertainty", "point predict", "without uncertainty", "no band", "no interval",
+)
+
+
+def _point_predictor(man: Optional[Dict[str, Any]]) -> bool:
+    unc = man.get("uncertainty") if isinstance(man, dict) else None
+    return isinstance(unc, dict) and unc.get("form") == UNCERTAINTY_FORM_NONE
+
+
+def check_point_predictor(unc: Dict[str, Any], version: Optional[Tuple[int, int]], where: str,
+                          findings: List[Finding]) -> None:
+    """M007 for ``uncertainty.form: none``: no per_output block and no calibration, from contract 1.1."""
+    if version is not None and version < FORM_NONE_FROM:
+        findings.append(Finding("M007", where, "uncertainty.form 'none' is defined from contract 1.1; a package "
+                                               "declaring %d.%d covers every output with an uncertainty.per_output "
+                                               "block" % version))
+        return
+    for name in sorted(unc["per_output"]):
+        findings.append(Finding("M007", where, "uncertainty.form is 'none', so no output carries a band, but "
+                                               "uncertainty.per_output declares a block for %r" % (name,)))
+    if "calibration" in unc:
+        findings.append(Finding("M007", where, "uncertainty.form is 'none', so there is no band to calibrate, but "
+                                               "uncertainty declares a calibration block"))
 
 
 # Roles a hashed artifact may play. The set is deliberately confined to files
@@ -1006,7 +1048,14 @@ def check_card(text: str, man: Optional[Dict[str, Any]], where: str, findings: L
     uq = bodies.get("Uncertainty quantification", "")
     if not uq:
         _not_run("the card has no Uncertainty quantification section to read (C003)", "C005")
-    if uq:
+    if uq and _point_predictor(man):
+        _ran("C005")
+        if not any(phrase in uq.lower() for phrase in NO_UNCERTAINTY_PHRASES):
+            findings.append(Finding("C005", where, "uncertainty.form is 'none', and section '## Uncertainty "
+                                                   "quantification' does not say that the model reports no "
+                                                   "uncertainty (for example: 'a point predictor; it reports no "
+                                                   "uncertainty')"))
+    elif uq:
         _ran("C005")
         if not _NUMERAL.search(uq):
             findings.append(Finding("C005", where, "section '## Uncertainty quantification' states no number; "
@@ -1201,13 +1250,20 @@ def check_report(rep: Dict[str, Any], man: Optional[Dict[str, Any]], where: str,
 
 
 def check_b4(check: Any, where: str, findings: List[Finding]) -> None:
-    """B4 conservation: a number over a named control volume, or a stated inapplicability.
+    """B4 conservation: a number over a named control volume, a stated inapplicability, or an honest NOT_RUN.
 
     This is the rule the scalar ladder's V2.3 cannot satisfy.  V2.3 passes when a
     free-text field is a non-empty string, so the string
     ``"applicable_not_implemented_v0 (...)"`` -- which asserts the check applies
     and supplies no measurement -- is graded PASS today.  Under B4 that is a FAIL,
     because asserting applicability obliges a number.
+
+    A check that applies and was not run reports ``NOT_RUN`` with ``applicable:
+    true``.  It carries no measurement, so nothing here reads one from it, and it
+    blocks the rollup like every NOT_RUN (V008 rejects a report that says
+    otherwise).  Before contract 1.1 this rule demanded a measurement from it, so
+    a producer whose model conserves a quantity it had not yet measured could
+    only call the check NOT_APPLICABLE, which is false.
     """
     at = "%s checks.B4_conservation" % where
     if check is None:
@@ -1229,6 +1285,8 @@ def check_b4(check: Any, where: str, findings: List[Finding]) -> None:
             findings.append(Finding("V009", at, "B4 applicable: false must carry status NOT_APPLICABLE, not %r"
                                     % (check.get("status"),)))
         return
+    if check.get("status") == "NOT_RUN":
+        return  # applies and was not run: no measurement to read, and NOT_RUN blocks the rollup
     for key in ("quantity", "control_volume"):
         if not str(check.get(key, "")).strip():
             findings.append(Finding("V009", at, "B4 applicable: true must name %r" % key))
@@ -1259,7 +1317,8 @@ def check_b4(check: Any, where: str, findings: List[Finding]) -> None:
 # made NOT_RUN -- a status spec section 5.3 defines for every key -- impossible
 # to report honestly for A3 and A5: a package whose model has not been trained
 # was rejected for saying so, while a NOT_APPLICABLE claim with any reason at
-# all was accepted.
+# all was accepted.  B4's V009 reads no measurement from a NOT_RUN either
+# (check_b4), so from contract 1.1 no rule reads one on any key.
 #
 # This narrows what V010 and V011 read; it does not loosen the verdict.  NOT_RUN
 # is in BLOCKING_STATUSES, so it forces the recomputed overall to FAIL and V008

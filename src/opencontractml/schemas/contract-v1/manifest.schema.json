@@ -75,12 +75,12 @@
       "type": "object",
       "required": ["form", "per_output"],
       "properties": {
-        "form": {"type": "string", "enum": ["class_probabilities", "ensemble", "monte_carlo",
-                                            "predictive_interval", "quantiles"]},
+        "form": {"type": "string", "enum": ["class_probabilities", "ensemble", "monte_carlo", "none",
+                                            "predictive_interval", "quantiles"],
+                 "description": "none (contract 1.1) declares a point predictor: the model reports no uncertainty, per_output is the empty mapping and there is no calibration block (verify rule M007). A consumer may refuse such a package by its own policy, and the package-v1 schema does not define the value."},
         "per_output": {
           "type": "object",
-          "minProperties": 1,
-          "description": "One block per declared output. Coverage of every output is enforced by verify rule M007, which JSON Schema cannot express.",
+          "description": "One block per declared output, and none at all under form none. Coverage of every output is enforced by verify rule M007, which JSON Schema cannot express.",
           "additionalProperties": {"type": "object"}
         },
         "calibration": {"type": "object"}

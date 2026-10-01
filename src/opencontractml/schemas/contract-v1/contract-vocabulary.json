@@ -161,7 +161,7 @@
     {
       "id": "M007",
       "severity": "ERROR",
-      "title": "every output is covered by an uncertainty.per_output block"
+      "title": "every output is covered by an uncertainty.per_output block; uncertainty.form none (from contract 1.1) declares no block and no calibration"
     },
     {
       "id": "M008",
@@ -236,7 +236,7 @@
     {
       "id": "C005",
       "severity": "ERROR",
-      "title": "the uncertainty section states a method and a number"
+      "title": "the uncertainty section states a method and a number, or, under uncertainty.form none, that the model reports no uncertainty"
     },
     {
       "id": "C006",
@@ -286,7 +286,7 @@
     {
       "id": "V009",
       "severity": "ERROR",
-      "title": "B4 conservation is measured, not declared"
+      "title": "B4 conservation is measured, not declared (a NOT_RUN check declares applicable: true and carries no measurement)"
     },
     {
       "id": "V010",

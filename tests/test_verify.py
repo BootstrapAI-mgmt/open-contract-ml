@@ -411,6 +411,34 @@ def _a5_bitwise_at(tolerance: float):
     return plant
 
 
+#: B4 as a check that applies and was not run: the honest encoding contract 1.1 accepts.
+B4_NOT_RUN = {"status": "NOT_RUN", "applicable": True,
+              "reason": "the model conserves energy, and the balance has not been measured yet"}
+
+#: What a point predictor's card says where another card names a method and a number.
+POINT_PREDICTOR_UQ = ("A point predictor: the model reports no uncertainty, and its answers carry no bands, "
+                      "so there is no interval to calibrate.")
+
+
+def _point_predictor_package(spec_version: str = "1.1", calibration: bool = False, card_says_so: bool = True):
+    """The synthetic package declaring uncertainty.form none, consistently in all three documents."""
+    def apply(root: Path) -> None:
+        man = base_manifest()
+        man["spec_version"] = spec_version
+        man["uncertainty"] = {"form": "none", "per_output": {}}
+        if calibration:
+            man["uncertainty"]["calibration"] = {"holdout_size": 10, "empirical_coverage": 0.9, "method": "none"}
+        rep = base_report()
+        rep["spec_version"] = spec_version
+        rep["checks"]["A3_uq_calibration"] = {"status": "NOT_APPLICABLE",
+                                              "reason": "the model reports no uncertainty, so there is no band"}
+        card = base_card().replace('spec_version: "1.1"', 'spec_version: "%s"' % spec_version)
+        if card_says_so:
+            card = card.replace(CARD_SECTION_TEXT["Uncertainty quantification"], POINT_PREDICTOR_UQ)
+        write_package(root, manifest=man, report=rep, card=card)
+    return apply
+
+
 def _strip_units(m) -> None:
     for field in m["inputs"] + m["outputs"]:
         field.pop("units", None)
@@ -558,6 +586,21 @@ MUTATIONS = [
     ("V011", _mutate_report(_a5_bitwise_at(1e-6))),
     # The report declares the contract version its manifest declares.
     ("V002", _mutate_report(lambda r: r.__setitem__("spec_version", "1.0"))),
+    # Honest statuses (contract 1.1). B4 may report NOT_RUN with applicable: true -- the
+    # check applies and was not run -- which blocks the rollup like every NOT_RUN, and a
+    # NOT_RUN B4 still declares that it applies.
+    ("V008", _mutate_report(lambda r: r["checks"].__setitem__("B4_conservation", dict(B4_NOT_RUN)))),
+    ("V009", _mutate_report(lambda r: r["checks"].__setitem__("B4_conservation",
+                                                              dict(B4_NOT_RUN, applicable=False)))),
+    ("V009", _mutate_report(lambda r: r["checks"].__setitem__(
+        "B4_conservation", {k: v for k, v in B4_NOT_RUN.items() if k != "applicable"}))),
+    # uncertainty.form none declares a point predictor: no per_output block, no
+    # calibration, from contract 1.1, and a card that says the model reports no
+    # uncertainty. The first keeps the synthetic package's bands under form none.
+    ("M007", _mutate_manifest(lambda m: m["uncertainty"].__setitem__("form", "none"))),
+    ("M007", _point_predictor_package(calibration=True)),
+    ("M007", _point_predictor_package(spec_version="1.0")),
+    ("C005", _point_predictor_package(card_says_so=False)),
 ]
 
 
@@ -756,6 +799,53 @@ def test_a_measured_fail_is_still_graded_for_legibility(tmp_path: Path, key: str
 
     _rewrite_report(pkg, fail_without_its_instrument)
     assert rules_fired(vs.check_package(pkg)) == {rule}
+
+
+def test_b4_not_run_with_applicable_true_is_an_honest_blocking_status(tmp_path: Path):
+    """The conservation check applies and was not run: conformant under an overall FAIL, never under a PASS.
+
+    Before contract 1.1, V009 demanded a measurement from this check, so a
+    producer whose model conserves a quantity it had not measured could only call
+    the check NOT_APPLICABLE, which is false.
+    """
+    pkg = _copy_reference_package(tmp_path)
+    _rewrite_report(pkg, lambda rep: (rep["checks"].__setitem__("B4_conservation", dict(B4_NOT_RUN)),
+                                      rep.__setitem__("overall", "FAIL")))
+    assert vs.check_package(pkg) == []
+    _rewrite_report(pkg, lambda rep: rep.__setitem__("overall", "PASS"))
+    findings = vs.check_package(pkg)
+    assert rules_fired(findings) == {"V008"}
+    assert "recomputing from the checks gives FAIL (1 blocking)" in findings[0].message
+
+
+def test_a_not_run_check_is_read_for_no_measurement_on_any_key(tmp_path: Path):
+    """No rule reads a measurement from NOT_RUN, whatever the key; every NOT_RUN key blocks the rollup."""
+    pkg = _copy_reference_package(tmp_path)
+
+    def every_key_not_run(rep):
+        for key in vs.LADDER:
+            rep["checks"][key] = {"status": "NOT_RUN", "reason": NOT_RUN_REASON}
+        rep["checks"]["B4_conservation"]["applicable"] = True
+        rep["overall"] = "FAIL"
+
+    _rewrite_report(pkg, every_key_not_run)
+    assert vs.check_package(pkg) == []
+
+
+def test_a_point_predictor_with_no_bands_is_conformant(tmp_path: Path):
+    """uncertainty.form none, an empty per_output, no calibration, and a card that says so."""
+    root = tmp_path / "pkg"
+    write_package(root)
+    _point_predictor_package()(root)
+    assert vs.check_package(root) == []
+
+
+def test_form_none_names_each_band_it_still_declares(tmp_path: Path):
+    root = write_package(tmp_path / "pkg")
+    _mutate_manifest(lambda m: m["uncertainty"].__setitem__("form", "none"))(root)
+    messages = [f.message for f in vs.check_package(root) if f.rule == "M007"]
+    assert messages == ["uncertainty.form is 'none', so no output carries a band, but uncertainty.per_output "
+                        "declares a block for 'life_cycles'"]
 
 
 def test_only_the_two_unmeasured_statuses_are_exempt():

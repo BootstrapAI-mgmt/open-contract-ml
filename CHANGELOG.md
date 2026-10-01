@@ -40,8 +40,27 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   (with the reason), beside the verdict and the findings it wrote before. Its
   JSON Schema ships as `schemas/contract-v1/conformance-record.schema.json`;
   `opencontractml.verify.conformance_record()` returns the same record.
+- A point predictor, as an amendment proposed for the maintainer's
+  ratification (`docs/spec/CONTRACT-v1.md`, section 3): `uncertainty.form:
+  none` declares that a model reports no uncertainty. Such a package declares
+  `per_output: {}` and no `calibration` block, and its card's uncertainty
+  section says the model reports no uncertainty where another card names a
+  method and a number (`M007`, `C005`). The value is defined from contract 1.1;
+  a 1.0 package that declares it is rejected (`M007`). A consumer may refuse
+  such a package by its own policy, and the package-v1 manifest schema does
+  not define the value.
 
 ### Changed
+
+- `B4_conservation` may report `NOT_RUN` with `applicable: true`, as an
+  amendment proposed for the maintainer's ratification (sections 5.3 and 5.4):
+  a conservation check that applies and was not run carries no measurement and
+  blocks `overall`, as every `NOT_RUN` does. `V009` used to demand a
+  measurement from it, so the only report that conformed called the check
+  `NOT_APPLICABLE`, which is false. This applies to every package. The two
+  recorded `M018` findings on `uncertainty.form` in
+  `tests/fixtures/producer_packages/known-findings.json` now list `none` among
+  the schema's forms; the findings are otherwise unchanged.
 
 - The validation report must declare the `spec_version` its manifest declares
   (`V002`), as the model card already must (`C002`).
