@@ -32,7 +32,7 @@ at startup than serve a model whose UQ block is missing.
 
 ## Field outputs and what a run answers
 
-The Contract's 1.1 amendment, proposed in this repository's unreleased line,
+The Contract's 1.1 amendment, which 0.2.0 is the first release to implement,
 has a `type: field` output carry a `field` block — `kind`, `units`, `support`
 and `media_type`, with `shape` and `coordinate_ref` where the node layout is
 fixed — and the package-v1 schema defines the block exactly as the Contract's

@@ -39,7 +39,7 @@ from typing import Any
 
 #: This distribution's own version. Distinct from :data:`CONTRACT_VERSION`,
 #: which is the version of the *specification* this release implements.
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 
 __all__ = ["verify", "CONTRACT_VERSION", "SUPPORTED_CONTRACT_MAJOR", "__version__"]
 

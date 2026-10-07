@@ -240,7 +240,7 @@ standard does arrive.
   `A5`, `V011`. This one matters more than it looks: two validation ladders
   used the same word for tolerances four orders of magnitude apart.
 - **Under which licences the model, its weights and its training data are
-  offered** — from the 1.1 amendment proposed in the unreleased line, the
+  offered** — from the 1.1 amendment, the
   `licence` block (`M020`; `M021` warns when it is absent).
 
 ### Not answerable, and known to be
@@ -253,13 +253,13 @@ standard does arrive.
   the sample covers the intended domain.
 - **Who packaged it.** The Contract proves the bytes have not changed since
   packaging; it does not prove authorship. See
-  [PROVENANCE-SIGNING.md](spec/PROVENANCE-SIGNING.md). The proposed 1.1
+  [PROVENANCE-SIGNING.md](spec/PROVENANCE-SIGNING.md). The 1.1
   amendment defines a field for a detached signature and checks its
   declaration (`M017`), but nothing verifies a signature.
 - **Field I/O signatures.** `modality: field_in_field_out` is in the enum but
   the `outputs` block was designed for scalars; a field output's shape, mesh
   reference and units need a v1.1 addition. This is the largest structural hole
-  in v1.0. The 1.1 amendment proposed in the unreleased line addresses it: a
+  in v1.0. The 1.1 amendment addresses it: a
   field output declares its kind, units, support and payload format, with its
   shape and coordinate convention where the layout is fixed (`M019`), and each
   run answers with a reference to the payload it wrote, which carries the
@@ -331,7 +331,7 @@ contract is outside OMS's stated scope, by OMS's own design.
 rewrite the digest beside it in the same commit. `CONTRACT-v1.md` §10.4 states
 this as a known limitation. The design for closing it without adopting a
 dependency is [PROVENANCE-SIGNING.md](spec/PROVENANCE-SIGNING.md). The 1.1
-amendment proposed in the unreleased line takes its first step:
+amendment takes its first step:
 `provenance.signature: {format: oms, path}` records a detached signature in the
 package, and the checker warns about a malformed declaration (`M017`). It
 verifies no signature, so enforcement stays a v2 concern.
@@ -352,8 +352,8 @@ tier and ship a validation report whose `PASS` rows carry no numbers.
 **What the Contract adds:** a mechanical decision. MOF classifies; it does not
 reject. The Contract exits 1 and names the rule.
 
-**What the Contract lacks:** any notion of openness. Until the 1.1 amendment
-proposed in the unreleased line, the manifest had no licence field for the
+**What the Contract lacks:** any notion of openness. Until the 1.1 amendment,
+the manifest had no licence field for the
 model, the weights or the training corpus, a real omission for a standard
 published under Apache-2.0. The amendment adds a `licence` block that names
 each one's licence as an SPDX expression with its text or URL, or as
@@ -408,9 +408,9 @@ PhysicsNeMo-CFD evaluation is the obvious way to find out.
 | Per-output uncertainty contract | yes | defines | yes | yes | partly | no | no | **no** |
 | Conservation on the prediction | yes | — | — | — | no | no | no | **no** |
 | Byte-level provenance that re-verifies | yes | — | — | — | no | **yes** | partly | no |
-| Signature / authorship | **no**; a declared field from 1.1, proposed, not verified | — | — | — | no | **yes** | no | no |
+| Signature / authorship | **no**; a declared field from 1.1, not verified | — | — | — | no | **yes** | no | no |
 | Requirements provenance | **no** | — | — | — | **yes** | no | no | no |
-| Openness / licensing | licences declared from 1.1, proposed; no openness tiers | — | — | — | no | no | **yes** | no |
+| Openness / licensing | licences declared from 1.1; no openness tiers | — | — | — | no | no | **yes** | no |
 | Validated at production scale | **no** | — | — | — | — | — | — | **yes** |
 
 Read the bold cells as the working list. The Contract's distinctive

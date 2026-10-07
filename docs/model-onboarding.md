@@ -72,7 +72,7 @@ From a trained model to a docked one:
    stderr. A field is written as a file into the working directory and answered
    with an artifact reference that carries the file's digest. Section 12 of
    [the Contract](spec/CONTRACT-v1.md) is the normative text, part of the 1.1
-   amendment proposed in the unreleased line.
+   amendment, which 0.2.0 is the first release to implement.
 2. **Author `manifest.yaml`** — identity, inputs, outputs, the `uncertainty`
    block (form + `per_output` for every output + calibration), `invocation`,
    `lineage`, and discoverability metadata; for a contract package at 1.1, a

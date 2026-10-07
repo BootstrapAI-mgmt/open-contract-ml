@@ -24,7 +24,7 @@ authored:
   sha256: 38c5a9d7013ee239145bf21a49ac5006eb48f7f5b2f1057a5e6aef6a44fbd44a
 - path: CHANGELOG.md
   why: what changed in each release, newest first; the sdist carries it
-  sha256: b8c413dd93862456ff0fda12fbff942bec2fccc7cfabfd1404800b1c51324e4b
+  sha256: 75c039435eef98e6688018fd3a52a683774020dc7a4b4471bdc27f980593fa1f
 - path: CLAUDE.md
   why: notes for coding agents - the commands, what the tests enforce and what never to do here
   sha256: 2f2cb2671c3213cfeb4bda3f0c42cc45b25036aab62c80fa067a7f50d8cb02f7
@@ -46,7 +46,7 @@ authored:
   sha256: null
 - path: README.md
   why: what the Contract is and how to verify a package
-  sha256: d66fbadd29f5df9e99f924d6a8f932ffa73bf339b8a397a5fc79c9e2be34c078
+  sha256: fa2a93fa7f8011227090fd96a9b2e49a84d64174ca1af6939aa62b969300b349
 - path: SECURITY.md
   why: how to report a vulnerability, and the safe-loading policy
   sha256: 2cd546fd9e9a56421e9a298c916a712e19c01e736dece9007029b50b8dd1e893
@@ -59,11 +59,11 @@ authored:
 - path: docs/STANDARDS-ALIGNMENT.md
   why: where the Contract sits relative to the ASME VVUQ standards and the nearest related work, and where
     it does not reach
-  sha256: a469dab65240a091069fe0772db79a2c1fa66f7f368a381d1faf933b65436d6d
+  sha256: 38362c1869420a61fe1cce2bbe878ad8c35648303f9837d5e89365eec5caafaf
 - path: docs/spec/PROVENANCE-SIGNING.md
   why: design for an optional OpenSSF Model Signing sidecar at contract 1.1; design only, nothing implemented
     and no dependency proposed
-  sha256: 346ab89e83210ea19b24b4ff595618f3e309cbfcacd1c4fa1258364e39949198
+  sha256: afd583cf2d1ecf14eb604b1603da963a8a06b5303f8c09e5472f0d6ef2470504
 - path: examples/build_reference_field_package.py
   why: builds the reference field package from its seeded synthetic corpus, and checks that every file it
     generates reproduces byte for byte
@@ -88,10 +88,10 @@ authored:
   sha256: 8ab7334522268b045555cd624ea8cb43b134fd8865eab7f69df896b81b5430ba
 - path: pyproject.toml
   why: packaging metadata
-  sha256: 0128b222e6d2754691cfcd3b50cfc3de66cdff8f83839c579bd50fa703fb6185
+  sha256: a9b63a582124165b4cff6b809ffea09a6d4b9f89ff3869c9ebda827daa85fdbf
 - path: src/opencontractml/__init__.py
   why: package root; lazily re-exports the checker
-  sha256: e1cd370b42c7470f055160f3189ce682b65d8d8b57e87f28ab8e46088086b46f
+  sha256: ad158ea04853ba089c621f98bf5d2444f56075c55f92098b69b7bd93110ad6e0
 - path: src/opencontractml/schemas/contract-v1/conformance-record.schema.json
   why: the JSON Schema of the conformance record that open-contract-ml check --json writes, every rule id
     of the checker required
@@ -158,15 +158,15 @@ extracted:
 - path: docs/model-onboarding.md
   transformed: true
   why: how to package a trained model and validate it before publishing
-  sha256: d763feb9a0ef82df83d2f4417178a66d1953a2482558987be7195f9129e5843a
+  sha256: 429cbd10bbb2a82fb129a3424e890e7f2f15e3540d9a29e0918a0e5858a6e513
 - path: docs/model-packages.md
   transformed: true
   why: what a model registry directory holds and how a consumer validates it
-  sha256: d34d57c3262345c3d826a9ee4090ad62cf4fbef9ba42a6a678d75eb12a97f21d
+  sha256: 9ac9abb0f3eb39f4e4e762ea14bf02d4a39e02c1ca2cebe19acc37fc69388f3a
 - path: docs/spec/CONTRACT-v1.md
   transformed: true
   why: the normative specification of the Contract, version 1.1
-  sha256: bd00c5fad9af112bbbfb4ddcc79676b55aeaad8928a058dd18adf28e122165ab
+  sha256: ccc70130235ab872ab275e01d0e4eac33be762153bc6737c9c0ceb0602c7b7d4
 - path: examples/brake_disc_tmf_v1/fake_model.py
   transformed: true
   why: a deterministic stdio_json stub model for the package-v1 worked example

@@ -7,6 +7,11 @@ implements are separate numbers: `opencontractml.__version__` is the first,
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-07
+
+The first release to implement contract 1.1; 0.1.0 and 0.1.1 implement
+contract 1.0.
+
 ### Added
 
 - Contract 1.1, an amendment the maintainer accepted, merged into `main` on
@@ -20,15 +25,14 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   any keeps conforming. From 1.1 `bitwise` reproducibility means a tolerance
   of 0 (`V011`), and `B4`'s comparators compare `relative_imbalance` with
   `<=` or `<` (`V009`). `opencontractml.verify.CONTRACT_VERSION` is now
-  `"1.1"`; the package version is unchanged.
-- Contract 1.1 is amended a second time before any release carries it. The
-  amendments below that are named as proposed for the maintainer's
-  ratification add to what the first amendment made 1.1, so a package
-  written to that first 1.1 is now warned for having no licence block
-  (`M021`), needs a field block on each `type: field` output (`M019`), and
-  under `check --smoke` must answer with `status` and the request's `run_id`
-  (`S001`). The released 0.1.1 implements contract 1.0, which none of this
-  binds.
+  `"1.1"`.
+- Contract 1.1 was amended a second time before a release carried it. The
+  amendments below, which the maintainer ratified on 2026-10-07, add to what
+  the first amendment made 1.1, so a package written to that first 1.1 is
+  now warned for having no licence block (`M021`), needs a field block on
+  each `type: field` output (`M019`), and under `check --smoke` must answer
+  with `status` and the request's `run_id` (`S001`). The released 0.1.1
+  implements contract 1.0, which none of this binds.
 - `open-contract-ml check --smoke` also runs a package's entrypoint the way
   a consumer dispatches it under `stdio_json`: once per `examples[]` entry,
   within `invocation.timeout_s`, in the package directory. Each answer must
@@ -48,8 +52,8 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   (with the reason), beside the verdict and the findings it wrote before. Its
   JSON Schema ships as `schemas/contract-v1/conformance-record.schema.json`;
   `opencontractml.verify.conformance_record()` returns the same record.
-- A point predictor, as an amendment proposed for the maintainer's
-  ratification (`docs/spec/CONTRACT-v1.md`, section 3): `uncertainty.form:
+- A point predictor, as an amendment the maintainer ratified on 2026-10-07
+  (`docs/spec/CONTRACT-v1.md`, section 3): `uncertainty.form:
   none` declares that a model reports no uncertainty. Such a package declares
   `per_output: {}` and no `calibration` block, and its card's uncertainty
   section says the model reports no uncertainty where another card names a
@@ -57,8 +61,8 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   a 1.0 package that declares it is rejected (`M007`). A consumer may refuse
   such a package by its own policy, and the package-v1 manifest schema does
   not define the value.
-- A field output's declaration, as an amendment proposed for the maintainer's
-  ratification (section 3): a `type: field` output states `field: {kind,
+- A field output's declaration, as an amendment the maintainer ratified on
+  2026-10-07 (section 3): a `type: field` output states `field: {kind,
   units, support, media_type}` -- `scalar` or `vector`, the field's units,
   `node` or `cell`, and the payload's format as a bare `type/subtype` token --
   and, where its node layout is fixed, `shape` and `coordinate_ref` (new rule
@@ -68,8 +72,8 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   `$defs.output_field`, and a test holds the two equal. The schema accepts a
   block of `shape`, `coordinate_ref` and `units` alone; `M019` names the keys
   such a block lacks.
-- A licence block, as an amendment proposed for the maintainer's
-  ratification (section 3): `licence` names the licence of the model, of
+- A licence block, as an amendment the maintainer ratified on 2026-10-07
+  (section 3): `licence` names the licence of the model, of
   its weights and of its training data, each as an SPDX license expression
   with the licence's text or a URL to it, or as `NOASSERTION` with a note. A
   malformed block is an error (new rule `M020`); a package declaring 1.1 or
@@ -80,8 +84,8 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   reference package declares its own: Apache-2.0 for the model and the
   weights, which are files of this repository, and `NOASSERTION` for a
   training corpus that is not distributed.
-- An optional signature, as an amendment proposed for the maintainer's
-  ratification (section 6): `provenance.signature: {format: oms, path}`
+- An optional signature, as an amendment the maintainer ratified on
+  2026-10-07 (section 6): `provenance.signature: {format: oms, path}`
   records a detached signature beside the package, in the shape
   `docs/spec/PROVENANCE-SIGNING.md` designed. Rule `M017`, reserved until
   now, warns about a malformed declaration -- an unknown format, a missing
@@ -89,17 +93,17 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   artifact -- and about nothing else. The checker verifies no signature, and
   an unsigned package is not warned; enforcing signatures stays a v2
   concern.
-- The versioning and deprecation policy, as an amendment proposed for the
-  maintainer's ratification (section 7): what a MINOR version newly
+- The versioning and deprecation policy, as an amendment the maintainer
+  ratified on 2026-10-07 (section 7): what a MINOR version newly
   requires binds only a package that declares it, and a key a later MINOR
   defines is held to its definition wherever a package declares it; a MINOR
   may deprecate a key or a value, which a checker then warns about, and only
   a MAJOR removes one, not before two releases have carried the
   deprecation. Section 7 also maps each release to the contract version it
-  implements: 0.1.0 and 0.1.1 implement 1.0, and the unreleased line 1.1,
-  proposed. `CONTRIBUTING.md` says how a change is recorded here.
-- The normative `stdio_json` frame, as an amendment proposed for the
-  maintainer's ratification (section 12): the request `{run_id, mode,
+  implements: 0.1.0 and 0.1.1 implement 1.0, and 0.2.0 implements 1.1.
+  `CONTRIBUTING.md` says how a change is recorded here.
+- The normative `stdio_json` frame, as an amendment the maintainer
+  ratified on 2026-10-07 (section 12): the request `{run_id, mode,
   inputs}` on stdin, then end of file; one `ok` or `error` frame per row on
   stdout, in order; exit 0 for every answer, a refusal included, so that a
   non-zero exit, a timeout or stdout without frames is a crash and not a
@@ -144,7 +148,7 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   against it: serve parity and the hashes are unchanged, and the single-call
   runtime is now the median of five calls on the machine that measured it.
 - `B4_conservation` may report `NOT_RUN` with `applicable: true`, as an
-  amendment proposed for the maintainer's ratification (sections 5.3 and 5.4):
+  amendment the maintainer ratified on 2026-10-07 (sections 5.3 and 5.4):
   a conservation check that applies and was not run carries no measurement and
   blocks `overall`, as every `NOT_RUN` does. `V009` used to demand a
   measurement from it, so the only report that conformed called the check

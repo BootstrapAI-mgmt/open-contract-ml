@@ -524,7 +524,7 @@ are separate numbers:
 |---|---|---|
 | 0.1.0 | 1.0 | released 2026-09-17; its files are no longer on the Python Package Index, so this row is read from the first public snapshot of this repository, which declares version 0.1.0 and contract 1.0 |
 | 0.1.1 | 1.0 | released 2026-09-27 |
-| unreleased, after 0.1.1 | 1.1, proposed | `opencontractml.__version__` reads 0.1.1 until the next release; a conformance record's `contract_version` (section 8) tells it from a 0.1.1 checker |
+| 0.2.0 | 1.1 | released 2026-10-07; a conformance record's `contract_version` (section 8) tells a 0.2.0 checker from a 0.1.1 checker, whose `--json` report reads 1.0 |
 
 Each release adds its row here, and its `CHANGELOG.md` entry names the contract version it
 implements (`CONTRIBUTING.md`).

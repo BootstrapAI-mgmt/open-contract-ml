@@ -23,6 +23,9 @@ rather than an improvised one.
 > unsigned is left to the version that enforces signing. The manifest schema now
 > names the field with a description only, so it states no constraint and a
 > malformed signature is `M017` and nothing else.
+>
+> **Note (2026-10-07).** The maintainer ratified the field as part of Contract 1.1, as
+> the previous note describes it, and 0.2.0 is the first release that carries it.
 
 [CONTRACT-v1.md](CONTRACT-v1.md) §10.4 records the gap this closes:
 

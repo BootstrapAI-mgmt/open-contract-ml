@@ -74,7 +74,7 @@ reports `PASS` or `FAIL` names its comparison — `{metric: r2, op: ">=", bar:
 r2_min}` — and the checker recomputes the status from it, so a `PASS` whose `r2`
 misses its `r2_min` is rejected (`V013`).
 
-The unreleased line amends 1.1 again, for the maintainer's ratification. A
+Contract 1.1 was amended again before 0.2.0, the first release to implement it. A
 `type: field` output states what it holds — its kind, units, support and payload
 format (`M019`) — and a run answers it with a reference to the file it wrote. A
 `licence` block names the licences of the model, its weights and its training
