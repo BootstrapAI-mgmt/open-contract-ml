@@ -1120,8 +1120,14 @@ def test_a_package_declaring_a_major_this_checker_does_not_support_is_rejected(t
 
 
 def test_every_release_in_the_changelog_has_a_row_in_the_version_map():
-    """Section 7's version map names, for each release, the contract version it implements."""
+    """Section 7's version map names, for each release, the contract version it implements.
+
+    It also names the version this checker implements: in the row of the release that
+    ``opencontractml.__version__`` names, or, while the unreleased line implements a version
+    no release carries yet, in an ``unreleased`` row that calls it proposed.
+    """
     import re
+    import opencontractml
     repo = Path(__file__).resolve().parents[1]
     released = re.findall(r"^## \[(\d+\.\d+\.\d+)\]", (repo / "CHANGELOG.md").read_text(encoding="utf-8"), re.M)
     spec = (repo / "docs" / "spec" / "CONTRACT-v1.md").read_text(encoding="utf-8")
@@ -1129,7 +1135,9 @@ def test_every_release_in_the_changelog_has_a_row_in_the_version_map():
     section_7, _, _ = section_7.partition("\n## 8.")
     rows = dict(re.findall(r"^\| (\d+\.\d+\.\d+) \| (\d+\.\d+) \|", section_7, re.M))
     assert released and set(released) == set(rows), (released, rows)
-    assert re.search(r"^\| unreleased[^|]*\| %s, proposed \|" % re.escape(vs.CONTRACT_VERSION), section_7, re.M)
+    proposed = re.search(r"^\| unreleased[^|]*\| %s, proposed \|" % re.escape(vs.CONTRACT_VERSION), section_7, re.M)
+    assert rows.get(opencontractml.__version__) == vs.CONTRACT_VERSION or proposed, (
+        opencontractml.__version__, vs.CONTRACT_VERSION, rows)
     assert spec.startswith("# The Contract, version %s\n" % vs.CONTRACT_VERSION)
 
 

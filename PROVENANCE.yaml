@@ -494,7 +494,7 @@ extracted:
 - path: tests/test_verify.py
   transformed: true
   why: tests of the conformance checker, one planted defect per ERROR rule
-  sha256: e09a00cb901653a4e6f5d7cf1be1164b9e97cf3cea17547968f5bdca0c390f37
+  sha256: b3562c503314c236d89143da6391f5b4d6b9e97e26b4f1d482d012ec07645ce0
 modified_copies:
 - path: tests/fixtures/producer_packages/brake_disc_link1_thermal_fno/manifest.yaml
   copy_of: brake_disc_link1_thermal_fno
