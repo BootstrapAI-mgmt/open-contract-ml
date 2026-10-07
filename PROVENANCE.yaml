@@ -67,7 +67,7 @@ authored:
 - path: examples/build_reference_field_package.py
   why: builds the reference field package from its seeded synthetic corpus, and checks that every file it
     generates reproduces byte for byte
-  sha256: 256c7ffe8274268e5b0153220a07112912697a6f109cb2bdcd5d651de7d9f502
+  sha256: bf9ba4875ef6cb801dc5d3b629c36f2865f1b0ccfdcc3a599e8122008301bbad
 - path: examples/reference-field-package/manifest.yaml
   why: the manifest of the reference field package, written by examples/build_reference_field_package.py
   sha256: 4e93a28e060ebcec1978206bfe34b5f51fbfec858edc5372a0ec3e6c3ab900d4

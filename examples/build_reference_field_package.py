@@ -14,9 +14,10 @@ the package; --check then compares that copy with the files on disk.
 
 It uses the standard library alone, and in every number it writes only
 operations IEEE 754 requires to be correctly rounded (addition, subtraction,
-multiplication, division, square root), with sums taken by math.fsum. No result
-therefore depends on the platform's maths library, and the files come out
-byte-identical on any machine that runs Python 3.11 or later.
+multiplication, division, square root), with sums taken by math.fsum, so no
+result depends on the platform's maths library. tests/test_reference_field_package.py
+runs --check wherever the suite runs, so every interpreter and platform the
+suite is run on must reproduce the committed bytes.
 
 Two values are recorded rather than re-derived on each run: the entrypoint's
 runtime (C4), measured with --measure-runtime under the interpreter
@@ -441,7 +442,7 @@ def serve_parity(pkg: Path, weights: Dict[str, Any]) -> Dict[str, float]:
 
 
 def measure_runtime(pkg: Path) -> float:
-    label, inputs = EXAMPLES[0]
+    _, inputs = EXAMPLES[0]
     times = []
     for n in range(5):
         with tempfile.TemporaryDirectory(prefix="reference-field-time-") as tmp:
