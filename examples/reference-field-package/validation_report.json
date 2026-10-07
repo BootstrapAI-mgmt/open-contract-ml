@@ -1,0 +1,366 @@
+{
+  "spec_version": "1.1",
+  "produced_by": "examples/build_reference_field_package.py in this repository, from the seeded corpus it generates; C4's runtime is the measurement its --measure-runtime mode records",
+  "model_id": "contract_reference_plate_field_v1",
+  "model_version": "1.0.0",
+  "dataset_sha256": "3e6c3408c1cdd7b739680b53c212f09976dbf1dfbfa9310c12856757807345e6",
+  "lane": "field",
+  "splits": {
+    "train": 400,
+    "cal": 250,
+    "test_id": 250,
+    "test_extrap": 100
+  },
+  "checks": {
+    "A1_accuracy": {
+      "status": "PASS",
+      "method": "relative L2 error of the predicted field against each interior-test design's corpus field, over all 289 nodes",
+      "metrics": {
+        "rel_l2_mean": 0.0199539,
+        "rel_l2_worst": 0.0218028,
+        "rmse_K": 0.115308,
+        "n": 250
+      },
+      "thresholds": {
+        "rel_l2_mean_max": 0.05,
+        "rel_l2_worst_max": 0.1
+      },
+      "comparators": [
+        {
+          "metric": "rel_l2_mean",
+          "op": "<=",
+          "bar": "rel_l2_mean_max"
+        },
+        {
+          "metric": "rel_l2_worst",
+          "op": "<=",
+          "bar": "rel_l2_worst_max"
+        }
+      ]
+    },
+    "A2_extrapolation": {
+      "status": "PASS",
+      "method": "the same on the corner split, every design at or above 45.3817 W, which training never saw; degradation_ratio is the corner's mean relative L2 error over the interior test's",
+      "metrics": {
+        "rel_l2_mean": 0.0198589,
+        "rel_l2_worst": 0.0218959,
+        "rmse_K": 0.200245,
+        "n": 100,
+        "degradation_ratio": 0.995236
+      },
+      "thresholds": {
+        "degradation_max": 3.0,
+        "rel_l2_extrap_max": 0.1
+      },
+      "comparators": [
+        {
+          "metric": "degradation_ratio",
+          "op": "<=",
+          "bar": "degradation_max"
+        },
+        {
+          "metric": "rel_l2_mean",
+          "op": "<=",
+          "bar": "rel_l2_extrap_max"
+        }
+      ]
+    },
+    "A3_uq_calibration": {
+      "status": "PASS",
+      "method": "split conformal, calibrated on the calibration split: coverage of the field band (every node inside it) and of the peak band, on the interior test split",
+      "metrics": {
+        "nominal": 0.9,
+        "empirical_coverage": 0.904,
+        "peak_empirical_coverage": 0.892,
+        "n": 250,
+        "half_width_field": 0.0344997,
+        "half_width_peak": 0.0167865
+      },
+      "thresholds": {
+        "coverage_band_lo": 0.85,
+        "coverage_band_hi": 0.96
+      },
+      "comparators": [
+        {
+          "metric": "empirical_coverage",
+          "op": ">=",
+          "bar": "coverage_band_lo"
+        },
+        {
+          "metric": "empirical_coverage",
+          "op": "<=",
+          "bar": "coverage_band_hi"
+        },
+        {
+          "metric": "peak_empirical_coverage",
+          "op": ">=",
+          "bar": "coverage_band_lo"
+        },
+        {
+          "metric": "peak_empirical_coverage",
+          "op": "<=",
+          "bar": "coverage_band_hi"
+        }
+      ]
+    },
+    "A4_baseline_beat": {
+      "status": "PASS",
+      "method": "RMSE over all interior-test nodes against the training mean field, node by node",
+      "metrics": {
+        "rmse_model_K": 0.115308,
+        "rmse_mean_field_K": 2.55378,
+        "ratio_vs_mean": 0.045152,
+        "n": 250
+      },
+      "thresholds": {
+        "beat_mean_max_ratio": 0.5
+      },
+      "comparators": [
+        {
+          "metric": "ratio_vs_mean",
+          "op": "<=",
+          "bar": "beat_mean_max_ratio"
+        }
+      ]
+    },
+    "A5_reproducibility": {
+      "status": "PASS",
+      "method": "refit the amplitude and both half-widths on the same rows and compare them",
+      "metrics": {
+        "max_abs_coefficient_delta": 0.0,
+        "coefficients_compared": 3,
+        "bitwise_identical": 1
+      },
+      "thresholds": {
+        "tolerance": 0.0
+      },
+      "comparators": [
+        {
+          "metric": "max_abs_coefficient_delta",
+          "op": "<=",
+          "bar": "tolerance"
+        }
+      ],
+      "determinism_class": "bitwise"
+    },
+    "B1_monotonicity": {
+      "status": "PASS",
+      "method": "64-point probe lines in power_W at eight plate sizes; a violation is a decrease from one probe point to the next",
+      "metrics": {
+        "violation_fraction_peak": 0.0,
+        "violation_fraction_nodes": 0.0,
+        "n_probe_points": 512
+      },
+      "thresholds": {
+        "violation_fraction_max": 0.0
+      },
+      "comparators": [
+        {
+          "metric": "violation_fraction_peak",
+          "op": "<=",
+          "bar": "violation_fraction_max"
+        },
+        {
+          "metric": "violation_fraction_nodes",
+          "op": "<=",
+          "bar": "violation_fraction_max"
+        }
+      ],
+      "declared": [
+        {
+          "feature": "power_W",
+          "target": "peak_rise",
+          "direction": "+"
+        },
+        {
+          "feature": "power_W",
+          "target": "temperature_rise",
+          "direction": "+"
+        }
+      ]
+    },
+    "B2_bounds": {
+      "status": "PASS",
+      "method": "every node of the predicted field on a 16-level grid over each input's declared range",
+      "metrics": {
+        "n_probe_points": 4096,
+        "n_violations": 0,
+        "min_predicted_rise_K": 0.0
+      },
+      "thresholds": {
+        "lower_bound_K": 0.0,
+        "max_violations": 0
+      },
+      "comparators": [
+        {
+          "metric": "min_predicted_rise_K",
+          "op": ">=",
+          "bar": "lower_bound_K"
+        },
+        {
+          "metric": "n_violations",
+          "op": "<=",
+          "bar": "max_violations"
+        }
+      ]
+    },
+    "B3_residual": {
+      "status": "PASS",
+      "method": "five-point discrete Laplacian of the predicted field at the interior nodes of every interior-test design: the residual of k t laplacian(T) + q = 0, relative to q in the L2 norm",
+      "metrics": {
+        "relative_residual_worst": 2.33333e-05,
+        "relative_residual_mean": 2.33333e-05,
+        "n": 250,
+        "nodes_per_design": 225
+      },
+      "thresholds": {
+        "relative_residual_max": 0.01
+      },
+      "comparators": [
+        {
+          "metric": "relative_residual_worst",
+          "op": "<=",
+          "bar": "relative_residual_max"
+        }
+      ]
+    },
+    "B4_conservation": {
+      "status": "PASS",
+      "method": "heat conducted out through the four edges, from second-order one-sided differences of the predicted field and Simpson's rule along each edge, against the heating power P; steady, so nothing is stored; the worst interior-test design",
+      "metrics": {
+        "relative_imbalance": 1.16665e-05,
+        "n": 250
+      },
+      "thresholds": {
+        "imbalance_max": 0.01
+      },
+      "comparators": [
+        {
+          "metric": "relative_imbalance",
+          "op": "<=",
+          "bar": "imbalance_max"
+        }
+      ],
+      "applicable": true,
+      "quantity": "heat flow (W)",
+      "control_volume": "the whole plate",
+      "scope": "control_volume"
+    },
+    "B5_invariance": {
+      "status": "PASS",
+      "method": "the predicted field on a 33 x 33 grid over the same plate against the 17 x 17 grid, at the nodes the two grids share",
+      "metrics": {
+        "max_abs_diff_K": 0.0,
+        "n": 250,
+        "fine_nodes_per_side": 33
+      },
+      "thresholds": {
+        "max_abs_diff_allowed_K": 1e-09
+      },
+      "comparators": [
+        {
+          "metric": "max_abs_diff_K",
+          "op": "<=",
+          "bar": "max_abs_diff_allowed_K"
+        }
+      ]
+    },
+    "B6_integrated_quantities": {
+      "status": "NOT_APPLICABLE",
+      "reason": "no declared output is an integrated quantity: peak_rise is the value at one node, so there is no integral of the field to re-derive and compare with a label (the heat the field conducts out is B4's balance)"
+    },
+    "C1_ood_guard": {
+      "status": "PASS",
+      "method": "the entrypoint's own input check (predict.read_inputs), a box on the declared ranges, on the interior-test inputs and on one far-out design (power_W 500)",
+      "metrics": {
+        "pass_fraction_test_id": 1.0,
+        "far_out_design_refused": 1,
+        "n": 250
+      },
+      "thresholds": {
+        "min_pass_fraction_id": 0.95,
+        "far_out_must_refuse": 1
+      },
+      "comparators": [
+        {
+          "metric": "pass_fraction_test_id",
+          "op": ">=",
+          "bar": "min_pass_fraction_id"
+        },
+        {
+          "metric": "far_out_design_refused",
+          "op": ">=",
+          "bar": "far_out_must_refuse"
+        }
+      ]
+    },
+    "C2_serve_parity": {
+      "status": "PASS",
+      "method": "predict.py launched with a stdio_json request in a working directory of the caller's, on 6 inputs; every node of the field and of its two band files, read back from the files it wrote, and the three peak numbers, against this script's own implementation; differences relative to the predicted peak",
+      "metrics": {
+        "max_rel_diff": 0.0,
+        "n_cases": 6,
+        "references_verified": 18
+      },
+      "thresholds": {
+        "max_rel_diff_allowed": 1e-09
+      },
+      "comparators": [
+        {
+          "metric": "max_rel_diff",
+          "op": "<=",
+          "bar": "max_rel_diff_allowed"
+        }
+      ]
+    },
+    "C3_provenance_integrity": {
+      "status": "PASS",
+      "method": "both pinned files hashed again once the measurements were done, and compared with the pins written into the manifest",
+      "metrics": {
+        "artifacts_verified": 2,
+        "hash_mismatches": 0
+      },
+      "thresholds": {
+        "max_hash_mismatches": 0
+      },
+      "comparators": [
+        {
+          "metric": "hash_mismatches",
+          "op": "<=",
+          "bar": "max_hash_mismatches"
+        }
+      ]
+    },
+    "C4_deployment_readiness": {
+      "status": "PASS",
+      "method": "the deployment declarations below present, and the median of five single calls of the entrypoint, measured on Linux under CPython 3.11.15, against the manifest timeout",
+      "metrics": {
+        "declarations_present": 4,
+        "measured_runtime_s": 0.0345
+      },
+      "thresholds": {
+        "declarations_required": 4,
+        "timeout_s": 60
+      },
+      "comparators": [
+        {
+          "metric": "declarations_present",
+          "op": ">=",
+          "bar": "declarations_required"
+        },
+        {
+          "metric": "measured_runtime_s",
+          "op": "<=",
+          "bar": "timeout_s"
+        }
+      ],
+      "declarations": {
+        "validation_anchor": "illustrative: a Contract fixture fitted to a synthetic corpus, not a validated surrogate",
+        "inference_target": "workstation, single call, standard-library Python",
+        "retrain_cadence": "not scheduled (fixture)",
+        "owner_escalation": "open-contract-ml@example.invalid"
+      }
+    }
+  },
+  "overall": "PASS"
+}

@@ -18,7 +18,7 @@ authored:
   why: the build gate; runs the suite (one Linux interpreter per pull request, the full interpreter matrix
     weekly and on demand), then builds the wheel and drives the installed checker from outside the checkout
     so that a packaging fault cannot hide behind a green source-tree run
-  sha256: 0d182eed138b7e980d023a5a8b106031a0e4a8f083e3c2652a0cbb02d1d00f43
+  sha256: aec53d6aa340f6e3ec6fa7d57a65c0770fc7e1a1ade01b2b5ea3b976f0fb97b8
 - path: .gitignore
   why: build/venv/cache exclusions
   sha256: 38c5a9d7013ee239145bf21a49ac5006eb48f7f5b2f1057a5e6aef6a44fbd44a
@@ -68,10 +68,24 @@ authored:
   why: builds the reference field package from its seeded synthetic corpus, and checks that every file it
     generates reproduces byte for byte
   sha256: 256c7ffe8274268e5b0153220a07112912697a6f109cb2bdcd5d651de7d9f502
+- path: examples/reference-field-package/manifest.yaml
+  why: the manifest of the reference field package, written by examples/build_reference_field_package.py
+  sha256: 4e93a28e060ebcec1978206bfe34b5f51fbfec858edc5372a0ec3e6c3ab900d4
+- path: examples/reference-field-package/model_card.md
+  why: the model card of the reference field package, written by examples/build_reference_field_package.py
+  sha256: 321c301cf5a5edaff47d01813ad6460d5aa50182ede7c43e75f956a3ecad8f6e
+- path: examples/reference-field-package/model_weights.json
+  why: the weights of the reference field package, the fitted amplitude and band half-widths with the fixed
+    plate properties, written by examples/build_reference_field_package.py
+  sha256: 4c4d6467c33ce32557e5793299cd454fbf978d3ff19c3e3eb05113f08bdb8e32
 - path: examples/reference-field-package/predict.py
   why: the standard-library entrypoint of the reference field package, answering a field and its band by
     artifact reference and a peak in band
   sha256: 704966495bedb1b8209e894acce54c2f789312ce28e4532db988ba66cb88d56c
+- path: examples/reference-field-package/validation_report.json
+  why: the validation report of the reference field package, every number measured by
+    examples/build_reference_field_package.py
+  sha256: 8ab7334522268b045555cd624ea8cb43b134fd8865eab7f69df896b81b5430ba
 - path: pyproject.toml
   why: packaging metadata
   sha256: 0128b222e6d2754691cfcd3b50cfc3de66cdff8f83839c579bd50fa703fb6185
@@ -132,6 +146,10 @@ authored:
 - path: tests/test_provenance.py
   why: the provenance falsifier
   sha256: 915c90b323009413f03184b858167fa1b2821ccc5d75daece18c56278ceb0968
+- path: tests/test_reference_field_package.py
+  why: holds the reference field package to check, check --smoke and check --json, the 1.0 packages to
+    their recorded findings and a 2.0 copy to M002, and the builder to a byte-for-byte rebuild
+  sha256: 0e89c09353981a3fa96c5cf619f415993e41b73a20173e482ff5cb89b05a2883
 - path: tests/test_stdio_frame.py
   why: the stdio_json frame held over two real entrypoints, in single and batch mode, for answers and
     refusals, and planted defects in real frames

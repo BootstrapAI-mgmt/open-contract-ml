@@ -230,6 +230,10 @@ jobs:
           # --smoke also runs the entrypoint on the manifest's two examples; the
           # reference entrypoint needs only the standard library
           "$RUNNER_TEMP/clean/bin/open-contract-ml" check --smoke "$GITHUB_WORKSPACE/examples/reference-package"
+          # the field package's entrypoint writes its payload files into the working
+          # directory --smoke makes, and the check verifies each one it references
+          "$RUNNER_TEMP/clean/bin/open-contract-ml" check "$GITHUB_WORKSPACE/examples/reference-field-package"
+          "$RUNNER_TEMP/clean/bin/open-contract-ml" check --smoke "$GITHUB_WORKSPACE/examples/reference-field-package"
 
       # tests/fixtures/producer_packages/ holds copies of packages that real
       # producers emit (its README says what each copy changed). Checking them

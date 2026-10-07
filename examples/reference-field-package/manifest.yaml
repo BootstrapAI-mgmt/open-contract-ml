@@ -1,0 +1,184 @@
+# Contract 1.1 -- the reference field package's manifest.
+#
+# A CONTRACT fixture, not a model of any real plate: a closed-form expression
+# with one amplitude fitted to a synthetic corpus. Its entrypoint runs and every
+# check in its report was measured, but nothing here is a validated surrogate.
+#
+# It is a worked instance of a type: field output under docs/spec/CONTRACT-v1.md:
+# the output's field block, a band carried by *_artifact references, a scalar in
+# the frame, and a licence block. examples/build_reference_field_package.py wrote
+# this file and computed every number and digest in it. To check the package and
+# run its entrypoint on the examples below:
+#
+#     python -m opencontractml.verify check --smoke examples/reference-field-package
+
+spec_version: "1.1"
+
+id: contract_reference_plate_field_v1
+name: "Contract Reference -- Plate Temperature-Rise Field"
+version: "1.0.0"
+
+owner:
+  team: "open-contract-ml maintainers"
+  contact: "open-contract-ml@example.invalid"
+
+domain: heat_conduction
+# The plate's size is its geometry, stated as two lengths. The modality
+# enumeration has no value for numeric inputs with a field output, and this is
+# the nearest one.
+modality: geometry_in_field_out
+analysis_type: "steady conduction"
+tags: [reference, contract-v1, contract-fixture, field]
+
+purpose: "Reference instance of a Contract 1.1 field package: it predicts the temperature rise over a heated plate as a field, so that checkers and consumers can try the field block, the artifact references and the stdio_json frame on a package that really runs."
+
+when_to_use: |
+  Validating how a consumer handles a field output -- the field block, the
+  artifact references a run answers with, the payload files themselves --
+  against a package that is known to be conformant.
+
+when_not_to_use: |
+  Do NOT use for engineering decisions. The expression has one coefficient,
+  fitted to a synthetic corpus drawn from the same expression; it carries no
+  physical validation.
+
+inputs:
+  - name: power_W
+    type: float
+    units: W
+    canonical_units: W
+    range: [5.0, 50.0]
+    required: true
+    default: 20.0
+    description: "Heating power delivered into the plate."
+  - name: length_m
+    type: float
+    units: m
+    canonical_units: m
+    range: [0.05, 0.2]
+    required: true
+    default: 0.1
+    description: "Plate length, along x."
+  - name: width_m
+    type: float
+    units: m
+    canonical_units: m
+    range: [0.05, 0.2]
+    required: true
+    default: 0.1
+    description: "Plate width, along y."
+
+outputs:
+  - name: temperature_rise
+    type: field
+    units: K
+    viewer: field_contour
+    description: "Steady temperature rise above the edge temperature, at every node of the plate."
+    field:
+      kind: scalar
+      units: K
+      support: node
+      media_type: application/vnd.vtk.vtp+xml
+      shape: [17, 17]
+      coordinate_ref: "the 17 x 17 nodes of a uniform grid over the plate, at x = i * length_m / 16 and y = j * width_m / 16; the shape and the payload both index j, along y, first and i, along x, second"
+  - name: peak_rise
+    type: float
+    units: K
+    viewer: scalar_with_uq
+    description: "The largest value of the predicted field, which this model always places at the centre node."
+
+primary_inputs: [power_W, length_m, width_m]
+primary_outputs: [temperature_rise, peak_rise]
+
+uncertainty:
+  form: predictive_interval
+  per_output:
+    temperature_rise:
+      lower_artifact: temperature_rise_lower
+      upper_artifact: temperature_rise_upper
+      level: 0.9
+      method: "split conformal on each design's largest absolute nodal residual, as a fraction of its predicted peak; one half-width applied at every node"
+    peak_rise:
+      lower_field: peak_rise_lower
+      upper_field: peak_rise_upper
+      level: 0.9
+      method: "split conformal on the absolute residual at the centre node, as a fraction of the predicted peak"
+  calibration:
+    holdout_size: 250
+    empirical_coverage: 0.904
+    method: "split conformal, on a calibration split disjoint from training and test; coverage of the field band measured on the interior test split"
+
+invocation:
+  executable: ./predict.py
+  protocol: stdio_json
+  timeout_s: 60
+  expected_runtime_s: 0.0345
+  batch_supported: true
+
+lineage:
+  training_data_version: "contract-reference-field-corpus-1.0"
+  training_date: "2026-10-07"
+  metrics:
+    rel_l2_mean: 0.0199539
+    rmse_K: 0.115308
+    n_test: 250
+  retrain_cadence: "not scheduled (contract fixture)"
+
+# --- the Contract's additions to the package-v1 manifest ---------------------- #
+
+provenance:
+  artifacts:
+    - path: ./predict.py
+      role: entrypoint
+      sha256: 704966495bedb1b8209e894acce54c2f789312ce28e4532db988ba66cb88d56c
+      bytes: 9697
+    - path: ./model_weights.json
+      role: weights
+      sha256: 4c4d6467c33ce32557e5793299cd454fbf978d3ff19c3e3eb05113f08bdb8e32
+      bytes: 438
+  dataset:
+    sha256: 3e6c3408c1cdd7b739680b53c212f09976dbf1dfbfa9310c12856757807345e6
+    n_samples: 1000
+    generator_version: "contract-reference-field-corpus-1.0"
+    solver_version: "none (synthetic closed-form corpus)"
+  code:
+    repo: "https://github.com/BootstrapAI-mgmt/open-contract-ml"
+    commit: "8dfa2611fba92a67c3077f0b2e2b5d531eb56ad3"
+    version: "contract-reference-field-1.0.0"
+  environment:
+    python: "3.11.15"
+    # predict.py and its builder import nothing outside the standard library
+    packages: {}
+
+validation:
+  report: ./validation_report.json
+  overall: PASS
+
+model_card: ./model_card.md
+
+# --- the licences, contract 1.1 --------------------------------------------- #
+# The entrypoint and the weights are files of this repository, which is
+# Apache-2.0. The corpus is not shipped with the package, so no licence is
+# asserted for the data.
+licence:
+  model:
+    spdx: Apache-2.0
+    url: "http://www.apache.org/licenses/LICENSE-2.0"
+  weights:
+    spdx: Apache-2.0
+    url: "http://www.apache.org/licenses/LICENSE-2.0"
+  training_data:
+    spdx: NOASSERTION
+    note: "the synthetic corpus contract-reference-field-corpus-1.0 is not shipped with this package; examples/build_reference_field_package.py in this repository regenerates it from its seed, the package pins it by sha256, and no licence is asserted for the data"
+
+examples:
+  - label: "A square plate at moderate power"
+    inputs:
+      power_W: 20.0
+      length_m: 0.1
+      width_m: 0.1
+  - label: "A long, narrow plate at full power"
+    inputs:
+      power_W: 50.0
+      length_m: 0.2
+      width_m: 0.05

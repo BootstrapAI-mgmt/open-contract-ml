@@ -1,0 +1,24 @@
+{
+  "model": "closed-form temperature rise over a heated plate, one fitted amplitude",
+  "amplitude": 3.00007,
+  "conductivity_W_mK": 50.0,
+  "thickness_m": 0.004,
+  "nodes_per_side": 17,
+  "field_half_width": 0.0344997,
+  "peak_half_width": 0.0167865,
+  "band_level": 0.9,
+  "input_ranges": {
+    "power_W": [
+      5.0,
+      50.0
+    ],
+    "length_m": [
+      0.05,
+      0.2
+    ],
+    "width_m": [
+      0.05,
+      0.2
+    ]
+  }
+}
