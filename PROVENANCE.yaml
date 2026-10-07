@@ -140,7 +140,7 @@ extracted:
 - path: docs/spec/CONTRACT-v1.md
   transformed: true
   why: the normative specification of the Contract, version 1.1
-  sha256: 8f32fa8761dc3f205a044ca1e8a96bf04e053924b725e6825019dfa7ced638bb
+  sha256: 41eafcc045bf71d5679c20455d61bccc82fc071f0048a8099db10ea6392e2113
 - path: examples/brake_disc_tmf_v1/fake_model.py
   transformed: true
   why: a deterministic stdio_json stub model for the package-v1 worked example
@@ -432,7 +432,7 @@ extracted:
 - path: src/opencontractml/verify.py
   transformed: true
   why: the conformance checker and the machine-readable contract vocabulary
-  sha256: 7e766a2c9b0afa743ec2bb36e4626f18351cff7884c4f0b2835360c285c05878
+  sha256: 40a3c1041d6515d56259fe80764c1c453f81068603d83b54d30a04a8437cf3e8
 - path: tests/fixtures/model_packages/conformant/manifest.yaml
   transformed: true
   why: 'a conformant package-v1 fixture: its manifest'

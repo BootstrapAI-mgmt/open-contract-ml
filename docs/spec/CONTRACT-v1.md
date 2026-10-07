@@ -661,11 +661,11 @@ protocol's normative text (1.1). A consumer, and `check --smoke` (section 8), la
 file `invocation.executable` names -- a `.py` file with a Python interpreter, any other
 file as an executable -- once per request.
 
-**The working directory.** Each request runs in a working directory of its own, created
-for that request and empty when the entrypoint starts; it is never the package directory.
-An entrypoint reads its own files -- weights, assets -- relative to its own location, never
-relative to the working directory, and writes every file it produces into the working
-directory. Every file an answer references is there.
+**The working directory.** The caller makes a new, empty directory for every request and
+starts the entrypoint in it; the package directory is not used for that. The entrypoint
+finds what it ships with -- its weights and assets -- beside its executable, not through
+the current directory, and creates every output file under the current directory, so
+each file an answer references lies there.
 
 **The request** is one JSON object on stdin, followed by end of file:
 
@@ -685,11 +685,11 @@ directory. Every file an answer references is there.
 **The answer** is a sequence of frames on stdout, one JSON object per line, and nothing
 else; diagnostics and progress go to stderr. A frame is one of two:
 
-- an **`ok` frame**, `{"run_id": ..., "status": "ok", "outputs": {...}}`. `outputs` carries
-  every declared output and every key the manifest's `uncertainty.per_output` blocks name
-  -- the value of each `field`, `*_field` and `*_artifact` key -- each present and not
-  `null`. Keys beyond the declaration are allowed. A value travels in band, as JSON (a
-  number, a label, a series), or as an artifact reference (below).
+- an **`ok` frame**, `{"run_id": ..., "status": "ok", "outputs": {...}}`. `outputs` has a
+  value other than `null` for each output the manifest lists and for each key that a
+  `field`, `*_field` or `*_artifact` entry of an `uncertainty.per_output` block names; it
+  may have other keys too. A value travels in band, as JSON (a number, a label, a
+  series), or as an artifact reference (below).
 - an **`error` frame**, `{"run_id": ..., "status": "error", "error": {"code": ...,
   "message": ..., "field": ...}}`, for a request the model declines: `code` is a short
   upper-case token such as `MISSING_INPUT`, `OUT_OF_RANGE` or `BAD_REQUEST`; `message` says
@@ -726,12 +726,13 @@ it:
 | `field` | what the payload holds: `name`, the name of its array in the payload; `units`, the field's units, its field block's where one is declared; `range`, `[low, high]`, two finite numbers with `low <= high` (for a `vector` field, the range of its magnitude); `n_nodes`, the payload's node count, a positive integer |
 
 The file is exactly `bytes` long and its sha256 is `sha256`. Keys beyond these are
-allowed. A reference is a top-level value of `outputs`. The value of a `type: field`
-output that declares a field block is a reference, and so is the value of every key a
-`*_artifact` declaration in its `uncertainty.per_output` block names; a `*_field` key may
-carry one too, and any value whose `kind` is `artifact` is held to the same rules. In
-`batch` mode each row's references name that row's own files, since one path cannot carry
-two digests. What the reference carries -- the node count, the value range, the digest --
+allowed. References sit directly under `outputs`, never inside another value. A `type:
+field` output that declares a field block is answered with a reference, as is each key
+named by a `*_artifact` entry in that output's `uncertainty.per_output` block; a
+`*_field` key may be answered with one as well, and every value whose `kind` is
+`artifact` meets the same rules. In `batch` mode every row writes, and references, files
+of its own: a path stands for a single digest. What the reference carries -- the node
+count, the value range, the digest --
 is what section 3 leaves out of the manifest: it is the run's.
 
 **What binds whom.** The frame binds every package: it is what `stdio_json` has meant to

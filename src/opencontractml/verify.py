@@ -894,7 +894,7 @@ FIELD_KINDS: Tuple[str, ...] = ("scalar", "vector")
 FIELD_SUPPORTS: Tuple[str, ...] = ("cell", "node")
 #: The contract version from which every ``type: field`` output declares its field block.
 FIELD_BLOCK_REQUIRED_FROM: Tuple[int, int] = (1, 1)
-#: A media type as a bare ``type/subtype`` token: no parameters, no whitespace.  The
+#: A media type here is ``type/subtype`` alone; parameters and spaces are refused.  The
 #: manifest schema's ``field.media_type`` pattern is this one (a test holds them equal).
 MEDIA_TYPE_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9_.+-]*/[A-Za-z0-9][A-Za-z0-9_.+-]*$"
 #: VTK XML PolyData: the field payload format the reference field package answers with.
@@ -1803,8 +1803,9 @@ def reference_problems(value: Any, run_dir: Path, media_type: Optional[str] = No
                        units: Optional[str] = None) -> List[str]:
     """Every way ``value`` breaks the artifact-reference rules (spec section 12), empty when it holds.
 
-    The keys are checked first, then the containment of ``path`` in ``run_dir``,
-    then -- only when both hold -- the file's size and digest.  ``media_type`` and
+    Missing or malformed keys are reported first, then a ``path`` that leaves
+    ``run_dir``; the file is opened, and its size and digest compared, only if neither
+    was found.  ``media_type`` and
     ``units``, when given, are what the manifest declared for this value.
     """
     if not isinstance(value, dict):
