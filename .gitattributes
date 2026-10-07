@@ -29,6 +29,7 @@
 # conversion outright, so these bytes are identical regardless of what any
 # consumer's core.autocrlf is set to.
 examples/reference-package/** -text
+examples/reference-field-package/** -text
 tests/fixtures/producer_packages/** -text
 examples/worked-cells/**/data/*.csv -text
 

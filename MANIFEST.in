@@ -13,6 +13,8 @@
 include CHANGELOG.md
 graft tests/fixtures
 graft examples/reference-package
+graft examples/reference-field-package
+include examples/build_reference_field_package.py
 graft examples/brake_disc_tmf_v1
 exclude tests/test_provenance.py
 exclude tests/test_link_integrity.py

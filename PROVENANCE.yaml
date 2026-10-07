@@ -13,7 +13,7 @@ what_this_is: 'One record per tracked file, in one of three classes. `authored`:
 authored:
 - path: .gitattributes
   why: eol=lf, without which a Windows clone breaks the M013 sha256 pins
-  sha256: b087f8e29332f1371182545c688f6933da61beaf32d3e2588c4b36f8294c29e0
+  sha256: b749b0a605e7b32c1d843f3363ff810463af6b78b0c79ff3a5990dae0ab4a3ab
 - path: .github/workflows/ci.yml
   why: the build gate; runs the suite (one Linux interpreter per pull request, the full interpreter matrix
     weekly and on demand), then builds the wheel and drives the installed checker from outside the checkout
@@ -37,7 +37,7 @@ authored:
 - path: MANIFEST.in
   why: 'what the sdist carries beyond the package: the changelog, its tests, and the example and fixture
     files those tests read'
-  sha256: 4466d4fbf056592d7f683ca6ba865acee0af15f4dec94ab1666b872e0ebd1601
+  sha256: 2e18197316cb0d7d201ef3077b8899e32081d971a0e89e30771da0d534055378
 - path: NOTICE
   why: copyright notice; reproduces the MIT notice safeload.py arrives under
   sha256: 93422d79dca301d8b309a19da3f79a31a0fe450cc5d14a0606ec7ea09a347706
@@ -64,6 +64,14 @@ authored:
   why: design for an optional OpenSSF Model Signing sidecar at contract 1.1; design only, nothing implemented
     and no dependency proposed
   sha256: 346ab89e83210ea19b24b4ff595618f3e309cbfcacd1c4fa1258364e39949198
+- path: examples/build_reference_field_package.py
+  why: builds the reference field package from its seeded synthetic corpus, and checks that every file it
+    generates reproduces byte for byte
+  sha256: 256c7ffe8274268e5b0153220a07112912697a6f109cb2bdcd5d651de7d9f502
+- path: examples/reference-field-package/predict.py
+  why: the standard-library entrypoint of the reference field package, answering a field and its band by
+    artifact reference and a peak in band
+  sha256: 704966495bedb1b8209e894acce54c2f789312ce28e4532db988ba66cb88d56c
 - path: pyproject.toml
   why: packaging metadata
   sha256: 0128b222e6d2754691cfcd3b50cfc3de66cdff8f83839c579bd50fa703fb6185
