@@ -1,9 +1,9 @@
-"""A stdio_json entrypoint in the shape a grid field producer documents for the packages it emits.
+"""A stdio_json entrypoint that answers a field on a regular grid, and its band, by reference.
 
 A test fixture, standard library only. It answers each row with a temperature-rise
 field on a 4 x 4 grid of nodes, written as VTK XML PolyData into its working
 directory and returned by reference, with its lower and upper band the same way
-(named by `lower_field` / `upper_field`, as such a producer names them), and three
+(named by `lower_field` / `upper_field` in the manifest's `per_output` block), and three
 in-band diagnostics beyond the declared outputs. In `batch` mode each row writes
 its own files. A request it will not take gets an in-band error frame and exit 0;
 an internal failure exits 1.

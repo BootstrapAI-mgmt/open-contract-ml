@@ -24,7 +24,7 @@ authored:
   sha256: 38c5a9d7013ee239145bf21a49ac5006eb48f7f5b2f1057a5e6aef6a44fbd44a
 - path: CHANGELOG.md
   why: what changed in each release, newest first; the sdist carries it
-  sha256: 6df549e662cad47ac9f9f304f00269ded69a08e2a601dcdde6ed2d291268100c
+  sha256: 9d1ae3ed493fd4795ff1c7059a5613684cb138f24ffc43af8256cf16f661547a
 - path: CLAUDE.md
   why: notes for coding agents - the commands, what the tests enforce and what never to do here
   sha256: 291cadcd097d64e170116f1bc5e91d410f08e6955d32e277953431fa70c8a698
@@ -99,9 +99,9 @@ authored:
     the copy changed'
   sha256: 61a7fadf54b46c4141bf18a1ed22b278ad4099d595a71250d8476cfb717533c1
 - path: tests/fixtures/stdio_frame/grid_field_predict.py
-  why: a standard-library entrypoint in the shape a grid field producer documents, answering a field and
-    its band by reference, with a switch that plants one protocol defect for the negative tests
-  sha256: 3bd561e0955ee2e4bc454be6f9be5287a24bb43b2bb7a5871c110aea336e14bd
+  why: a standard-library entrypoint that answers a field on a regular grid and its band by reference,
+    with a switch that plants one protocol defect for the negative tests
+  sha256: b0a11118c36c92ada1042894c19a1475067b6505691677a6b4392a2560f0ae81
 - path: tests/test_conformance_record.py
   why: holds the conformance record to its schema and to its own findings, pins the rule states the checker
     reports where a rule cannot apply, and plants defects the schema must reject
@@ -110,7 +110,7 @@ authored:
   why: holds the standard-library schema walker of the checker to the published contract-v1 manifest schema
     - every keyword applied, every constraint rejected where an independent validator rejects it, and an
     unappliable keyword refused
-  sha256: 12e0d07bd230da2dc2dd9b58637b9336d5791d957f1edd462af6b8f55992db56
+  sha256: 0b7f8a71183482f1bc955d91640c8f7706b21e5db9c2d70d2ed04f50cc572d35
 - path: tests/test_gate.py
   why: tests of the V3 declarations of the gate engine
   sha256: 7f903ea54f0b8c99c034e040703a11775e5ccae5ba8e5cd710e6d055cd4f97ea
@@ -127,7 +127,7 @@ authored:
 - path: tests/test_stdio_frame.py
   why: the stdio_json frame held over two real entrypoints, in single and batch mode, for answers and
     refusals, and planted defects in real frames
-  sha256: 07c03c772ed9056177d96616208bdb6f188398a30c56975e747697899726db09
+  sha256: de615f5efeb5796f0f9207124b70b24927d804815e36a5e2c67c3163ad6fd628
 extracted:
 - path: docs/model-onboarding.md
   transformed: true
@@ -140,7 +140,7 @@ extracted:
 - path: docs/spec/CONTRACT-v1.md
   transformed: true
   why: the normative specification of the Contract, version 1.1
-  sha256: 41eafcc045bf71d5679c20455d61bccc82fc071f0048a8099db10ea6392e2113
+  sha256: c3c71469cc184b061c45f022251667843f3f2eb576d6fecbbbd2601e7ee9be8b
 - path: examples/brake_disc_tmf_v1/fake_model.py
   transformed: true
   why: a deterministic stdio_json stub model for the package-v1 worked example
@@ -432,7 +432,7 @@ extracted:
 - path: src/opencontractml/verify.py
   transformed: true
   why: the conformance checker and the machine-readable contract vocabulary
-  sha256: 40a3c1041d6515d56259fe80764c1c453f81068603d83b54d30a04a8437cf3e8
+  sha256: a1efd270dbaa3695b21af19a50fe30c7ffa20c031fd0f9da16746c85be9455ba
 - path: tests/fixtures/model_packages/conformant/manifest.yaml
   transformed: true
   why: 'a conformant package-v1 fixture: its manifest'
@@ -468,7 +468,7 @@ extracted:
 - path: tests/test_verify.py
   transformed: true
   why: tests of the conformance checker, one planted defect per ERROR rule
-  sha256: 4546c81a9fb9fa32409661ccbb7e1300eaf6895f18a18b403c71e692f68321e0
+  sha256: e09a00cb901653a4e6f5d7cf1be1164b9e97cf3cea17547968f5bdca0c390f37
 modified_copies:
 - path: tests/fixtures/producer_packages/brake_disc_link1_thermal_fno/manifest.yaml
   copy_of: brake_disc_link1_thermal_fno

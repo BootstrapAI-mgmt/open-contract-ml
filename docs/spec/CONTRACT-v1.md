@@ -635,7 +635,7 @@ otherwise:
 | A package that declares no `licence` block is warned (section 3) | `M021` (a warning) | from `spec_version` 1.1 | not warned |
 | `provenance.signature`, optional: `{format: oms, path}` naming a sidecar in the package that is not a pinned artifact; nothing is verified (section 6) | `M017` (a warning) | a signature wherever it is declared | may declare one |
 | A MINOR binds only a package that declares it; deprecation at a MINOR, removal only at a MAJOR; which release implements which version (section 7) | -- | the Contract | unaffected |
-| The `stdio_json` frame: the request `{run_id, mode, inputs}`, an `ok` or `error` frame per row, exit 0 for every answer, a working directory of its own, and the artifact reference a field travels in (section 12) | `S001`, `S003` | every package, under `check --smoke`; `status` and `run_id` from `spec_version` 1.1 | its `ok` answers may omit `status` and `run_id` |
+| The `stdio_json` frame: the request `{run_id, mode, inputs}`, an `ok` or `error` frame per row, exit 0 for every answer, a new, empty working directory for each request, and the artifact reference a field travels in (section 12) | `S001`, `S003` | every package, under `check --smoke`; `status` and `run_id` from `spec_version` 1.1 | its `ok` answers may omit `status` and `run_id` |
 | `check --smoke` runs each request in a fresh working directory, and the examples as one batch where the manifest declares batch support (sections 8, 12) | `S001`, `S002`, `S003` | only when asked for | unaffected by the default check |
 
 These bind every package, because they hold it to what 1.0 already stated -- its schema,
@@ -721,9 +721,9 @@ it:
 | `kind` | the string `artifact` |
 | `path` | the file, relative to the working directory and inside it: not absolute, no drive, no `..` that leaves it, no symbolic link that leads out of it |
 | `media_type` | the file's format, a bare `type/subtype` token; for a declared field, the `media_type` its field block states (section 3) |
-| `sha256` | the file's digest, 64 lowercase hex characters, taken from the bytes on disk after the write |
+| `sha256` | the file's SHA-256 as 64 lowercase hex characters, computed from the finished file as it lies on disk |
 | `bytes` | the file's length, a non-negative integer |
-| `field` | what the payload holds: `name`, the name of its array in the payload; `units`, the field's units, its field block's where one is declared; `range`, `[low, high]`, two finite numbers with `low <= high` (for a `vector` field, the range of its magnitude); `n_nodes`, the payload's node count, a positive integer |
+| `field` | what the payload holds: `name`, the name of its array in the payload; `units`, the field's units, its field block's where one is declared; `range`, `[low, high]`, both bounds finite and `low` no greater than `high` (for a `vector` field, the range of its magnitude); `n_nodes`, the payload's node count, a positive integer |
 
 The file is exactly `bytes` long and its sha256 is `sha256`. Keys beyond these are
 allowed. References sit directly under `outputs`, never inside another value. A `type:
@@ -732,8 +732,8 @@ named by a `*_artifact` entry in that output's `uncertainty.per_output` block; a
 `*_field` key may be answered with one as well, and every value whose `kind` is
 `artifact` meets the same rules. In `batch` mode every row writes, and references, files
 of its own: a path stands for a single digest. What the reference carries -- the node
-count, the value range, the digest --
-is what section 3 leaves out of the manifest: it is the run's.
+count, the value range, the digest -- is what section 3 leaves out of the manifest: it is
+the run's.
 
 **What binds whom.** The frame binds every package: it is what `stdio_json` has meant to
 the consumers that dispatch it, and 1.0 left it unwritten. A checker reading a package that

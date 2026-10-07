@@ -255,9 +255,9 @@ def _whole_manifests():
     out.append(("a complete field block", with_field))
     grid_block = _reference_manifest()
     grid_block["outputs"].append({"name": "dT", "type": "field", "units": "K", "viewer": "field_contour",
-                                  "field": {"shape": [64, 64], "coordinate_ref": "regular_grid_cell_centred",
+                                  "field": {"shape": [64, 64], "coordinate_ref": "cell centres of a regular grid",
                                             "units": "K"}})
-    out.append(("a grid producer's field block", grid_block))
+    out.append(("a field block of shape, coordinates and units only", grid_block))
     broken_field = _reference_manifest()
     broken_field["outputs"].append({"name": "dT", "type": "field", "viewer": "field_contour",
                                     "field": {"kind": "tensor", "support": "edge", "media_type": "VTK PolyData",
@@ -280,8 +280,8 @@ def _package_v1_schema() -> dict:
 def test_the_field_block_is_one_definition_in_both_manifest_schemas():
     """outputs[].field is defined once: the contract-v1 schema's outputs item and package-v1's $defs.output_field agree.
 
-    package-v1's ``$defs.output_field.properties.field`` is also the exact place a
-    producer probes to learn whether the installed checker knows the block.
+    Whether package-v1's ``$defs.output_field.properties.field`` exists is also how a tool
+    can tell that the installed checker knows the block, so its place is held here too.
     """
     contract = _shipped_schema_as_written()["properties"]["outputs"]["items"]["properties"]["field"]
     package_v1 = _package_v1_schema()["$defs"]["output_field"]["properties"]["field"]

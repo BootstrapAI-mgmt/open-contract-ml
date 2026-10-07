@@ -448,11 +448,12 @@ def _point_predictor_package(spec_version: str = "1.1", calibration: bool = Fals
 FIELD_BLOCK = {"kind": "scalar", "units": "K", "support": "node", "media_type": "application/vnd.vtk.vtp+xml",
                "shape": [17, 17], "coordinate_ref": "nodes of a regular grid on the plate, row-major, axis order (y, x)"}
 
-#: The block a grid producer emits today: shape, coordinate reference and units alone.
-GRID_PRODUCER_BLOCK = {"shape": [64, 64],
-                       "coordinate_ref": "regular_grid_cell_centred; axis order (y, x), row-major; "
-                                         "y in [0, 0.1] m, x in [0, 0.1] m",
-                       "units": "K"}
+#: An example field block for a cell-centred grid field that states its shape, where its
+#: values sit and its units, and nothing else: no kind, no support, no media type.
+SHAPE_ONLY_FIELD_BLOCK = {"shape": [64, 64],
+                          "coordinate_ref": "cell centres of a regular grid; first index y, second x, row-major; "
+                                            "y and x each from 0 to 0.1 m",
+                          "units": "K"}
 
 
 def _add_field_output(block=None, **extra):
@@ -489,7 +490,7 @@ MALFORMED_SIGNATURES = [
 ]
 
 
-#: An entrypoint in the shape a grid field producer documents: a field and its band by reference.
+#: The grid-field example entrypoint: it answers a field and its band as artifact references.
 GRID_FIELD_ENTRYPOINT = Path(__file__).resolve().parent / "fixtures" / "stdio_frame" / "grid_field_predict.py"
 
 
@@ -688,10 +689,10 @@ MUTATIONS = [
     ("C005", _point_predictor_package(card_says_so=False)),
     # A type: field output states what it holds (contract 1.1). The first is the field
     # output the checker accepted before, declared with nothing but a description; the
-    # second is the block a grid producer emits today, which the schema accepts and
-    # which lacks kind, support and media_type.
+    # second is an example block for a cell-centred grid field with shape, coordinates
+    # and units only, which the schema accepts and which lacks kind, support and media_type.
     ("M019", _mutate_manifest(_add_field_output())),
-    ("M019", _mutate_manifest(_add_field_output(GRID_PRODUCER_BLOCK))),
+    ("M019", _mutate_manifest(_add_field_output(SHAPE_ONLY_FIELD_BLOCK))),
     ("M019", _mutate_manifest(lambda m: m["outputs"][0].__setitem__("field", dict(FIELD_BLOCK)))),
     ("M019", _mutate_manifest(_add_field_output(dict(FIELD_BLOCK, units="degC")))),
     ("M019", _mutate_manifest(_add_field_output("a VTK file"))),
@@ -990,10 +991,10 @@ def test_a_bare_field_output_keeps_conforming_in_a_contract_1_0_package(tmp_path
     assert vs.check_package(write_package(tmp_path / "pkg", manifest=man, report=rep, card=card)) == []
 
 
-def test_the_grid_producers_block_passes_the_schema_and_lacks_three_keys(tmp_path: Path):
-    """What a grid producer emits today is structurally valid and, under 1.1, incomplete -- and says which keys."""
+def test_a_shape_only_field_block_passes_the_schema_and_lacks_three_keys(tmp_path: Path):
+    """A block of shape, coordinates and units is valid against the schema, and M019 names the three keys 1.1 adds."""
     root = write_package(tmp_path / "pkg")
-    _mutate_manifest(_add_field_output(GRID_PRODUCER_BLOCK))(root)
+    _mutate_manifest(_add_field_output(SHAPE_ONLY_FIELD_BLOCK))(root)
     findings = vs.check_package(root)
     assert [(f.rule, f.where) for f in findings] == [("M019", "manifest.json outputs[1]")]
     assert "lacks kind, support, media_type" in findings[0].message
@@ -1281,7 +1282,7 @@ def test_smoke_passes_the_reference_package():
 
 
 def test_smoke_runs_from_a_relative_package_path(monkeypatch):
-    """The entrypoint is launched by absolute path, because it runs in a working directory of its own."""
+    """The entrypoint is launched by absolute path, since it starts in a fresh directory, not in the package."""
     monkeypatch.chdir(REFERENCE_PACKAGE.parents[1])
     assert vs.main(["check", "--smoke", "examples/reference-package"]) == 0
 

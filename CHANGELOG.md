@@ -95,7 +95,7 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   inputs}` on stdin, then end of file; one `ok` or `error` frame per row on
   stdout, in order; exit 0 for every answer, a refusal included, so that a
   non-zero exit, a timeout or stdout without frames is a crash and not a
-  result; a working directory of its own for every request, never the
+  result; a new, empty working directory for every request, never the
   package directory; and the artifact reference a field travels in,
   `{kind: artifact, path, media_type, sha256, bytes, field: {name, units,
   range, n_nodes}}`, whose file is inside the working directory and exactly

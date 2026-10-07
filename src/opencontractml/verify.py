@@ -1817,7 +1817,7 @@ def reference_problems(value: Any, run_dir: Path, media_type: Optional[str] = No
     media = value.get("media_type")
     if "media_type" in value:
         if not isinstance(media, str) or not re.match(MEDIA_TYPE_PATTERN, media):
-            problems.append("media_type %r is not a bare type/subtype token" % (media,))
+            problems.append("media_type %r does not have the form type/subtype, without parameters" % (media,))
         elif media_type and media != media_type:
             problems.append("media_type %r is not the declared %r" % (media, media_type))
     digest = value.get("sha256")
@@ -1846,7 +1846,7 @@ def reference_problems(value: Any, run_dir: Path, media_type: Optional[str] = No
             if "range" in descriptor and not (
                     isinstance(span, list) and len(span) == 2 and all(_is_number(x) for x in span)
                     and all(math.isfinite(x) for x in span) and span[0] <= span[1]):
-                problems.append("field.range %r is not [low, high], two finite numbers with low <= high" % (span,))
+                problems.append("field.range %r is not [low, high] with both bounds finite and low not above high" % (span,))
             count = descriptor.get("n_nodes")
             if "n_nodes" in descriptor and not (isinstance(count, int) and not isinstance(count, bool) and count > 0):
                 problems.append("field.n_nodes %r is not a positive integer" % (count,))
@@ -1947,7 +1947,7 @@ def _tail(text: str, limit: int = 200) -> str:
 
 
 def _smoke_command(pkg: Path, executable: str) -> Tuple[Optional[List[str]], Optional[str]]:
-    # absolute, because the process runs in a working directory of its own
+    # resolved to an absolute path: the process starts in a fresh directory, not in the package
     target = (pkg / executable).resolve()
     if target.suffix.lower() == ".py":
         return [sys.executable, str(target)], None

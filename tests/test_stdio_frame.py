@@ -1,13 +1,13 @@
-"""The stdio_json frame (the specification's section 12), held over two real entrypoints.
+"""The stdio_json frame (section 12 of docs/spec/CONTRACT-v1.md), held over two real entrypoints.
 
 The reference package's entrypoint answers scalar outputs in band; the fixture in
-``tests/fixtures/stdio_frame/`` answers a field and its band by reference, in the
-shape a grid field producer documents for the packages it emits. Each is run the
-way a consumer runs it -- one request on stdin, a working directory of its own --
-in ``single`` and ``batch`` mode, for answers and for refusals, and every frame it
-writes must hold under ``opencontractml.verify.frame_problems``. Defects planted in
-real frames -- a declared output removed, a digest that is not the file's, a path
-out of the working directory -- must not.
+``tests/fixtures/stdio_frame/`` answers a nodal field on a small regular grid, and
+its band, as artifact references. Each is run as section 12 says a caller runs it --
+one request on stdin, in a fresh, empty directory -- in ``single`` and ``batch``
+mode, for answers and for refusals, and every frame it writes must hold under
+``opencontractml.verify.frame_problems``. Defects planted in real frames -- a
+declared output removed, a digest that is not the file's, a path out of the
+working directory -- must not.
 """
 
 from __future__ import annotations
@@ -130,7 +130,7 @@ def test_the_grid_field_entrypoint_answers_a_batch_with_its_own_files_per_row(tm
     frames = frames_of(dispatch(GRID_FIELD, vs.stdio_request("g-2", GRID_ROWS), run))
     assert len(frames) == len(GRID_ROWS)
     paths = [frame["outputs"]["dT"]["path"] for frame in frames]
-    assert len(set(paths)) == len(GRID_ROWS), "one path cannot carry two digests"
+    assert len(set(paths)) == len(GRID_ROWS), "each batch row must reference files of its own, not another row's"
     for frame in frames:
         assert vs.frame_problems(frame, GRID_FIELD_MANIFEST, run, "g-2") == []
 
