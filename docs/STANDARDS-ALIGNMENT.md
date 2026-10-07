@@ -239,6 +239,9 @@ standard does arrive.
 - **Whether determinism is bitwise or seeded-tolerance, and at what tolerance** —
   `A5`, `V011`. This one matters more than it looks: two validation ladders
   used the same word for tolerances four orders of magnitude apart.
+- **Under which licences the model, its weights and its training data are
+  offered** — from the 1.1 amendment proposed in the unreleased line, the
+  `licence` block (`M020`; `M021` warns when it is absent).
 
 ### Not answerable, and known to be
 
@@ -250,11 +253,18 @@ standard does arrive.
   the sample covers the intended domain.
 - **Who packaged it.** The Contract proves the bytes have not changed since
   packaging; it does not prove authorship. See
-  [PROVENANCE-SIGNING.md](spec/PROVENANCE-SIGNING.md).
+  [PROVENANCE-SIGNING.md](spec/PROVENANCE-SIGNING.md). The proposed 1.1
+  amendment defines a field for a detached signature and checks its
+  declaration (`M017`), but nothing verifies a signature.
 - **Field I/O signatures.** `modality: field_in_field_out` is in the enum but
   the `outputs` block was designed for scalars; a field output's shape, mesh
   reference and units need a v1.1 addition. This is the largest structural hole
-  in v1.0.
+  in v1.0. The 1.1 amendment proposed in the unreleased line addresses it: a
+  field output declares its kind, units, support and payload format, with its
+  shape and coordinate convention where the layout is fixed (`M019`), and each
+  run answers with a reference to the payload it wrote, which carries the
+  payload's digest, node count and value range (`S003`, under `check --smoke`).
+  A tensor-valued field has no kind yet.
 - **Cross-model uncertainty propagation** — §4.
 
 ---
@@ -320,7 +330,11 @@ contract is outside OMS's stated scope, by OMS's own design.
 *who wrote the manifest*, and an attacker who can rewrite the artifact can
 rewrite the digest beside it in the same commit. `CONTRACT-v1.md` §10.4 states
 this as a known limitation. The design for closing it without adopting a
-dependency is [PROVENANCE-SIGNING.md](spec/PROVENANCE-SIGNING.md).
+dependency is [PROVENANCE-SIGNING.md](spec/PROVENANCE-SIGNING.md). The 1.1
+amendment proposed in the unreleased line takes its first step:
+`provenance.signature: {format: oms, path}` records a detached signature in the
+package, and the checker warns about a malformed declaration (`M017`). It
+verifies no signature, so enforcement stays a v2 concern.
 
 ### 6.3 Model Openness Framework (MOF)
 
@@ -338,12 +352,17 @@ tier and ship a validation report whose `PASS` rows carry no numbers.
 **What the Contract adds:** a mechanical decision. MOF classifies; it does not
 reject. The Contract exits 1 and names the rule.
 
-**What the Contract lacks:** any notion of openness or licensing. The manifest
-has no licence field for the model, the weights or the training corpus — a real
-omission for a standard published under Apache-2.0, and a
-candidate for v1.1. MOF's component checklist is also broader than the
-Contract's `provenance` block: the Contract records a dataset digest, not
-whether the dataset is released or releasable.
+**What the Contract lacks:** any notion of openness. Until the 1.1 amendment
+proposed in the unreleased line, the manifest had no licence field for the
+model, the weights or the training corpus, a real omission for a standard
+published under Apache-2.0. The amendment adds a `licence` block that names
+each one's licence as an SPDX expression with its text or URL, or as
+`NOASSERTION` with a note; a malformed block is an error (`M020`) and an absent
+one a warning (`M021`). The checker reads an expression's grammar and carries no
+licence list, and it records what licence is declared, not how open a model is.
+MOF's component checklist is also broader than the Contract's `provenance`
+block: the Contract records a dataset digest, not whether the dataset is
+released or releasable.
 
 ### 6.4 NVIDIA PhysicsNeMo-CFD
 
@@ -368,7 +387,8 @@ measurement with no threshold cannot be either, which is the whole content of
 errors onto `A1`, and it has nothing at `A3`, `B4` or anywhere in Tier C.
 
 **What the Contract lacks:** everything that makes the comparison real. The
-Contract ships one synthetic reference package. PhysicsNeMo-CFD runs against
+Contract ships two synthetic reference packages, one with scalar outputs and one
+with a field output. PhysicsNeMo-CFD runs against
 DrivAerML with a production model and an actual GPU stack. A gate that has never
 been run against a hard problem has not been shown to be a useful gate, only a
 consistent one. Building an adapter that emits a Contract package from a
@@ -388,16 +408,16 @@ PhysicsNeMo-CFD evaluation is the obvious way to find out.
 | Per-output uncertainty contract | yes | defines | yes | yes | partly | no | no | **no** |
 | Conservation on the prediction | yes | — | — | — | no | no | no | **no** |
 | Byte-level provenance that re-verifies | yes | — | — | — | no | **yes** | partly | no |
-| Signature / authorship | **no** | — | — | — | no | **yes** | no | no |
+| Signature / authorship | **no**; a declared field from 1.1, proposed, not verified | — | — | — | no | **yes** | no | no |
 | Requirements provenance | **no** | — | — | — | **yes** | no | no | no |
-| Openness / licensing | **no** | — | — | — | no | no | **yes** | no |
+| Openness / licensing | licences declared from 1.1, proposed; no openness tiers | — | — | — | no | no | **yes** | no |
 | Validated at production scale | **no** | — | — | — | — | — | — | **yes** |
 
 Read the bold cells as the working list. The Contract's distinctive
 contributions are the enforced measurement-plus-threshold rule, the conservation
 definition, and provenance digests that re-verify. Its distinctive gaps are the
-missing experimental leg, the missing signature, and the fact that it has never
-been run in anger.
+missing experimental leg, a signature nothing verifies, and the fact that it has
+never been run in anger.
 
 ---
 

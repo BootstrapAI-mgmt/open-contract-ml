@@ -54,7 +54,9 @@ A worked, conformant package: [examples/brake_disc_tmf_v1/](../examples/brake_di
 (it ships no `.exe` — see §3 on why that is still gate-valid). A package that
 also carries the Contract's `provenance` and `validation` blocks is a contract
 package; [examples/reference-package/](../examples/reference-package/) is the
-worked one, graded by `open-contract-ml check`.
+worked one, graded by `open-contract-ml check`, and
+[examples/reference-field-package/](../examples/reference-field-package/) is a
+worked one whose output is a field.
 
 ---
 
@@ -63,11 +65,19 @@ worked one, graded by `open-contract-ml check`.
 From a trained model to a docked one:
 
 1. **Train / export** the model and wrap it behind the `stdio_json` wire format:
-   read one JSON object on stdin, write `{status, outputs|error}` on stdout,
-   progress JSON on stderr.
+   read one request, `{run_id, mode, inputs}`, from stdin to end of file; write
+   one frame per row on stdout — `{run_id, status: "ok", outputs}`, or
+   `{run_id, status: "error", error: {code, message, field}}` for a request the
+   model declines — and exit 0 after any answer; progress and diagnostics go to
+   stderr. A field is written as a file into the working directory and answered
+   with an artifact reference that carries the file's digest. Section 12 of
+   [the Contract](spec/CONTRACT-v1.md) is the normative text, part of the 1.1
+   amendment proposed in the unreleased line.
 2. **Author `manifest.yaml`** — identity, inputs, outputs, the `uncertainty`
    block (form + `per_output` for every output + calibration), `invocation`,
-   `lineage`, and discoverability metadata.
+   `lineage`, and discoverability metadata; for a contract package at 1.1, a
+   `field` block on each `type: field` output and a `licence` block naming the
+   licences of the model, its weights and its training data.
 3. **Author `model_card.md`** from the template — the eleven sections, with the
    `model_id`/`version` front-matter matching the manifest.
 4. **Build the executable** and place it in the package folder; point
@@ -112,8 +122,11 @@ executable is verified when the model is loaded for dispatch.
 For a contract package, run `open-contract-ml check <package>` as well: it adds
 the provenance hashes, the validation report and the rest of the Contract's
 rules. `open-contract-ml check --smoke <package>` also runs the entrypoint on
-the manifest's `examples[]` and checks each answer, which is the nearest the
-checker comes to the dispatcher's own load-time check.
+the manifest's `examples[]`, each in a fresh working directory and, where the
+manifest declares batch support, all of them as one batch, and checks every
+answer against the frame and every artifact reference against the file it
+names. That is the nearest the checker comes to the dispatcher's own load-time
+check.
 
 ---
 
@@ -135,3 +148,4 @@ checker comes to the dispatcher's own load-time check.
 - [the package-v1 manifest schema](../src/opencontractml/schemas/package-v1/manifest.schema.json) — the manifest format
 - [the model-card template](../src/opencontractml/templates/model_card.template.md) — the card template
 - [docs/spec/CONTRACT-v1.md](spec/CONTRACT-v1.md) — the Contract, which adds provenance and validation to the package format
+- [examples/reference-field-package/](../examples/reference-field-package/) — a worked contract package whose output is a field

@@ -30,6 +30,23 @@ page with the validation error, and does
 NOT appear in the catalog. This is deliberate: better to fail loud
 at startup than serve a model whose UQ block is missing.
 
+## Field outputs and what a run answers
+
+The Contract's 1.1 amendment, proposed in this repository's unreleased line,
+has a `type: field` output carry a `field` block — `kind`, `units`, `support`
+and `media_type`, with `shape` and `coordinate_ref` where the node layout is
+fixed — and the package-v1 schema defines the block exactly as the Contract's
+manifest schema does. The field's band is named by `lower_artifact` and
+`upper_artifact` in its `uncertainty.per_output` block. A run answers in the
+`stdio_json` frame of [the Contract's section 12](spec/CONTRACT-v1.md): the
+entrypoint writes the field into the working directory made for the run and
+answers with a reference giving the file's path, media type, sha256 and size,
+and the field's name, units, value range and node count. The file must be
+exactly that size with that digest, so a dispatcher can verify it before reading
+it; `opencontractml.verify.reference_problems` is that check, and
+`open-contract-ml check --smoke` applies it to every reference an entrypoint
+returns.
+
 ## Adding a model
 
 Drop a folder into the directory matching the structure above. The
@@ -57,3 +74,10 @@ A non-runnable illustrative example lives at
 shows what a complete `manifest.yaml` + `model_card.md` pair looks
 like. Once a real `.exe` is built, copying that folder into a
 registry directory would make it discoverable.
+
+Two runnable contract packages are worked examples as well:
+[../examples/reference-package/](../examples/reference-package/), whose
+outputs are scalars, and
+[../examples/reference-field-package/](../examples/reference-field-package/),
+whose output is a field answered by artifact reference. Both pass
+`open-contract-ml check --smoke`.

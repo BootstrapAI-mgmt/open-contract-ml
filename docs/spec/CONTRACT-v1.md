@@ -571,6 +571,14 @@ one at a time and as a batch), and its `C2_serve_parity` check really shells out
 entrypoint and compares against the in-process fit. It declares 1.1 and states its
 comparators and its licences.
 
+The worked field instance is `examples/reference-field-package/`: a `type: field`
+output with its field block, whose entrypoint writes VTK XML PolyData files -- the
+field and the two edges of its band -- into the working directory and answers with
+artifact references, with a peak value in the frame. Its report measures fourteen checks and declares one not
+applicable, with the reason. `examples/build_reference_field_package.py` writes the
+package from a seeded synthetic corpus and, with `--check`, rebuilds every generated
+file and compares it byte for byte.
+
 ## 9. What this spec is careful not to do
 
 - **It sets no physics thresholds.** Every bar stays with the producer that sets it.

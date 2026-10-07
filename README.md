@@ -33,6 +33,12 @@ A directory containing:
 `examples/reference-package/` is a worked conformant instance. Every hash in its
 manifest is the real digest of the file beside it and every number in its
 validation report was measured, so it is a fixture you can check the checker against.
+`examples/reference-field-package/` is the same for a model whose output is a
+field: its entrypoint writes VTK XML PolyData files, one for the field and one for
+each edge of its band, and answers with references to them, each carrying the
+file's digest and size, and
+`examples/build_reference_field_package.py --check` rebuilds every number and
+digest in it byte for byte.
 
 ## The property that makes this worth anything
 
@@ -68,9 +74,24 @@ reports `PASS` or `FAIL` names its comparison — `{metric: r2, op: ">=", bar:
 r2_min}` — and the checker recomputes the status from it, so a `PASS` whose `r2`
 misses its `r2_min` is rejected (`V013`).
 
+The unreleased line amends 1.1 again, for the maintainer's ratification. A
+`type: field` output states what it holds — its kind, units, support and payload
+format (`M019`) — and a run answers it with a reference to the file it wrote. A
+`licence` block names the licences of the model, its weights and its training
+data (`M020`; `M021` warns when there is none). A conservation check that applies
+but was not run may say so, and still blocks. A point predictor may declare
+`uncertainty.form: none`. A package may record a detached signature, whose
+declaration is checked (`M017`) and which nothing verifies. Section 11 of
+`docs/spec/CONTRACT-v1.md` lists every change since 1.0 and what each means for a
+package that conformed to 1.0.
+
 Two switches go further. `open-contract-ml check --smoke` runs the package's
-entrypoint on the examples its manifest declares and checks every answer carries
-the declared outputs and uncertainty fields; it executes the package's code, so
+entrypoint the way a consumer dispatches it, in the `stdio_json` frame that
+section 12 of the Contract defines: each example the manifest declares as a
+request of its own, in a fresh working directory, and all of them as one batch
+where the manifest declares batch support. Every answer must carry the declared
+outputs and uncertainty keys (`S001`), and every artifact reference in it must
+match the file the entrypoint wrote (`S003`). It executes the package's code, so
 it is off by default and the plain check runs nothing. `--json <file>` writes a
 conformance record: the checker's version, the digests of the documents it read,
 when it ran, and for every rule whether it was evaluated, fired, or not evaluated
@@ -100,7 +121,7 @@ because a consumer *validating* a package does not need a training stack to do i
 
 ```
 docs/spec/CONTRACT-v1.md            the normative text
-docs/spec/PROVENANCE-SIGNING.md     design for an optional signature at 1.1 (not implemented)
+docs/spec/PROVENANCE-SIGNING.md     design for an optional signature; 1.1 defines the field, nothing verifies one
 docs/EXTRACTION.md                  where the files came from, and the known gaps
 docs/STANDARDS-ALIGNMENT.md         where this sits against ASME VVUQ, and where it does not reach
 docs/REFERENCES.md                  the bibliography every [Key] citation resolves to
@@ -111,6 +132,8 @@ src/opencontractml/
   safe_artifact.py, safeload.py     safe deserialization
   schemas/contract-v1/              manifest schema, conformance-record schema, machine-readable vocabulary
 examples/reference-package/         a worked conformant instance
+examples/reference-field-package/   a worked conformant instance whose output is a field
+examples/build_reference_field_package.py  writes that package from a seeded corpus; --check rebuilds it
 examples/worked-cells/              nine worked data contracts with synthetic datasets
 examples/falsifier-benchmark/       the adversarial benchmark
 tests/fixtures/producer_packages/   copies of real producer packages, checked in CI

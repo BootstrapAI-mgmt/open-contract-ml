@@ -25,6 +25,8 @@ scikit-learn). `opencontractml.safeload` also needs the `[tensors]` extra
 python -m pytest -q -rs
 python -m opencontractml.verify check examples/reference-package
 python -m opencontractml.verify check tests/fixtures/producer_packages/*/
+python -m opencontractml.verify check --smoke examples/reference-package examples/reference-field-package
+python examples/build_reference_field_package.py --check
 python -m build
 python -m pip install twine && python -m twine check dist/*
 ```
@@ -60,10 +62,16 @@ wheel, and runs the installed checker from outside the checkout. Python 3.12,
   means adding, re-pinning or removing its record in `PROVENANCE.yaml`: the
   sha256 of its committed bytes and why it is here. `tests/test_provenance.py`
   fails otherwise.
-- **Pinned artifacts stay byte-exact.** The files of `examples/reference-package/`
-  and `tests/fixtures/producer_packages/` are pinned by sha256 and byte count
-  in their manifests (rule `M013`), and `.gitattributes` keeps them LF. Re-pin
-  an artifact you edit; never let an editor change its line endings.
+- **Pinned artifacts stay byte-exact.** The files of `examples/reference-package/`,
+  `examples/reference-field-package/` and `tests/fixtures/producer_packages/`
+  are pinned by sha256 and byte count in their manifests (rule `M013`), and
+  `.gitattributes` keeps them LF. Re-pin an artifact you edit; never let an
+  editor change its line endings. The field package's manifest, model card,
+  validation report and weights are written by
+  `examples/build_reference_field_package.py`: change the builder or the
+  entrypoint, run the builder, and commit what it writes, rather than editing
+  those files by hand. Its `--check` mode fails while they differ from a
+  rebuild.
 - **Nothing dangles.** A relative markdown link must point at a tracked file,
   and every `[AuthorYear]` citation needs a row in `docs/REFERENCES.md`
   (`tests/test_link_integrity.py`). Third-party text is cited, never copied.

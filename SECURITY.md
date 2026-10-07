@@ -45,5 +45,8 @@ lies outside the package directory.
 entrypoint on the examples its manifest declares, which is running the
 package's code with the checker's own permissions. It does so only after the
 entrypoint's bytes match the digest the manifest pins, which proves the file is
-the one the package declares, not that it is safe. Use `--smoke` only on a
-package you would run.
+the one the package declares, not that it is safe. Each run starts in a
+fresh, empty working directory that the checker creates and deletes afterwards;
+the entrypoint may write files there, as a field package writes its payloads,
+and nothing stops it writing elsewhere. Use `--smoke` only on a package you
+would run.

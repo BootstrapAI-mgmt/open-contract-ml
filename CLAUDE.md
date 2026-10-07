@@ -11,7 +11,9 @@ The Contract (`docs/spec/CONTRACT-v1.md`) and its checker
 (`src/opencontractml/verify.py`, standard library only); the package-v1
 validators (`manifest.py`, `model_card.py`); a scalar gate engine (`gate.py`,
 `corpus_gate.py`, `train_b1.py`); two safe loaders (`safe_artifact.py`,
-`safeload.py`); a conformant reference package (`examples/reference-package/`);
+`safeload.py`); a conformant reference package (`examples/reference-package/`)
+and a conformant field package with the builder that writes it
+(`examples/reference-field-package/`, `examples/build_reference_field_package.py`);
 and copies of producer packages the checker must keep accepting
 (`tests/fixtures/producer_packages/`).
 
@@ -22,6 +24,8 @@ python -m pip install -e ".[dev]"     # Python 3.11+: pytest, build and the [gat
 python -m pytest -q -rs               # the suite; -rs prints each skip and its reason
 python -m opencontractml.verify check examples/reference-package tests/fixtures/producer_packages/*/
 python -m opencontractml.verify check --smoke examples/reference-package   # also runs the entrypoint
+python -m opencontractml.verify check --smoke examples/reference-field-package
+python examples/build_reference_field_package.py --check   # the field package rebuilds byte for byte
 python -m opencontractml.verify rules
 python -m opencontractml.manifest examples/brake_disc_tmf_v1
 python -m build
@@ -51,11 +55,14 @@ yours to explain.
 - **Producer findings.** A producer fixture the checker rejects is recorded in
   `tests/fixtures/producer_packages/known-findings.json`, not edited; each copy
   must produce exactly the findings recorded for it.
-- **Pinned artifacts.** The files of `examples/reference-package/` and
-  `tests/fixtures/producer_packages/` are pinned by sha256 and byte count in
-  their manifests (rule `M013`), and `.gitattributes` keeps them LF. An edit
-  there is re-pinned in the manifest, in `PROVENANCE.yaml` and, for a producer
-  fixture, in its README.
+- **Pinned artifacts.** The files of `examples/reference-package/`,
+  `examples/reference-field-package/` and `tests/fixtures/producer_packages/`
+  are pinned by sha256 and byte count in their manifests (rule `M013`), and
+  `.gitattributes` keeps them LF. An edit there is re-pinned in the manifest,
+  in `PROVENANCE.yaml` and, for a producer fixture, in its README. The field
+  package's four generated files come from its builder: edit the builder or
+  the entrypoint and run it, never the generated files
+  (`tests/test_reference_field_package.py` runs its `--check`).
 - **References.** No relative markdown link may leave the tracked tree, every
   `[AuthorYear]` citation needs a row in `docs/REFERENCES.md`, and third-party
   text is cited rather than copied (`tests/test_link_integrity.py`,
