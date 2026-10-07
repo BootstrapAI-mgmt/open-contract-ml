@@ -9,18 +9,26 @@ implements are separate numbers: `opencontractml.__version__` is the first,
 
 ### Added
 
-- Contract 1.1, an amendment proposed for the maintainer's ratification
-  (`docs/spec/CONTRACT-v1.md`, sections 5.3 and 11): a check that reports
-  `PASS` or `FAIL` states its comparison as `comparators`, entries of the form
-  `{metric, op, bar}` naming a number in its `metrics`, an operator and a
-  number in its `thresholds`, and its status must follow from them (new rules
-  `V012` and `V013`). Every `PASS` and `FAIL` check of a package declaring
-  `spec_version` 1.1 needs at least one; a 1.0 package's comparators are
-  checked where it declares them, and a 1.0 package without any keeps
-  conforming. From 1.1 `bitwise` reproducibility means a tolerance of 0
-  (`V011`), and `B4`'s comparators compare `relative_imbalance` with `<=` or
-  `<` (`V009`). `opencontractml.verify.CONTRACT_VERSION` is now `"1.1"`; the
-  package version is unchanged.
+- Contract 1.1, an amendment the maintainer accepted, merged into `main` on
+  2026-10-01 (`docs/spec/CONTRACT-v1.md`, sections 5.3 and 11): a check that
+  reports `PASS` or `FAIL` states its comparison as `comparators`, entries
+  of the form `{metric, op, bar}` naming a number in its `metrics`, an
+  operator and a number in its `thresholds`, and its status must follow from
+  them (new rules `V012` and `V013`). Every `PASS` and `FAIL` check of a
+  package declaring `spec_version` 1.1 needs at least one; a 1.0 package's
+  comparators are checked where it declares them, and a 1.0 package without
+  any keeps conforming. From 1.1 `bitwise` reproducibility means a tolerance
+  of 0 (`V011`), and `B4`'s comparators compare `relative_imbalance` with
+  `<=` or `<` (`V009`). `opencontractml.verify.CONTRACT_VERSION` is now
+  `"1.1"`; the package version is unchanged.
+- Contract 1.1 is amended a second time before any release carries it. The
+  amendments below that are named as proposed for the maintainer's
+  ratification add to what the first amendment made 1.1, so a package
+  written to that first 1.1 is now warned for having no licence block
+  (`M021`), needs a field block on each `type: field` output (`M019`), and
+  under `check --smoke` must answer with `status` and the request's `run_id`
+  (`S001`). The released 0.1.1 implements contract 1.0, which none of this
+  binds.
 - `open-contract-ml check --smoke` also runs a package's entrypoint the way
   a consumer dispatches it under `stdio_json`: once per `examples[]` entry,
   within `invocation.timeout_s`, in the package directory. Each answer must
@@ -105,6 +113,16 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   `opencontractml.verify.stdio_request()`, `read_frames()`,
   `frame_problems()` and `reference_problems()` are the same checks, callable
   on their own.
+- `examples/reference-field-package/`, another worked package, this one with
+  a field output: a `type: field` output with its field block, answered by
+  an artifact reference to a VTK XML PolyData file the entrypoint writes,
+  its band by two more references, and a peak value in the frame, with a
+  licence block and a validation report of fourteen measured checks. Its
+  entrypoint needs only the standard library.
+  `examples/build_reference_field_package.py` writes the package from a
+  seeded synthetic corpus, and its `--check` mode rebuilds every generated
+  file and compares it byte for byte. The CI `package` job checks it, with
+  and without `--smoke`, from outside the checkout.
 
 ### Changed
 

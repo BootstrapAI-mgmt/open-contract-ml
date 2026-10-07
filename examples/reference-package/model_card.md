@@ -154,6 +154,13 @@ model_id / version / dataset_sha256 triple (rules C002, V002, V003).
   report declare `spec_version` 1.1, and the report states each measured
   check's comparison as `comparators`, the metric and the threshold it was
   compared with, in the direction each threshold's name gives.
+- **1.0.0, re-issued for the amended Contract 1.1** (2026-10-01) -- the fit, the
+  weights and every accuracy, calibration and physics number are unchanged. The
+  manifest declares a licence block. The entrypoint answers in the `stdio_json`
+  frame of section 12 -- `{run_id, status: ok, outputs}`, a frame per row in batch
+  mode, an error frame with exit 0 for a request it will not take -- and is pinned
+  again, and C2, C3 and C4 were measured again against it, C4's runtime as the
+  median of five single calls.
 
 ## Disclosure
 
