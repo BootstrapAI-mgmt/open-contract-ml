@@ -43,7 +43,10 @@ PyYAML when it is importable and is a hard ERROR when it is not (rule E002);
 ``manifest.json`` is an accepted dependency-free equivalent of ``manifest.yaml``.
 The manifest is also held to the contract-v1 JSON Schema this package ships,
 applied by a standard-library walker (rule M018); a schema the walker cannot
-apply in full is likewise an ERROR, never a skip (rule E003).
+apply in full is likewise an ERROR, never a skip (rule E003).  A manifest that
+names the taxonomy cell its model serves is held to the pinned copy of the cell
+vocabulary this package ships, ids and counts only (rules M022 to M024); a copy
+the checker cannot read is an ERROR too (rule E004).
 """
 
 from __future__ import annotations
@@ -218,6 +221,8 @@ RULES: Tuple[Rule, ...] = (
     Rule("E001", "ERROR", "package directory exists and is readable"),
     Rule("E002", "ERROR", "a YAML parser is available for a .yaml artifact"),
     Rule("E003", "ERROR", "the contract-v1 manifest schema loads and the checker applies every keyword it uses"),
+    Rule("E004", "ERROR", "the pinned cell vocabulary loads and holds together, wherever a manifest declares a "
+                          "taxonomy key"),
     Rule("M001", "ERROR", "manifest present and parses to a mapping"),
     Rule("M002", "ERROR", "spec_version present, MAJOR.MINOR, major supported"),
     Rule("M003", "ERROR", "identity block complete (id, name, version, owner, domain, modality, purpose)"),
@@ -246,6 +251,13 @@ RULES: Tuple[Rule, ...] = (
     Rule("M020", "ERROR", "a declared licence block names the model, the weights and the training data, each by an "
                           "SPDX license expression with its text or URL, or by NOASSERTION with a note"),
     Rule("M021", "WARN", "a package declaring contract 1.1 or later declares a licence block"),
+    Rule("M022", "ERROR", "a declared taxonomy_cell is an id the pinned cell vocabulary lists as live (well formed, "
+                          "listed, not retired)"),
+    Rule("M023", "ERROR", "a declared taxonomy_registry comes with a taxonomy_cell and pins the cell vocabulary the "
+                          "checker carries: registry, version, sha256, document_sha256, bytes and cells, each well "
+                          "formed"),
+    Rule("M024", "WARN", "a declared taxonomy_registry pins the content of the cell vocabulary the checker carries "
+                         "(sha256, document_sha256, bytes, cells); another version is warned, never failed"),
     Rule("C001", "ERROR", "model card parses with a flat scalar front-matter"),
     Rule("C002", "ERROR", "card front-matter identity matches the manifest"),
     Rule("C003", "ERROR", "the eleven required card sections are present, first, in order"),
@@ -827,6 +839,7 @@ def check_manifest(man: Dict[str, Any], pkg: Path, where: str, findings: List[Fi
 
     check_field_blocks(outputs, _major_minor(spec_version), where, findings)
     check_licence(man, pkg, _major_minor(spec_version), where, findings)
+    check_taxonomy(man, where, findings)
 
     in_names = [f.get("name") for f in inputs if isinstance(f, dict)]
     out_names = [f.get("name") for f in outputs if isinstance(f, dict)]
@@ -1147,12 +1160,22 @@ def check_point_predictor(unc: Dict[str, Any], version: Optional[Tuple[int, int]
                                                "uncertainty declares a calibration block"))
 
 
-# The cell vocabulary.  The checker carries a pinned copy of the cell vocabulary
-# of the maintainer's analysis taxonomy -- ids and counts only -- in
+# The taxonomy cell (contract 1.2, proposed).  ``taxonomy_cell`` names, by its id,
+# the cell of the maintainer's analysis taxonomy that the model serves; a model
+# that serves no declared cell omits the key.  ``taxonomy_registry`` pins the
+# version of the cell vocabulary the id was read from: its name and version say
+# which vocabulary, its content digests and counts which version of it.  The
+# checker carries a pinned copy of the vocabulary -- ids and counts only -- in
 # ``schemas/contract-v1/taxonomy-cells.json``, read with the standard library as
-# the manifest schema is.  The copy names the vocabulary and its version, pins
-# that version's content by its digests and counts, states the grammar of a cell
-# id and lists the live and the retired ids.
+# the manifest schema is, and only for a manifest that declares one of the two
+# keys.  A declared cell the copy does not list as live is an error (M022); a pin
+# without a cell, a malformed pin and a pin naming another vocabulary are errors
+# (M023); a pin to another version of the same vocabulary is a warning (M024).
+# The vocabulary's ids are stable -- an id is never reused or renumbered, and a
+# cell whose identity changes is retired and issued a new id -- so an id the copy
+# lists means what it meant at the version pinned, and the cell is checked against
+# the copy whatever the pin says.  A copy the checker cannot read is an error
+# (E004), never a skip.
 TAXONOMY_CELL_KEY = "taxonomy_cell"
 TAXONOMY_REGISTRY_KEY = "taxonomy_registry"
 #: Where the pinned copy of the cell vocabulary lives inside this package.
@@ -1239,6 +1262,79 @@ def load_taxonomy_cells() -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
     vocabulary.update(id_pattern=doc["id_pattern"], grammar=re.compile(doc["id_pattern"]),
                       ids=frozenset(doc["ids"]), retired=frozenset(doc["retired"]))
     return vocabulary, None
+
+
+def check_taxonomy(man: Dict[str, Any], where: str, findings: List[Finding]) -> None:
+    """M022 for a declared ``taxonomy_cell``, M023 and M024 for a declared ``taxonomy_registry``; E004 when the
+    pinned cell vocabulary they are checked against cannot be read."""
+    has_cell, has_pin = TAXONOMY_CELL_KEY in man, TAXONOMY_REGISTRY_KEY in man
+    if not has_cell and not has_pin:
+        _not_run("the package declares no taxonomy_cell or taxonomy_registry", "E004", "M022", "M023", "M024")
+        return
+    _ran("E004")
+    vocab, problem = load_taxonomy_cells()
+    if vocab is None:
+        findings.append(Finding("E004", where, "%s -- the manifest's taxonomy_cell and taxonomy_registry are "
+                                               "unchecked, which is an error, never a skip" % problem))
+        _not_run("the pinned cell vocabulary could not be read (E004)", "M022", "M023", "M024")
+        return
+    vocabulary = "the pinned cell vocabulary (version %s, %d cells)" % (vocab["version"], vocab["cells"])
+    cell = man.get(TAXONOMY_CELL_KEY)
+    if has_cell:
+        _ran("M022")
+        at = "%s %s" % (where, TAXONOMY_CELL_KEY)
+        if not isinstance(cell, str):
+            findings.append(Finding("M022", at, "%r is not a cell id of %s: a cell id is a string in the grammar %s, "
+                                                "and a model that serves no declared cell omits the key"
+                                    % (cell, vocabulary, vocab["id_pattern"])))
+        elif vocab["grammar"].fullmatch(cell) is None:
+            findings.append(Finding("M022", at, "%r is not a cell id of %s: it does not match the grammar %s"
+                                    % (cell, vocabulary, vocab["id_pattern"])))
+        elif cell in vocab["retired"]:
+            findings.append(Finding("M022", at, "%r is retired in %s: the cell it named has left the vocabulary or "
+                                                "was issued a new id" % (cell, vocabulary)))
+        elif cell not in vocab["ids"]:
+            findings.append(Finding("M022", at, "%r is not a cell of %s" % (cell, vocabulary)))
+    else:
+        _not_run("the package declares no taxonomy_cell", "M022")
+    if not has_pin:
+        _not_run("the package declares no taxonomy_registry", "M023", "M024")
+        return
+    _ran("M023")
+    at = "%s %s" % (where, TAXONOMY_REGISTRY_KEY)
+    pin = man.get(TAXONOMY_REGISTRY_KEY)
+    before = len(findings)
+    if cell is None:
+        findings.append(Finding("M023", at, "the manifest pins the cell vocabulary but names no taxonomy_cell; a pin "
+                                            "travels with the cell it was read for"))
+    if not isinstance(pin, dict):
+        findings.append(Finding("M023", at, "must be a mapping {%s}, got %r" % (", ".join(TAXONOMY_PIN_REQUIRED), pin)))
+    else:
+        missing = [key for key in TAXONOMY_PIN_REQUIRED if key not in pin]
+        if missing:
+            findings.append(Finding("M023", at, "lacks %s; a pin states %s"
+                                    % (", ".join(missing), ", ".join(TAXONOMY_PIN_REQUIRED))))
+        for key in TAXONOMY_PIN_REQUIRED:
+            if key not in pin:
+                continue
+            want = taxonomy_pin_value_problem(key, pin[key])
+            if want:
+                findings.append(Finding("M023", "%s.%s" % (at, key), "must be %s, got %r" % (want, pin[key])))
+            elif key in TAXONOMY_PIN_IDENTITY and pin[key] != vocab[key]:
+                findings.append(Finding("M023", "%s.%s" % (at, key), "is %r: the pin names another cell vocabulary "
+                                                                     "than the one this checker carries, %r version %r"
+                                        % (pin[key], vocab["registry"], vocab["version"])))
+    if len(findings) > before:
+        _not_run("the taxonomy_registry pin is malformed or names another vocabulary (M023)", "M024")
+        return
+    _ran("M024")
+    differ = [key for key in TAXONOMY_PIN_CONTENT if pin[key] != vocab[key]]
+    if differ:
+        details = "; ".join("%s %r against the copy's %r" % (key, pin[key], vocab[key]) for key in differ)
+        findings.append(Finding("M024", at, "pins another version of the cell vocabulary than this checker's copy "
+                                            "-- %s differ: %s. Its ids are stable, so the cell is checked against "
+                                            "the copy and the difference is warned, never failed"
+                                % (", ".join(differ), details)))
 
 
 # Roles a hashed artifact may play. The set is deliberately confined to files

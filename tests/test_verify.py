@@ -542,6 +542,78 @@ def _rename_reference_id(new_id: str):
     return _reference_package(change)
 
 
+# --------------------------------------------------------------------------- #
+# The taxonomy cell (contract 1.2, proposed): the pinned cell vocabulary, the ids
+# it lists and does not, and the pin of it a producer records. Every id here is
+# read from, or derived from, the copy the checker ships; none is spelled out.
+# --------------------------------------------------------------------------- #
+def _vocabulary() -> dict:
+    vocabulary, problem = vs.load_taxonomy_cells()
+    assert vocabulary is not None, problem
+    return vocabulary
+
+
+def _listed() -> str:
+    """The first id the pinned vocabulary lists as live."""
+    return sorted(_vocabulary()["ids"])[0]
+
+
+def _unlisted() -> str:
+    """A well-formed id the vocabulary does not list: one row past the highest of the first id's group."""
+    group = _listed().rpartition("/")[0]
+    rows = [int(i.rpartition("/")[2]) for i in _vocabulary()["ids"] if i.rpartition("/")[0] == group]
+    cell = "%s/%d" % (group, max(rows) + 1)
+    assert _vocabulary()["grammar"].fullmatch(cell) and cell not in _vocabulary()["ids"]
+    return cell
+
+
+def _pin(**changes) -> dict:
+    """The pin a producer records for the copy's version, with where it read the vocabulary beside it."""
+    pin = {key: _vocabulary()[key] for key in vs.TAXONOMY_PIN_REQUIRED}
+    pin.update(repository="example-org/example-vocabulary", path="cells/vocabulary.json", commit="0" * 40)
+    pin.update(changes)
+    return pin
+
+
+#: Stands for a key the manifest does not declare.
+ABSENT = object()
+
+
+def _with_taxonomy(cell=ABSENT, pin=ABSENT):
+    """Declare taxonomy_cell and taxonomy_registry on the synthetic manifest."""
+    def change(m) -> None:
+        if cell is not ABSENT:
+            m["taxonomy_cell"] = cell
+        if pin is not ABSENT:
+            m["taxonomy_registry"] = pin
+    return change
+
+
+def _not_cells() -> list:
+    """Values of taxonomy_cell that are not an id the vocabulary lists as live.
+
+    No string at all; strings outside its grammar, among them a trailing newline, which
+    the schema's pattern lets through and the checker's whole-string match does not; and
+    a well-formed id the vocabulary does not list.
+    """
+    listed = _listed()
+    group = listed.rpartition("/")[0]
+    return [None, 3, [listed], {"id": listed}, "", listed.replace("/", "-"), listed.lower(), listed + LF,
+            " " + listed, group + "/0", group, _unlisted()]
+
+
+def _broken_pins() -> list:
+    """Pins M023 refuses: not a mapping, a key missing, a key malformed, another vocabulary named."""
+    def without(key):
+        pin = _pin()
+        pin.pop(key)
+        return pin
+    return [None, "the cell vocabulary", [], without("document_sha256"), without("registry"),
+            _pin(sha256="CAFE"), _pin(document_sha256=_vocabulary()["document_sha256"].upper()),
+            _pin(bytes=str(_vocabulary()["bytes"])), _pin(cells=True), _pin(cells=0), _pin(version=1),
+            _pin(registry=""), _pin(registry="another-vocabulary"), _pin(version="2")]
+
+
 MUTATIONS = [
     ("M001", _no_manifest),
     ("M002", _mutate_manifest(lambda m: m.__setitem__("spec_version", "9.0"))),
@@ -727,6 +799,18 @@ MUTATIONS = [
         "no_field_descriptor", "inline_field")],
     *[("S001", _grid_field_package(defect)) for defect in (
         "missing_output", "no_status", "wrong_run_id", "banner", "extra_frame", "nonzero_exit")],
+    # The taxonomy cell a model serves (contract 1.2, proposed) is an id the pinned cell
+    # vocabulary lists as live (M022); a pin of the vocabulary comes with a cell and names
+    # the vocabulary the checker carries (M023); a pin to another version of it is a
+    # warning (M024). An id the vocabulary retired has its own test, which plants it in
+    # the copy the checker reads.
+    *[("M022", _mutate_manifest(_with_taxonomy(cell=cell))) for cell in _not_cells()],
+    *[("M022", _mutate_manifest(_with_taxonomy(cell=cell, pin=_pin()))) for cell in (None, _unlisted())],
+    *[("M023", _mutate_manifest(_with_taxonomy(cell=_listed(), pin=pin))) for pin in _broken_pins()],
+    ("M023", _mutate_manifest(_with_taxonomy(pin=_pin()))),
+    ("M024", _mutate_manifest(_with_taxonomy(cell=_listed(), pin=_pin(sha256="1" * 64)))),
+    ("M024", _mutate_manifest(_with_taxonomy(cell=_listed(), pin=_pin(bytes=_vocabulary()["bytes"] + 1,
+                                                                        cells=_vocabulary()["cells"] + 1)))),
 ]
 
 
@@ -743,8 +827,8 @@ def test_each_rule_can_fail(tmp_path: Path, rule: str, mutate):
 def test_every_error_rule_has_a_negative_test():
     """A rule with no demonstrated failure is an unproven rule."""
     covered = {rule for rule, _ in MUTATIONS}
-    # E001, E002 and E003 are environment rules with their own dedicated tests below.
-    environment_rules = {"E001", "E002", "E003"}
+    # E001 to E004 are environment rules with their own dedicated tests below.
+    environment_rules = {"E001", "E002", "E003", "E004"}
     declared = {r.id for r in vs.RULES}
     uncovered = declared - covered - environment_rules
     assert uncovered == set(), "rules with no negative test: %s" % sorted(uncovered)
@@ -781,6 +865,43 @@ def test_e003_a_schema_keyword_the_checker_cannot_apply_is_an_error(good: Path, 
     findings = vs.check_package(good)
     assert rules_fired(findings) == {"E003"}
     assert any("oneOf" in f.message for f in findings if f.rule == "E003")
+
+
+def _declaring_a_cell(root: Path) -> Path:
+    pkg = write_package(root)
+    _mutate_manifest(_with_taxonomy(cell=_listed(), pin=_pin()))(pkg)
+    return pkg
+
+
+def test_e004_a_missing_cell_vocabulary_is_an_error_not_a_skip(tmp_path: Path, monkeypatch):
+    """A checker that cannot read the vocabulary a declared cell is checked against says so, never passes it."""
+    pkg = _declaring_a_cell(tmp_path / "pkg")
+    assert vs.check_package(pkg) == []
+    monkeypatch.setattr(vs, "TAXONOMY_CELLS_PATH", ("schemas", "contract-v1", "no-such-copy.json"))
+    findings = vs.check_package(pkg)
+    assert rules_fired(findings) == {"E004"}
+    assert "never a skip" in findings[0].message
+    assert not vs.summarize(findings)["conformant"]
+    states = {rule: state["state"] for rule, state in vs.conformance_record(pkg)["rules"].items()}
+    assert [states[r] for r in ("E004", "M022", "M023", "M024")] == ["fired"] + ["not_evaluated"] * 3
+
+
+def test_e004_a_cell_vocabulary_that_does_not_hold_together_is_an_error(tmp_path: Path, monkeypatch):
+    pkg = _declaring_a_cell(tmp_path / "pkg")
+    doc = json.loads(vs._taxonomy_cells_text())
+    doc["cells"] += 1
+    monkeypatch.setattr(vs, "_taxonomy_cells_text", lambda: json.dumps(doc))
+    findings = vs.check_package(pkg)
+    assert rules_fired(findings) == {"E004"}
+    assert "does not hold together" in findings[0].message
+
+
+def test_a_package_declaring_no_taxonomy_key_never_reads_the_cell_vocabulary(good: Path, monkeypatch):
+    """The copy is read only for a manifest that declares a cell or a pin, so no other package can fail by it."""
+    def refuse():
+        raise AssertionError("the checker read the cell vocabulary")
+    monkeypatch.setattr(vs, "_taxonomy_cells_text", refuse)
+    assert vs.check_package(good) == []
 
 
 # --------------------------------------------------------------------------- #

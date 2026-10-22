@@ -129,6 +129,11 @@
       "title": "the contract-v1 manifest schema loads and the checker applies every keyword it uses"
     },
     {
+      "id": "E004",
+      "severity": "ERROR",
+      "title": "the pinned cell vocabulary loads and holds together, wherever a manifest declares a taxonomy key"
+    },
+    {
       "id": "M001",
       "severity": "ERROR",
       "title": "manifest present and parses to a mapping"
@@ -232,6 +237,21 @@
       "id": "M021",
       "severity": "WARN",
       "title": "a package declaring contract 1.1 or later declares a licence block"
+    },
+    {
+      "id": "M022",
+      "severity": "ERROR",
+      "title": "a declared taxonomy_cell is an id the pinned cell vocabulary lists as live (well formed, listed, not retired)"
+    },
+    {
+      "id": "M023",
+      "severity": "ERROR",
+      "title": "a declared taxonomy_registry comes with a taxonomy_cell and pins the cell vocabulary the checker carries: registry, version, sha256, document_sha256, bytes and cells, each well formed"
+    },
+    {
+      "id": "M024",
+      "severity": "WARN",
+      "title": "a declared taxonomy_registry pins the content of the cell vocabulary the checker carries (sha256, document_sha256, bytes, cells); another version is warned, never failed"
     },
     {
       "id": "C001",

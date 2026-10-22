@@ -112,9 +112,12 @@ def test_a_record_agrees_with_its_own_findings(tmp_path: Path):
         assert record["conformant"] == (record["n_error"] == 0), name
 
 
-#: Rules the scalar reference package gives nothing to read: it has no field output and no signature.
+#: Rules the scalar reference package gives nothing to read: it has no field output, no signature and
+#: no taxonomy cell.
 NOTHING_TO_READ = {"M017": "provenance declares no signature",
-                   "M019": "no output is of type field or declares a field block"}
+                   "M019": "no output is of type field or declares a field block",
+                   **{rule: "the package declares no taxonomy_cell or taxonomy_registry"
+                      for rule in ("E004", "M022", "M023", "M024")}}
 
 
 def test_the_reference_package_evaluates_every_rule_but_the_smoke_ones():

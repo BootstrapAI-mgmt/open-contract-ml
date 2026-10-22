@@ -294,6 +294,24 @@ def test_the_field_block_is_one_definition_in_both_manifest_schemas():
     assert "required" not in contract, "presence is M019's, from 1.1; the schema accepts an incomplete block"
 
 
+def test_the_taxonomy_cell_is_one_definition_in_both_manifest_schemas():
+    """taxonomy_cell is defined once, in the pinned vocabulary's own grammar; the pin is the Contract's alone.
+
+    package-v1 states the cell a consumer reads, as it states a field block, and not the pin,
+    as it states no provenance; the pin's other keys ride along unchecked.
+    """
+    contract = _shipped_schema_as_written()["properties"]
+    package_v1 = _package_v1_schema()["properties"]
+    assert contract["taxonomy_cell"] == package_v1["taxonomy_cell"]
+    vocabulary, problem = vs.load_taxonomy_cells()
+    assert problem is None, problem
+    assert contract["taxonomy_cell"]["pattern"] == vocabulary["id_pattern"]
+    assert "taxonomy_registry" not in package_v1
+    pin = contract["taxonomy_registry"]
+    assert pin["required"] == list(vs.TAXONOMY_PIN_REQUIRED) == sorted(pin["properties"], key=pin["required"].index)
+    assert "additionalProperties" not in pin
+
+
 def test_the_package_v1_schema_is_valid_and_accepts_a_field_block():
     jsonschema = pytest.importorskip("jsonschema")
     schema = _package_v1_schema()
