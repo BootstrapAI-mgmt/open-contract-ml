@@ -82,8 +82,17 @@ data (`M020`; `M021` warns when there is none). A conservation check that applie
 but was not run may say so, and still blocks. A point predictor may declare
 `uncertainty.form: none`. A package may record a detached signature, whose
 declaration is checked (`M017`) and which nothing verifies. Section 11 of
-`docs/spec/CONTRACT-v1.md` lists every change since 1.0 and what each means for a
+`docs/spec/CONTRACT-v1.md` lists every change 1.1 made and what each means for a
 package that conformed to 1.0.
+
+Contract 1.2, an amendment proposed for the maintainer's ratification, lets a
+manifest name the taxonomy cell its model serves, `taxonomy_cell`, and the checker
+rejects an id its pinned copy of the cell vocabulary does not list as live
+(`M022`). An optional `taxonomy_registry` pins the vocabulary version the id was
+read from; a pin without a cell, or one naming another vocabulary, is an error
+(`M023`), and a pin to another version of the vocabulary is a warning (`M024`). The
+copy, `schemas/contract-v1/taxonomy-cells.json`, carries ids and counts only.
+Section 13 of the Contract lists the change.
 
 Two switches go further. `open-contract-ml check --smoke` runs the package's
 entrypoint the way a consumer dispatches it, in the `stdio_json` frame that
@@ -130,7 +139,8 @@ src/opencontractml/
   manifest.py, model_card.py        the validation library
   gate.py, corpus_gate.py           the gate engine
   safe_artifact.py, safeload.py     safe deserialization
-  schemas/contract-v1/              manifest schema, conformance-record schema, machine-readable vocabulary
+  schemas/contract-v1/              manifest schema, conformance-record schema, machine-readable vocabulary,
+                                    the pinned copy of the cell vocabulary
 examples/reference-package/         a worked conformant instance
 examples/reference-field-package/   a worked conformant instance whose output is a field
 examples/build_reference_field_package.py  writes that package from a seeded corpus; --check rebuilds it

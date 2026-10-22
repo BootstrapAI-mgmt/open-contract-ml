@@ -242,6 +242,10 @@ standard does arrive.
 - **Under which licences the model, its weights and its training data are
   offered** — from the 1.1 amendment, the
   `licence` block (`M020`; `M021` warns when it is absent).
+- **Which cell of the maintainer's analysis taxonomy it serves**, where it names
+  one — from the proposed 1.2 amendment, `taxonomy_cell`, an id the checker's
+  pinned copy of the cell vocabulary lists as live (`M022`), with the vocabulary
+  version it was read from (`taxonomy_registry`; `M023`, `M024`).
 
 ### Not answerable, and known to be
 

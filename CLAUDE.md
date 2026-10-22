@@ -52,6 +52,12 @@ yours to explain.
 - **The schema walker.** `verify` applies `schemas/contract-v1/manifest.schema.json`
   with its own walker; a keyword the schema gains must be one the walker applies
   (`tests/test_contract_schema.py` compares it with the `jsonschema` package).
+- **The cell vocabulary.** `schemas/contract-v1/taxonomy-cells.json` is the pinned
+  copy of the cell vocabulary a manifest's `taxonomy_cell` is checked against, ids
+  and counts only. It is replaced whole from a newer version of the vocabulary,
+  never edited by hand; `tests/test_taxonomy_cells.py` holds it to its own grammar
+  and counts, and `tests/test_contract_schema.py` holds the manifest schemas'
+  pattern to that grammar.
 - **Producer findings.** A producer fixture the checker rejects is recorded in
   `tests/fixtures/producer_packages/known-findings.json`, not edited; each copy
   must produce exactly the findings recorded for it.

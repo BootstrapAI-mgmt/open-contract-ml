@@ -7,6 +7,37 @@ implements are separate numbers: `opencontractml.__version__` is the first,
 
 ## [Unreleased]
 
+### Added
+
+- Contract 1.2, as an amendment proposed for the maintainer's ratification
+  (`docs/spec/CONTRACT-v1.md`, sections 3 and 13): a manifest may name the
+  taxonomy cell its model serves, `taxonomy_cell`, a cell id of the
+  maintainer's analysis taxonomy, and `open-contract-ml check` rejects an
+  id that is not a cell the checker's pinned copy of the cell vocabulary
+  lists as live -- one outside the vocabulary's grammar, one it does not
+  list, or one it has retired (new rule `M022`). Beside it, an optional
+  `taxonomy_registry` pins the vocabulary version the id was read from:
+  `registry`, `version`, `sha256`, `document_sha256`, `bytes` and
+  `cells`, with any other keys allowed and not checked. A pin without a
+  cell, a malformed pin and a pin naming another vocabulary are errors
+  (new rule `M023`); a pin to another version of the vocabulary is a
+  warning, never an error, because the vocabulary's ids are stable (new
+  rule `M024`). A model that serves no declared cell omits the key, and a
+  cell needs no pin. A checker that cannot read its copy of the
+  vocabulary reports an error, never a skip (new rule `E004`). The keys
+  are checked wherever a package of any version declares them, and a
+  package that declares neither gets the findings it had before.
+  `opencontractml.verify.CONTRACT_VERSION` is now `"1.2"`; the package
+  version is unchanged.
+- The pinned copy of the cell vocabulary ships with the checker as
+  `schemas/contract-v1/taxonomy-cells.json`: the vocabulary's name and
+  version, the sha256 of its file's bytes and of its parsed document, its
+  size in bytes and its number of cells (178), the grammar of a cell id,
+  the live ids, sorted, and the retired ids (none) -- ids and counts only.
+  `opencontractml.verify.load_taxonomy_cells()` reads it. The contract-v1
+  manifest schema states both keys, and the package-v1 manifest schema
+  states `taxonomy_cell` in the same definition.
+
 ## [0.2.0] - 2026-10-07
 
 The first release to implement contract 1.1; 0.1.0 and 0.1.1 implement

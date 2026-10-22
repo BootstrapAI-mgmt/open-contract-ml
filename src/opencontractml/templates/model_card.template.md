@@ -1,7 +1,7 @@
 ---
 model_id: REPLACE_WITH_MODEL_ID
 version: 0.0.0
-spec_version: "1.1"
+spec_version: "1.2"
 ---
 
 # REPLACE WITH MODEL NAME

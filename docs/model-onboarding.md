@@ -77,7 +77,11 @@ From a trained model to a docked one:
    block (form + `per_output` for every output + calibration), `invocation`,
    `lineage`, and discoverability metadata; for a contract package at 1.1, a
    `field` block on each `type: field` output and a `licence` block naming the
-   licences of the model, its weights and its training data.
+   licences of the model, its weights and its training data. A manifest may also
+   name the taxonomy cell its model serves, `taxonomy_cell`, with the pin of the
+   cell vocabulary it was read from, `taxonomy_registry` — proposed for Contract
+   1.2; `open-contract-ml check` rejects a cell its pinned copy of the vocabulary
+   does not list.
 3. **Author `model_card.md`** from the template — the eleven sections, with the
    `model_id`/`version` front-matter matching the manifest.
 4. **Build the executable** and place it in the package folder; point

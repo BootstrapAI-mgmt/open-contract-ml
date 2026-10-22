@@ -63,7 +63,7 @@ import sys
 from pathlib import Path, PureWindowsPath
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-CONTRACT_VERSION = "1.1"
+CONTRACT_VERSION = "1.2"
 SUPPORTED_CONTRACT_MAJOR = 1
 
 # --------------------------------------------------------------------------- #
