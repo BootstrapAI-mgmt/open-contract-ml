@@ -263,6 +263,19 @@ def _whole_manifests():
                                     "field": {"kind": "tensor", "support": "edge", "media_type": "VTK PolyData",
                                               "shape": [0, 64], "coordinate_ref": ""}})
     out.append(("a field block breaking every constraint", broken_field))
+    vocabulary, problem = vs.load_taxonomy_cells()
+    assert vocabulary is not None, problem
+    with_cell = _reference_manifest()
+    with_cell["taxonomy_cell"] = sorted(vocabulary["ids"])[0]
+    with_cell["taxonomy_registry"] = dict({key: vocabulary[key] for key in vs.TAXONOMY_PIN_REQUIRED},
+                                          repository="example-org/example-vocabulary", path="cells.json",
+                                          commit="0" * 40)
+    out.append(("a taxonomy cell and its pin", with_cell))
+    broken_cell = _reference_manifest()
+    broken_cell["taxonomy_cell"] = "not a cell id"
+    broken_cell["taxonomy_registry"] = {"registry": "", "version": 2, "sha256": "CAFE", "document_sha256": 5,
+                                        "bytes": 0, "cells": -1}
+    out.append(("a taxonomy cell and a pin breaking every constraint", broken_cell))
     return out
 
 

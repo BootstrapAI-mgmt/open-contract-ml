@@ -135,7 +135,7 @@ authored:
   why: holds the standard-library schema walker of the checker to the published contract-v1 manifest schema
     - every keyword applied, every constraint rejected where an independent validator rejects it, and an
     unappliable keyword refused
-  sha256: f3988631b3c912773e922de0eaaaa2b68ccb3b3e4761e68866a4a11bd7f37354
+  sha256: 777c65d3e566fcbb47294f4a385d4443817ad0d3704b7c439ab175b710722078
 - path: tests/test_gate.py
   why: tests of the V3 declarations of the gate engine
   sha256: 7f903ea54f0b8c99c034e040703a11775e5ccae5ba8e5cd710e6d055cd4f97ea
@@ -500,7 +500,7 @@ extracted:
 - path: tests/test_verify.py
   transformed: true
   why: tests of the conformance checker, one planted defect per ERROR rule
-  sha256: 1daf7989807e4faea70eee908d85b3d1bab4c798b667dc7edba9c2248dbf1f9f
+  sha256: a6eb934029897c41c9f62c59cb3cd60f32361fcb645709db8b122860d9a0e9b8
 modified_copies:
 - path: tests/fixtures/producer_packages/brake_disc_link1_thermal_fno/manifest.yaml
   copy_of: brake_disc_link1_thermal_fno

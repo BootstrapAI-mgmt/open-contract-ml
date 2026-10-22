@@ -905,6 +905,108 @@ def test_a_package_declaring_no_taxonomy_key_never_reads_the_cell_vocabulary(goo
 
 
 # --------------------------------------------------------------------------- #
+# The taxonomy cell (contract 1.2, proposed): what passes, what each rule says,
+# and an id the vocabulary retired, planted in the copy the checker reads.
+# --------------------------------------------------------------------------- #
+def _taxonomy_package(root: Path, cell=ABSENT, pin=ABSENT, version: str = "1.1") -> Path:
+    man, rep, card = _declaring(version, base_manifest(), base_report(), base_card())
+    _with_taxonomy(cell=cell, pin=pin)(man)
+    return write_package(root, manifest=man, report=rep, card=card)
+
+
+def test_a_cell_and_its_pin_are_conformant(tmp_path: Path):
+    """The pin's other keys -- where a producer read the vocabulary -- ride along unchecked."""
+    pkg = _taxonomy_package(tmp_path / "pkg", cell=_listed(), pin=_pin())
+    assert vs.check_package(pkg) == []
+    record = vs.conformance_record(pkg)
+    assert {r: record["rules"][r]["state"] for r in ("E004", "M022", "M023", "M024")} == dict.fromkeys(
+        ("E004", "M022", "M023", "M024"), "evaluated")
+
+
+def test_a_cell_needs_no_pin(tmp_path: Path):
+    pkg = _taxonomy_package(tmp_path / "pkg", cell=_listed())
+    assert vs.check_package(pkg) == []
+    record = vs.conformance_record(pkg)
+    assert record["rules"]["M022"]["state"] == "evaluated"
+    assert record["rules"]["M023"] == {"severity": "ERROR", "state": "not_evaluated",
+                                       "reason": "the package declares no taxonomy_registry"}
+
+
+@pytest.mark.parametrize("version", ["1.0", "1.1", "1.2"])
+def test_a_cell_is_held_to_the_vocabulary_whatever_version_a_package_declares(tmp_path: Path, version: str):
+    """A key a later minor defines is held to its definition wherever a package declares it."""
+    assert vs.check_package(_taxonomy_package(tmp_path / "listed", cell=_listed(), pin=_pin(),
+                                              version=version)) == []
+    unlisted = vs.check_package(_taxonomy_package(tmp_path / "unlisted", cell=_unlisted(), version=version))
+    assert rules_fired(unlisted) == {"M022"}
+
+
+def test_m022_names_the_id_the_vocabulary_version_and_its_count(tmp_path: Path):
+    [finding] = vs.check_package(_taxonomy_package(tmp_path / "pkg", cell=_unlisted()))
+    vocabulary = _vocabulary()
+    assert finding.rule == "M022" and finding.where == "manifest.json taxonomy_cell"
+    assert finding.message == "%r is not a cell of the pinned cell vocabulary (version %s, %d cells)" % (
+        _unlisted(), vocabulary["version"], vocabulary["cells"])
+
+
+def test_a_retired_cell_is_rejected(tmp_path: Path, monkeypatch):
+    """An id the vocabulary retired is not a cell, whatever pin the manifest states beside it."""
+    pkg = _taxonomy_package(tmp_path / "pkg", cell=_listed(), pin=_pin())
+    assert vs.check_package(pkg) == []
+    doc = json.loads(vs._taxonomy_cells_text())
+    doc["ids"].remove(_listed())
+    doc["retired"] = sorted(doc["retired"] + [_listed()])
+    doc["cells"] = len(doc["ids"])
+    monkeypatch.setattr(vs, "_taxonomy_cells_text", lambda: json.dumps(doc))
+    findings = vs.check_package(pkg)
+    assert {(f.rule, f.severity) for f in findings} == {("M022", "ERROR"), ("M024", "WARN")}
+    [m022] = [f for f in findings if f.rule == "M022"]
+    assert "is retired in the pinned cell vocabulary (version %s, %d cells)" % (doc["version"], doc["cells"]) \
+        in m022.message
+
+
+def test_a_trailing_newline_passes_the_schema_and_not_the_checker(tmp_path: Path):
+    """The schema's pattern ends in $, which admits a final newline; M022 matches the whole string."""
+    findings = vs.check_package(_taxonomy_package(tmp_path / "newline", cell=_listed() + LF))
+    assert rules_fired(findings) == {"M022"}
+    malformed = vs.check_package(_taxonomy_package(tmp_path / "malformed", cell=_listed().replace("/", "-")))
+    assert rules_fired(malformed) == {"M022", "M018"}
+    null = vs.check_package(_taxonomy_package(tmp_path / "null", cell=None))
+    assert rules_fired(null) == {"M022", "M018"}
+    assert any("omits the key" in f.message for f in null if f.rule == "M022")
+
+
+def test_m023_names_the_vocabulary_the_checker_carries(tmp_path: Path):
+    vocabulary = _vocabulary()
+    [finding] = vs.check_package(_taxonomy_package(tmp_path / "pkg", cell=_listed(),
+                                                   pin=_pin(registry="another-vocabulary")))
+    assert (finding.rule, finding.where) == ("M023", "manifest.json taxonomy_registry.registry")
+    assert "names another cell vocabulary than the one this checker carries, %r version %r" % (
+        vocabulary["registry"], vocabulary["version"]) in finding.message
+
+
+def test_a_pin_without_a_cell_is_rejected_and_its_content_is_not_read(tmp_path: Path):
+    findings = vs.check_package(_taxonomy_package(tmp_path / "pkg", pin=_pin(sha256="1" * 64)))
+    assert [(f.rule, f.where) for f in findings] == [("M023", "manifest.json taxonomy_registry")]
+    assert "names no taxonomy_cell" in findings[0].message
+    assert vs.conformance_record(tmp_path / "pkg")["rules"]["M024"]["state"] == "not_evaluated"
+
+
+def test_a_pin_to_another_version_is_a_warning_naming_what_differs(tmp_path: Path):
+    """Another version of the vocabulary is warned, never failed, and the cell is still checked against the copy."""
+    vocabulary = _vocabulary()
+    drifted = _pin(sha256="1" * 64, bytes=vocabulary["bytes"] + 10, cells=vocabulary["cells"] + 1)
+    findings = vs.check_package(_taxonomy_package(tmp_path / "listed", cell=_listed(), pin=drifted))
+    assert [(f.rule, f.severity) for f in findings] == [("M024", "WARN")]
+    assert vs.summarize(findings)["conformant"]
+    assert "-- sha256, bytes, cells differ: sha256 %r against the copy's %r" % ("1" * 64, vocabulary["sha256"]) \
+        in findings[0].message
+    assert "document_sha256" not in findings[0].message
+    unlisted = vs.check_package(_taxonomy_package(tmp_path / "unlisted", cell=_unlisted(), pin=drifted))
+    assert {(f.rule, f.severity) for f in unlisted} == {("M022", "ERROR"), ("M024", "WARN")}
+
+
+# --------------------------------------------------------------------------- #
 # The two rules real validation ladders actually got wrong. Worth their own tests.
 # --------------------------------------------------------------------------- #
 def test_a_declaration_string_is_not_a_conservation_measurement(tmp_path: Path):
