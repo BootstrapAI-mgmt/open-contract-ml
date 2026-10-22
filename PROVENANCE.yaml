@@ -171,8 +171,9 @@ extracted:
   sha256: f84fda13cdbbeba0a69d74bf63f53fece4f4063e315b81f0b8b1bcd8b1eb04b6
 - path: docs/spec/CONTRACT-v1.md
   transformed: true
-  why: the normative specification of the Contract, version 1.1
-  sha256: 2dbb142f762a2ddc3b372d4720832ee7a55903f5dea11e302e3487592cacdd0a
+  why: the normative specification of the Contract, version 1.2, an amendment proposed for the maintainer's
+    ratification
+  sha256: 0af4c4428b91a3115b45a63767e7c137a956b048df73f3da2aa2f2197cdab1dc
 - path: examples/brake_disc_tmf_v1/fake_model.py
   transformed: true
   why: a deterministic stdio_json stub model for the package-v1 worked example
@@ -464,7 +465,7 @@ extracted:
 - path: src/opencontractml/verify.py
   transformed: true
   why: the conformance checker and the machine-readable contract vocabulary
-  sha256: 954224939de7268964bc563d34635346ce02896e945db1a6d632e11f4659edc4
+  sha256: d7900424785fdaffaa0596e5c68c2f1f3f810bb8aaaff3df69fb24a0c4e6c60f
 - path: tests/fixtures/model_packages/conformant/manifest.yaml
   transformed: true
   why: 'a conformant package-v1 fixture: its manifest'

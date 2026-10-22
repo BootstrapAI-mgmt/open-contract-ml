@@ -1171,11 +1171,11 @@ def check_point_predictor(unc: Dict[str, Any], version: Optional[Tuple[int, int]
 # keys.  A declared cell the copy does not list as live is an error (M022); a pin
 # without a cell, a malformed pin and a pin naming another vocabulary are errors
 # (M023); a pin to another version of the same vocabulary is a warning (M024).
-# The vocabulary's ids are stable -- an id is never reused or renumbered, and a
-# cell whose identity changes is retired and issued a new id -- so an id the copy
-# lists means what it meant at the version pinned, and the cell is checked against
-# the copy whatever the pin says.  A copy the checker cannot read is an error
-# (E004), never a skip.
+# The vocabulary's ids are stable -- an id names one cell for good and keeps its
+# number, and a cell whose identity changes is retired and issued a new id -- so an
+# id the copy lists means what it meant at the version pinned, and the cell is
+# checked against the copy whatever the pin says.  A copy the checker cannot read
+# is an error (E004), never a skip.
 TAXONOMY_CELL_KEY = "taxonomy_cell"
 TAXONOMY_REGISTRY_KEY = "taxonomy_registry"
 #: Where the pinned copy of the cell vocabulary lives inside this package.

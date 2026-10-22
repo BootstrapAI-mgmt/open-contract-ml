@@ -165,9 +165,9 @@ path and commit a producer read the vocabulary at, are allowed and not checked. 
 pin without a cell, a malformed pin and a pin naming another vocabulary are errors
 (`M023`), and a cell without a pin is allowed. A pin to another version of the same
 vocabulary is a warning (`M024`), never an error: the vocabulary's ids are stable --
-an id is never reused or renumbered, and a cell whose identity changes is retired
-and given a new id -- so an id the copy lists means what it meant at the version
-pinned, and the cell is checked against the copy whatever the pin says. A cell the
+an id names one cell for good and keeps its number, and a cell whose identity
+changes is retired and issued a new id -- so an id the copy lists means what it meant
+at the version pinned, and the cell is checked against the copy whatever the pin says. A cell the
 vocabulary gained after the copy was taken is unknown to this checker until a
 release carries a newer copy. A checker that cannot read its copy reports an error,
 never a skip (`E004`). The two keys are held to these rules in a package of any
@@ -533,8 +533,8 @@ deliberately the package-v1 manifest's existing one, not a third name.
 - **A MINOR adds; it does not oblige an older package.** A checker of a later MINOR holds
   a package to the rules of the version it declares, and holds a key that a later MINOR
   defined -- comparators, a field block, a licence block, a signature, a taxonomy cell
-  and its pin -- to that definition wherever a package declares it. A key no version defines is ignored,
-  whatever version the package declares. A package whose `spec_version` major is greater
+  and its pin -- to that definition wherever a package declares it. A key no version
+  defines is ignored, whatever version the package declares. A package whose `spec_version` major is greater
   than the checker's is rejected (`M002`).
 - **Deprecation.** A MINOR version may deprecate a key or a value; only a MAJOR version
   removes one. The amendment that deprecates says so in section 11's table, names the
