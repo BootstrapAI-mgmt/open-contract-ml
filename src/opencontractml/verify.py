@@ -1306,7 +1306,7 @@ def check_taxonomy(man: Dict[str, Any], where: str, findings: List[Finding]) -> 
     before = len(findings)
     if cell is None:
         findings.append(Finding("M023", at, "the manifest pins the cell vocabulary but names no taxonomy_cell; a pin "
-                                            "travels with the cell it was read for"))
+                                            "only qualifies a declared cell"))
     if not isinstance(pin, dict):
         findings.append(Finding("M023", at, "must be a mapping {%s}, got %r" % (", ".join(TAXONOMY_PIN_REQUIRED), pin)))
     else:

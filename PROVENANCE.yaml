@@ -465,7 +465,7 @@ extracted:
 - path: src/opencontractml/verify.py
   transformed: true
   why: the conformance checker and the machine-readable contract vocabulary
-  sha256: d7900424785fdaffaa0596e5c68c2f1f3f810bb8aaaff3df69fb24a0c4e6c60f
+  sha256: 4dbb48182954621147305d1d23bbe4e7b13b7020f7c4d25e9155eae3ff5d0931
 - path: tests/fixtures/model_packages/conformant/manifest.yaml
   transformed: true
   why: 'a conformant package-v1 fixture: its manifest'
