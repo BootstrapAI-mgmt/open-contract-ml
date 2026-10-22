@@ -695,16 +695,21 @@ def schema_errors(instance: Any, schema: Any, at: str = "") -> List[Tuple[str, s
     return errors
 
 
-def _manifest_schema_text() -> str:
+def _shipped_text(parts: Tuple[str, ...]) -> str:
+    """The text of a file this package ships, ``parts`` below the package directory."""
     package = __package__ or ""
     if package:
         from importlib import resources  # noqa: PLC0415 -- standard library; works from a wheel and a zip
         node = resources.files(package)
-        for part in MANIFEST_SCHEMA_PATH:
+        for part in parts:
             node = node / part
         return node.read_text(encoding="utf-8")
     # run as a loose file rather than as part of the package
-    return Path(__file__).resolve().parent.joinpath(*MANIFEST_SCHEMA_PATH).read_text(encoding="utf-8")
+    return Path(__file__).resolve().parent.joinpath(*parts).read_text(encoding="utf-8")
+
+
+def _manifest_schema_text() -> str:
+    return _shipped_text(MANIFEST_SCHEMA_PATH)
 
 
 def load_manifest_schema() -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
@@ -1140,6 +1145,100 @@ def check_point_predictor(unc: Dict[str, Any], version: Optional[Tuple[int, int]
     if "calibration" in unc:
         findings.append(Finding("M007", where, "uncertainty.form is 'none', so there is no band to calibrate, but "
                                                "uncertainty declares a calibration block"))
+
+
+# The cell vocabulary.  The checker carries a pinned copy of the cell vocabulary
+# of the maintainer's analysis taxonomy -- ids and counts only -- in
+# ``schemas/contract-v1/taxonomy-cells.json``, read with the standard library as
+# the manifest schema is.  The copy names the vocabulary and its version, pins
+# that version's content by its digests and counts, states the grammar of a cell
+# id and lists the live and the retired ids.
+TAXONOMY_CELL_KEY = "taxonomy_cell"
+TAXONOMY_REGISTRY_KEY = "taxonomy_registry"
+#: Where the pinned copy of the cell vocabulary lives inside this package.
+TAXONOMY_CELLS_PATH: Tuple[str, ...] = ("schemas", "contract-v1", "taxonomy-cells.json")
+#: The keys of a pin that say which vocabulary it names: they must be the copy's (M023).
+TAXONOMY_PIN_IDENTITY: Tuple[str, ...] = ("registry", "version")
+#: The keys of a pin that say which version of the vocabulary: another version is warned (M024).
+TAXONOMY_PIN_CONTENT: Tuple[str, ...] = ("sha256", "document_sha256", "bytes", "cells")
+#: The keys every declared pin states.  Others -- where a producer read the vocabulary,
+#: such as a repository, a path and a commit -- are allowed and not checked.
+TAXONOMY_PIN_REQUIRED: Tuple[str, ...] = TAXONOMY_PIN_IDENTITY + TAXONOMY_PIN_CONTENT
+
+
+def _taxonomy_cells_text() -> str:
+    return _shipped_text(TAXONOMY_CELLS_PATH)
+
+
+def taxonomy_pin_value_problem(key: str, value: Any) -> Optional[str]:
+    """What a pin's ``key`` (one of :data:`TAXONOMY_PIN_REQUIRED`) must be when ``value`` is not that, else None."""
+    if key in TAXONOMY_PIN_IDENTITY:
+        return None if isinstance(value, str) and value.strip() else "a non-empty string"
+    if key in ("sha256", "document_sha256"):
+        return None if isinstance(value, str) and _HEX64.fullmatch(value) else "64 lowercase hex characters"
+    return None if _is_count(value) and value >= 1 else "a positive integer"
+
+
+def _taxonomy_cells_problems(doc: Any) -> List[str]:
+    """Every way ``doc`` is not a usable copy of the cell vocabulary."""
+    if not isinstance(doc, dict):
+        return ["it is not a JSON object"]
+    out: List[str] = []
+    for key in TAXONOMY_PIN_REQUIRED:
+        want = taxonomy_pin_value_problem(key, doc.get(key))
+        if want:
+            out.append("%s must be %s, got %r" % (key, want, doc.get(key)))
+    pattern = doc.get("id_pattern")
+    try:
+        grammar = re.compile(pattern)
+    except (re.error, TypeError):
+        return out + ["id_pattern %r does not compile" % (pattern,)]
+    lists: Dict[str, List[str]] = {}
+    for key in ("ids", "retired"):
+        ids = doc.get(key)
+        if not isinstance(ids, list):
+            out.append("%s must be a list of cell ids, got %r" % (key, ids))
+            continue
+        bad = [i for i in ids if not isinstance(i, str) or grammar.fullmatch(i) is None]
+        if bad:
+            out.append("%s holds %r, which is not a cell id in id_pattern" % (key, bad[0]))
+        strings = [i for i in ids if isinstance(i, str)]
+        if len(set(strings)) != len(strings):
+            out.append("%s holds a duplicate id" % key)
+        lists[key] = strings
+    if "ids" in lists and _is_count(doc.get("cells")) and len(lists["ids"]) != doc["cells"]:
+        out.append("cells is %d, but ids holds %d" % (doc["cells"], len(lists["ids"])))
+    both = sorted(set(lists.get("ids", ())) & set(lists.get("retired", ())))
+    if both:
+        out.append("%r is both live and retired" % both[0])
+    return out
+
+
+def load_taxonomy_cells() -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+    """``(vocabulary, None)``, or ``(None, why the pinned cell vocabulary cannot be used)``.
+
+    ``vocabulary`` holds the copy's name, version, digests and counts, its
+    ``id_pattern`` and that pattern compiled as ``grammar``, and its live ``ids``
+    and ``retired`` ids as frozensets.  A copy that does not hold together -- an
+    id outside its own grammar, a count that is not its number of ids, an id both
+    live and retired -- is refused whole rather than applied in part.
+    """
+    try:
+        text = _taxonomy_cells_text()
+    except (OSError, ImportError, TypeError, ValueError) as exc:
+        return None, "cannot read the pinned cell vocabulary this checker ships (%s: %s)" % (
+            type(exc).__name__, exc)
+    try:
+        doc = json.loads(text)
+    except ValueError as exc:
+        return None, "the pinned cell vocabulary is not valid JSON: %s" % exc
+    problems = _taxonomy_cells_problems(doc)
+    if problems:
+        return None, "the pinned cell vocabulary does not hold together: %s" % "; ".join(problems)
+    vocabulary: Dict[str, Any] = {key: doc[key] for key in TAXONOMY_PIN_REQUIRED}
+    vocabulary.update(id_pattern=doc["id_pattern"], grammar=re.compile(doc["id_pattern"]),
+                      ids=frozenset(doc["ids"]), retired=frozenset(doc["retired"]))
+    return vocabulary, None
 
 
 # Roles a hashed artifact may play. The set is deliberately confined to files

@@ -96,6 +96,9 @@ authored:
   why: the JSON Schema of the conformance record that open-contract-ml check --json writes, every rule id
     of the checker required
   sha256: 61d4f016af147f6f123eceab4e98fdf200e50dec350a87f27bdb3ecbe4c2431e
+- path: src/opencontractml/schemas/contract-v1/taxonomy-cells.json
+  why: the pinned copy of the cell vocabulary a manifest's taxonomy_cell is checked against, ids and counts only, written whole from the maintainer's registry
+  sha256: 212d67840675079746d3bc8f4f42f2441a365ac4f921e5c5d1ab1db5817ba4c1
 - path: tests/fixtures/producer_packages/README.md
   why: what the producer fixture packages are, how CI checks them, and how a copy differs from what its
     producer shipped
@@ -154,6 +157,9 @@ authored:
   why: the stdio_json frame held over two real entrypoints, in single and batch mode, for answers and
     refusals, and planted defects in real frames
   sha256: de615f5efeb5796f0f9207124b70b24927d804815e36a5e2c67c3163ad6fd628
+- path: tests/test_taxonomy_cells.py
+  why: tests that the pinned cell vocabulary carries ids and counts only and holds together, and that a broken copy is refused
+  sha256: fada4df5d1f44acd909022b584bc479065271f33363e99910853c57d537433ea
 extracted:
 - path: docs/model-onboarding.md
   transformed: true
@@ -458,7 +464,7 @@ extracted:
 - path: src/opencontractml/verify.py
   transformed: true
   why: the conformance checker and the machine-readable contract vocabulary
-  sha256: a1efd270dbaa3695b21af19a50fe30c7ffa20c031fd0f9da16746c85be9455ba
+  sha256: 292d554b04ab28ba8e9e8f409623a98fbfd96365cd3568af0536e811da0c885f
 - path: tests/fixtures/model_packages/conformant/manifest.yaml
   transformed: true
   why: 'a conformant package-v1 fixture: its manifest'
