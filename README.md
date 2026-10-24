@@ -14,7 +14,7 @@ is, what data it came from, and what was measured to justify shipping it — and
 ```console
 $ pip install open-contract-ml
 $ open-contract-ml check examples/reference-package
-OK   examples/reference-package  (contract 1.1, 0 warning(s))
+OK   examples/reference-package  (contract 1.2, package declares 1.1, 0 warning(s))
 ```
 
 Exit code 0 means conformant. 1 means it told you exactly which rule failed and why.
@@ -85,7 +85,7 @@ declaration is checked (`M017`) and which nothing verifies. Section 11 of
 `docs/spec/CONTRACT-v1.md` lists every change 1.1 made and what each means for a
 package that conformed to 1.0.
 
-Contract 1.2, an amendment proposed for the maintainer's ratification, lets a
+Contract 1.2, which 0.3.0 is the first release to implement, lets a
 manifest name the taxonomy cell its model serves, `taxonomy_cell`, and the checker
 rejects an id its pinned copy of the cell vocabulary does not list as live
 (`M022`). An optional `taxonomy_registry` pins the vocabulary version the id was

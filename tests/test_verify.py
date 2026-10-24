@@ -543,7 +543,7 @@ def _rename_reference_id(new_id: str):
 
 
 # --------------------------------------------------------------------------- #
-# The taxonomy cell (contract 1.2, proposed): the pinned cell vocabulary, the ids
+# The taxonomy cell (contract 1.2): the pinned cell vocabulary, the ids
 # it lists and does not, and the pin of it a producer records. Every id here is
 # read from, or derived from, the copy the checker ships; none is spelled out.
 # --------------------------------------------------------------------------- #
@@ -799,7 +799,7 @@ MUTATIONS = [
         "no_field_descriptor", "inline_field")],
     *[("S001", _grid_field_package(defect)) for defect in (
         "missing_output", "no_status", "wrong_run_id", "banner", "extra_frame", "nonzero_exit")],
-    # The taxonomy cell a model serves (contract 1.2, proposed) is an id the pinned cell
+    # The taxonomy cell a model serves (contract 1.2) is an id the pinned cell
     # vocabulary lists as live (M022); a pin of the vocabulary comes with a cell and names
     # the vocabulary the checker carries (M023); a pin to another version of it is a
     # warning (M024). An id the vocabulary retired has its own test, which plants it in
@@ -905,7 +905,7 @@ def test_a_package_declaring_no_taxonomy_key_never_reads_the_cell_vocabulary(goo
 
 
 # --------------------------------------------------------------------------- #
-# The taxonomy cell (contract 1.2, proposed): what passes, what each rule says,
+# The taxonomy cell (contract 1.2): what passes, what each rule says,
 # and an id the vocabulary retired, planted in the copy the checker reads.
 # --------------------------------------------------------------------------- #
 def _taxonomy_package(root: Path, cell=ABSENT, pin=ABSENT, version: str = "1.1") -> Path:

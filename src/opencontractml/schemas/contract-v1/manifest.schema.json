@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/BootstrapAI-mgmt/open-contract-ml/schemas/contract-v1/manifest.schema.json",
   "title": "Contract v1 manifest",
-  "description": "The machine contract of a contract package. A superset of the package-v1 manifest spec 1.0 (schemas/package-v1): it adds `provenance` and `validation` and changes nothing existing, so a contract-v1 manifest is a valid package-v1 manifest -- except one declaring `uncertainty.form: none` (contract 1.1), a value package-v1 does not define. Contract 1.1 also adds the optional `outputs[].field`, `licence` and `provenance.signature`, and contract 1.2 (proposed) the optional `taxonomy_cell` and `taxonomy_registry`. Structural rules only -- the cross-field invariants (uncertainty.per_output coverage, the entrypoint/executable binding, hash verification, what 1.1 requires of a 1.1 package, a taxonomy cell the pinned cell vocabulary lists) are in verify.py, which is the authority.",
+  "description": "The machine contract of a contract package. A superset of the package-v1 manifest spec 1.0 (schemas/package-v1): it adds `provenance` and `validation` and changes nothing existing, so a contract-v1 manifest is a valid package-v1 manifest -- except one declaring `uncertainty.form: none` (contract 1.1), a value package-v1 does not define. Contract 1.1 also adds the optional `outputs[].field`, `licence` and `provenance.signature`, and contract 1.2 the optional `taxonomy_cell` and `taxonomy_registry`. Structural rules only -- the cross-field invariants (uncertainty.per_output coverage, the entrypoint/executable binding, hash verification, what 1.1 requires of a 1.1 package, a taxonomy cell the pinned cell vocabulary lists) are in verify.py, which is the authority.",
   "type": "object",
   "required": [
     "spec_version", "id", "name", "version", "owner", "domain", "modality", "purpose",
@@ -294,12 +294,12 @@
     "taxonomy_cell": {
       "type": "string",
       "pattern": "^A\\.[0-9]+\\.[0-9]+/B[0-9]+/[1-9][0-9]*$",
-      "description": "Optional, contract 1.2 (proposed): the cell of the maintainer's analysis taxonomy that the model serves, by its id, <analysis>/<bucket>/<n>, in the grammar of the cell vocabulary open-contract-ml pins (schemas/contract-v1/taxonomy-cells.json). Omitted for a model that serves no declared cell; null is not a cell id. open-contract-ml check rejects an id the pinned vocabulary does not list as live (rule M022)."
+      "description": "Optional, contract 1.2: the cell of the maintainer's analysis taxonomy that the model serves, by its id, <analysis>/<bucket>/<n>, in the grammar of the cell vocabulary open-contract-ml pins (schemas/contract-v1/taxonomy-cells.json). Omitted for a model that serves no declared cell; null is not a cell id. open-contract-ml check rejects an id the pinned vocabulary does not list as live (rule M022)."
     },
     "taxonomy_registry": {
       "type": "object",
       "required": ["registry", "version", "sha256", "document_sha256", "bytes", "cells"],
-      "description": "Optional, contract 1.2 (proposed): the pin of the version of the cell vocabulary taxonomy_cell was read from -- the vocabulary's name and version, the sha256 of its file's bytes and of its parsed document, its size in bytes and its number of cells. Other keys, such as where a producer read the vocabulary, are allowed and not checked. open-contract-ml check rejects a pin without a taxonomy_cell, a malformed pin and a pin naming another vocabulary (rule M023), and warns when its content is not the pinned copy's (M024).",
+      "description": "Optional, contract 1.2: the pin of the version of the cell vocabulary taxonomy_cell was read from -- the vocabulary's name and version, the sha256 of its file's bytes and of its parsed document, its size in bytes and its number of cells. Other keys, such as where a producer read the vocabulary, are allowed and not checked. open-contract-ml check rejects a pin without a taxonomy_cell, a malformed pin and a pin naming another vocabulary (rule M023), and warns when its content is not the pinned copy's (M024).",
       "properties": {
         "registry": {"type": "string", "minLength": 1, "description": "The cell vocabulary's name."},
         "version": {"type": "string", "minLength": 1, "description": "The cell vocabulary's version."},

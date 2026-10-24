@@ -4,8 +4,7 @@
 self-contained. **Checker:** `opencontractml.verify` in this repository
 (`open-contract-ml check`). **Roles:** a *producer* emits contract packages; a
 *consumer* (a dispatching GUI, a registry, a checker) reads and enforces them.
-**Version:** 1.2, a MINOR amendment of 1.1, proposed for the maintainer's
-ratification. Section 13 lists its changes and what they mean for a package that
+**Version:** 1.2, a MINOR amendment of 1.1. Section 13 lists its changes and what they mean for a package that
 conformed to 1.1, as section 11 lists 1.1's for a package that conformed to 1.0.
 
 ---
@@ -145,7 +144,7 @@ pass: whether to dock a model without bars is a consumer's policy, and a consume
 holds every prediction to its bars refuses such a package. The package-v1 manifest
 schema does not define the value, so a package-v1 validator rejects it.
 
-**The taxonomy cell (1.2, proposed).** A manifest may name the cell of the
+**The taxonomy cell (1.2).** A manifest may name the cell of the
 maintainer's analysis taxonomy that its model serves, by the cell's id:
 `taxonomy_cell`, a string of the form `<analysis>/<bucket>/<n>` in the grammar of
 the cell vocabulary the checker pins. A model that serves no declared cell omits the
@@ -525,7 +524,7 @@ deliberately the package-v1 manifest's existing one, not a third name.
   unknown additive key to it. A 1.1 checker accepts a 1.0 package that declares no
   comparators, no field block and no licence block. What 1.1 requires newly binds only a
   package that declares `spec_version` 1.1 or later.
-- Contract 1.2, proposed for the maintainer's ratification, is a MINOR amendment of 1.1
+- Contract 1.2 is a MINOR amendment of 1.1
   (section 13). It adds two optional manifest keys, `taxonomy_cell` and
   `taxonomy_registry`, which a 1.1 or package-v1 consumer ignores as unknown additive
   keys. It requires nothing new of a package that declares neither: a 1.2 checker gives
@@ -560,7 +559,7 @@ are separate numbers:
 | 0.1.0 | 1.0 | released 2026-09-17; its files are no longer on the Python Package Index, so this row is read from the first public snapshot of this repository, which declares version 0.1.0 and contract 1.0 |
 | 0.1.1 | 1.0 | released 2026-09-27 |
 | 0.2.0 | 1.1 | released 2026-10-07; a conformance record's `contract_version` (section 8) tells a 0.2.0 checker from a 0.1.1 checker, whose `--json` report reads 1.0 |
-| unreleased, after 0.2.0 | 1.2, proposed | `opencontractml.__version__` reads 0.2.0 until the next release; a conformance record's `contract_version` (section 8) tells it from a 0.2.0 checker |
+| 0.3.0 | 1.2 | released 2026-10-23; a conformance record's `contract_version` (section 8) tells a 0.3.0 checker from a 0.2.0 checker, whose `--json` report reads 1.1 |
 
 Each release adds its row here, and its `CHANGELOG.md` entry names the contract version it
 implements (`CONTRIBUTING.md`).
@@ -796,10 +795,10 @@ states a `media_type` or units other than the declared ones, and a declared fiel
 `opencontractml.verify.read_frames`, `frame_problems` and `reference_problems` are the
 same checks, callable on a frame and a working directory a consumer holds.
 
-## 13. Changes in 1.2 (proposed)
+## 13. Changes in 1.2
 
-Contract 1.2 is a MINOR amendment of 1.1 (section 7), proposed for the maintainer's
-ratification. It adds what any package may declare and requires nothing of a package
+Contract 1.2 is a MINOR amendment of 1.1 (section 7), which the maintainer
+ratified on 2026-10-23; 0.3.0 is the first release to implement it. It adds what any package may declare and requires nothing of a package
 that declares neither of its two keys:
 
 | Change | Rule | Binds | A 1.0 or 1.1 package |

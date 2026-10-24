@@ -7,9 +7,14 @@ implements are separate numbers: `opencontractml.__version__` is the first,
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-23
+
+The first release to implement contract 1.2; 0.2.0 implements contract 1.1,
+and 0.1.0 and 0.1.1 implement contract 1.0.
+
 ### Added
 
-- Contract 1.2, as an amendment proposed for the maintainer's ratification
+- Contract 1.2, an amendment the maintainer ratified on 2026-10-23
   (`docs/spec/CONTRACT-v1.md`, sections 3 and 13): a manifest may name the
   taxonomy cell its model serves, `taxonomy_cell`, a cell id of the
   maintainer's analysis taxonomy, and `open-contract-ml check` rejects an
@@ -27,8 +32,7 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   vocabulary reports an error, never a skip (new rule `E004`). The keys
   are checked wherever a package of any version declares them, and a
   package that declares neither gets the findings it had before.
-  `opencontractml.verify.CONTRACT_VERSION` is now `"1.2"`; the package
-  version is unchanged.
+  `opencontractml.verify.CONTRACT_VERSION` is now `"1.2"`.
 - The pinned copy of the cell vocabulary ships with the checker as
   `schemas/contract-v1/taxonomy-cells.json`: the vocabulary's name and
   version, the sha256 of its file's bytes and of its parsed document, its

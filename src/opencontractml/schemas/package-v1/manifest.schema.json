@@ -84,7 +84,7 @@
     "taxonomy_cell": {
       "type": "string",
       "pattern": "^A\\.[0-9]+\\.[0-9]+/B[0-9]+/[1-9][0-9]*$",
-      "description": "Optional, contract 1.2 (proposed): the cell of the maintainer's analysis taxonomy that the model serves, by its id, <analysis>/<bucket>/<n>, in the grammar of the cell vocabulary open-contract-ml pins (schemas/contract-v1/taxonomy-cells.json). Omitted for a model that serves no declared cell; null is not a cell id. open-contract-ml check rejects an id the pinned vocabulary does not list as live (rule M022)."
+      "description": "Optional, contract 1.2: the cell of the maintainer's analysis taxonomy that the model serves, by its id, <analysis>/<bucket>/<n>, in the grammar of the cell vocabulary open-contract-ml pins (schemas/contract-v1/taxonomy-cells.json). Omitted for a model that serves no declared cell; null is not a cell id. open-contract-ml check rejects an id the pinned vocabulary does not list as live (rule M022)."
     },
     "purpose": {
       "type": "string",

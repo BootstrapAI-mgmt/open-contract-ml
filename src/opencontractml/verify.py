@@ -1160,7 +1160,7 @@ def check_point_predictor(unc: Dict[str, Any], version: Optional[Tuple[int, int]
                                                "uncertainty declares a calibration block"))
 
 
-# The taxonomy cell (contract 1.2, proposed).  ``taxonomy_cell`` names, by its id,
+# The taxonomy cell (contract 1.2).  ``taxonomy_cell`` names, by its id,
 # the cell of the maintainer's analysis taxonomy that the model serves; a model
 # that serves no declared cell omits the key.  ``taxonomy_registry`` pins the
 # version of the cell vocabulary the id was read from: its name and version say

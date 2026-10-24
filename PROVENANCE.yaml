@@ -24,7 +24,7 @@ authored:
   sha256: 38c5a9d7013ee239145bf21a49ac5006eb48f7f5b2f1057a5e6aef6a44fbd44a
 - path: CHANGELOG.md
   why: what changed in each release, newest first; the sdist carries it
-  sha256: cf8c4b7b67fda418043f768cc78ca74e8c0f5c208d81d71ce0d2558a2a2ef689
+  sha256: 6d2aeba68a7eeb31643843e68a4778f0a1b3162ce6341e1a9e17cf4dfcaab5ad
 - path: CLAUDE.md
   why: notes for coding agents - the commands, what the tests enforce and what never to do here
   sha256: 2ae60bc7728350f10e7b75f751578ca9ace514d10909f4b49a56c2bb0f8701a9
@@ -46,7 +46,7 @@ authored:
   sha256: null
 - path: README.md
   why: what the Contract is and how to verify a package
-  sha256: 2fe962461a42b9bcb07ace25905bdd8957a6994dff6292118238162d5f197e59
+  sha256: 10a408766467f510367bf113e14a95393798b39356e69d1f6467c9b3fbe46f3c
 - path: SECURITY.md
   why: how to report a vulnerability, and the safe-loading policy
   sha256: 2cd546fd9e9a56421e9a298c916a712e19c01e736dece9007029b50b8dd1e893
@@ -59,7 +59,7 @@ authored:
 - path: docs/STANDARDS-ALIGNMENT.md
   why: where the Contract sits relative to the ASME VVUQ standards and the nearest related work, and where
     it does not reach
-  sha256: 9ade3e08946aa6a6d2961acd9bf62564c4a01bb713f7b20260039aee43273210
+  sha256: 1be3267fc3874c1edfab874ed28050df0972d5281c1076fd99c764e81eb45451
 - path: docs/standards/crosswalk-7009B-RP0513.md
   why: clause-by-clause crosswalk of the 50 rules, manifest fields, card sections, and 15 ladder keys to
     NASA-STD-7009B, DNV-RP-0513, ASME V&V 40-2018, and ASME V&V 20-2009 (R2021)
@@ -92,10 +92,10 @@ authored:
   sha256: 8ab7334522268b045555cd624ea8cb43b134fd8865eab7f69df896b81b5430ba
 - path: pyproject.toml
   why: packaging metadata
-  sha256: a9b63a582124165b4cff6b809ffea09a6d4b9f89ff3869c9ebda827daa85fdbf
+  sha256: 85036c9fcd63f98a4f0c93b41081da99f0b5151f01230b9127efaa26783b0606
 - path: src/opencontractml/__init__.py
   why: package root; lazily re-exports the checker
-  sha256: ad158ea04853ba089c621f98bf5d2444f56075c55f92098b69b7bd93110ad6e0
+  sha256: 160ddf5bb35d837d57f401bd3b9178aee98559e19637f0ce972d8900cd5201c0
 - path: src/opencontractml/schemas/contract-v1/conformance-record.schema.json
   why: the JSON Schema of the conformance record that open-contract-ml check --json writes, every rule id
     of the checker required
@@ -168,16 +168,15 @@ extracted:
 - path: docs/model-onboarding.md
   transformed: true
   why: how to package a trained model and validate it before publishing
-  sha256: 971e0c065426efc4a71fa295536ade9692da4de6b50943e2c1241e0fdfb5a5c4
+  sha256: 335b417d07ba7b2cd5320aac6a8403cd7a2c83cf29cd78ffed66c3c6d97bb87e
 - path: docs/model-packages.md
   transformed: true
   why: what a model registry directory holds and how a consumer validates it
-  sha256: f84fda13cdbbeba0a69d74bf63f53fece4f4063e315b81f0b8b1bcd8b1eb04b6
+  sha256: 3de24a7f5bd338464b23ccb1be42bbf10c31e7e75e03bafc1742472000aca859
 - path: docs/spec/CONTRACT-v1.md
   transformed: true
-  why: the normative specification of the Contract, version 1.2, an amendment proposed for the maintainer's
-    ratification
-  sha256: 0af4c4428b91a3115b45a63767e7c137a956b048df73f3da2aa2f2197cdab1dc
+  why: the normative specification of the Contract, version 1.2
+  sha256: 9bcf8c5125f08a300d63cd9c10b9a032bd5d1624cfb2f22a394e4536beb5fe3a
 - path: examples/brake_disc_tmf_v1/fake_model.py
   transformed: true
   why: a deterministic stdio_json stub model for the package-v1 worked example
@@ -449,11 +448,11 @@ extracted:
 - path: src/opencontractml/schemas/contract-v1/manifest.schema.json
   transformed: true
   why: the JSON Schema of the Contract v1 manifest
-  sha256: 5936d743b50e1a967693552683a1cb8fdb0114ed54ecd1bc185cfa725791fe4d
+  sha256: a63dadbdb0c6ae42f5f6b44bbab0b27d79a88d6cce3f2e95e2c140b4c95a1727
 - path: src/opencontractml/schemas/package-v1/manifest.schema.json
   transformed: true
   why: the JSON Schema of the package-v1 manifest
-  sha256: 1066377b81585890a15344321a4db5e6d9fb20485704e2e927c3482b9b2256dd
+  sha256: f948ecc969f13709fc1c800dbbbc94792f76283d3f3d08d134943cb3a374910e
 - path: src/opencontractml/synth_corpus.py
   transformed: true
   why: a synthetic heat-shield corpus generator with defect modes for the G1 fail demonstrations
@@ -469,7 +468,7 @@ extracted:
 - path: src/opencontractml/verify.py
   transformed: true
   why: the conformance checker and the machine-readable contract vocabulary
-  sha256: 4dbb48182954621147305d1d23bbe4e7b13b7020f7c4d25e9155eae3ff5d0931
+  sha256: a579b36926102f2d6abceafbcd750d9e8f8d9a9c2ee688a284bec71166a7d3a2
 - path: tests/fixtures/model_packages/conformant/manifest.yaml
   transformed: true
   why: 'a conformant package-v1 fixture: its manifest'
@@ -505,7 +504,7 @@ extracted:
 - path: tests/test_verify.py
   transformed: true
   why: tests of the conformance checker, one planted defect per ERROR rule
-  sha256: a6eb934029897c41c9f62c59cb3cd60f32361fcb645709db8b122860d9a0e9b8
+  sha256: d2dbabea49b11a2c19d0650fa9953a5992095a7f28da78a27c88a6f9b1ae8d41
 modified_copies:
 - path: tests/fixtures/producer_packages/brake_disc_link1_thermal_fno/manifest.yaml
   copy_of: brake_disc_link1_thermal_fno

@@ -79,8 +79,9 @@ From a trained model to a docked one:
    `field` block on each `type: field` output and a `licence` block naming the
    licences of the model, its weights and its training data. A manifest may also
    name the taxonomy cell its model serves, `taxonomy_cell`, with the pin of the
-   cell vocabulary it was read from, `taxonomy_registry` — proposed for Contract
-   1.2; `open-contract-ml check` rejects a cell its pinned copy of the vocabulary
+   cell vocabulary it was read from, `taxonomy_registry` — part of the 1.2
+   amendment, which 0.3.0 is the first release to implement; `open-contract-ml check`
+   rejects a cell its pinned copy of the vocabulary
    does not list.
 3. **Author `model_card.md`** from the template — the eleven sections, with the
    `model_id`/`version` front-matter matching the manifest.
