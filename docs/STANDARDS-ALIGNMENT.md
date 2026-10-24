@@ -14,7 +14,12 @@ disagreement.
 
 Every source is listed with its verification status in [Sources](#sources) at
 the end. Two claims commonly repeated about these standards turned out to be
-wrong and are corrected in place.
+wrong and are corrected in place. For the clause-by-clause, rule-by-rule
+(`E001`–`E004`, `M001`–`M024`, `C001`–`C006`, `V001`–`V013`, `S001`–`S003`),
+field-by-field, and ladder-key (`A1`–`A5`, `B1`–`B6`, `C1`–`C4`) crosswalk tables
+against NASA-STD-7009B / NASA-HDBK-7009B, DNV-RP-0513 / DNV-RP-0510,
+ASME V&V 40-2018, and ASME V&V 20-2009 (R2021), see
+[docs/standards/crosswalk-7009B-RP0513.md](standards/crosswalk-7009B-RP0513.md).
 
 ---
 

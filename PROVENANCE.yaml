@@ -24,7 +24,7 @@ authored:
   sha256: 38c5a9d7013ee239145bf21a49ac5006eb48f7f5b2f1057a5e6aef6a44fbd44a
 - path: CHANGELOG.md
   why: what changed in each release, newest first; the sdist carries it
-  sha256: bb1469c21f8be3bbea48a147e959c7aa00868c6ff3162c608f97f5d98684f70e
+  sha256: cf8c4b7b67fda418043f768cc78ca74e8c0f5c208d81d71ce0d2558a2a2ef689
 - path: CLAUDE.md
   why: notes for coding agents - the commands, what the tests enforce and what never to do here
   sha256: 2ae60bc7728350f10e7b75f751578ca9ace514d10909f4b49a56c2bb0f8701a9
@@ -46,7 +46,7 @@ authored:
   sha256: null
 - path: README.md
   why: what the Contract is and how to verify a package
-  sha256: 509c0cd60ec989a5eba7b351a562d76c14cee90e2bf01a0af3e5929703062943
+  sha256: 2fe962461a42b9bcb07ace25905bdd8957a6994dff6292118238162d5f197e59
 - path: SECURITY.md
   why: how to report a vulnerability, and the safe-loading policy
   sha256: 2cd546fd9e9a56421e9a298c916a712e19c01e736dece9007029b50b8dd1e893
@@ -59,7 +59,11 @@ authored:
 - path: docs/STANDARDS-ALIGNMENT.md
   why: where the Contract sits relative to the ASME VVUQ standards and the nearest related work, and where
     it does not reach
-  sha256: 051beaf602e6dce65f4a2b490587673f8af3bc58ea6413d8833feb9524ed6321
+  sha256: 9ade3e08946aa6a6d2961acd9bf62564c4a01bb713f7b20260039aee43273210
+- path: docs/standards/crosswalk-7009B-RP0513.md
+  why: clause-by-clause crosswalk of the 50 rules, manifest fields, card sections, and 15 ladder keys to
+    NASA-STD-7009B, DNV-RP-0513, ASME V&V 40-2018, and ASME V&V 20-2009 (R2021)
+  sha256: fcd7c0747465e18884efff4ff3a45d7d18ba2c853dd61b9ff4226274246a2cf4
 - path: docs/spec/PROVENANCE-SIGNING.md
   why: design for an optional OpenSSF Model Signing sidecar at contract 1.1; design only, nothing implemented
     and no dependency proposed

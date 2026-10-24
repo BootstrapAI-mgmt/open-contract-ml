@@ -37,6 +37,14 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   `opencontractml.verify.load_taxonomy_cells()` reads it. The contract-v1
   manifest schema states both keys, and the package-v1 manifest schema
   states `taxonomy_cell` in the same definition.
+- `docs/standards/crosswalk-7009B-RP0513.md`, a clause-by-clause crosswalk
+  mapping the 50 rules (`E001`–`E004`, `M001`–`M024`, `C001`–`C006`,
+  `V001`–`V013`, `S001`–`S003`), the `manifest.yaml` fields, the
+  `model_card.md` sections, and the fifteen `validation_report.json` ladder
+  keys (`A1`–`A5`, `B1`–`B6`, `C1`–`C4`) to NASA-STD-7009B / NASA-HDBK-7009B,
+  DNV-RP-0513 / DNV-RP-0510, ASME V&V 40-2018, and ASME V&V 20-2009 (R2021),
+  stating what the checker verifies mechanically and what remains a human
+  engineering judgement.
 
 ## [0.2.0] - 2026-10-07
 
