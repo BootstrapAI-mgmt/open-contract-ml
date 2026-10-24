@@ -24,10 +24,10 @@ authored:
   sha256: 38c5a9d7013ee239145bf21a49ac5006eb48f7f5b2f1057a5e6aef6a44fbd44a
 - path: CHANGELOG.md
   why: what changed in each release, newest first; the sdist carries it
-  sha256: 75c039435eef98e6688018fd3a52a683774020dc7a4b4471bdc27f980593fa1f
+  sha256: 6d2aeba68a7eeb31643843e68a4778f0a1b3162ce6341e1a9e17cf4dfcaab5ad
 - path: CLAUDE.md
   why: notes for coding agents - the commands, what the tests enforce and what never to do here
-  sha256: 2f2cb2671c3213cfeb4bda3f0c42cc45b25036aab62c80fa067a7f50d8cb02f7
+  sha256: 2ae60bc7728350f10e7b75f751578ca9ace514d10909f4b49a56c2bb0f8701a9
 - path: CONTRIBUTING.md
   why: how to set up, run the checks and propose a change, including an amendment to the Contract
   sha256: 3f972a81a6f99e92d84c8b505e8df19c03e6b921f8f7eff6bdfe6a3118b9c5bd
@@ -46,7 +46,7 @@ authored:
   sha256: null
 - path: README.md
   why: what the Contract is and how to verify a package
-  sha256: fa2a93fa7f8011227090fd96a9b2e49a84d64174ca1af6939aa62b969300b349
+  sha256: 10a408766467f510367bf113e14a95393798b39356e69d1f6467c9b3fbe46f3c
 - path: SECURITY.md
   why: how to report a vulnerability, and the safe-loading policy
   sha256: 2cd546fd9e9a56421e9a298c916a712e19c01e736dece9007029b50b8dd1e893
@@ -59,7 +59,11 @@ authored:
 - path: docs/STANDARDS-ALIGNMENT.md
   why: where the Contract sits relative to the ASME VVUQ standards and the nearest related work, and where
     it does not reach
-  sha256: 38362c1869420a61fe1cce2bbe878ad8c35648303f9837d5e89365eec5caafaf
+  sha256: 1be3267fc3874c1edfab874ed28050df0972d5281c1076fd99c764e81eb45451
+- path: docs/standards/crosswalk-7009B-RP0513.md
+  why: clause-by-clause crosswalk of the 50 rules, manifest fields, card sections, and 15 ladder keys to
+    NASA-STD-7009B, DNV-RP-0513, ASME V&V 40-2018, and ASME V&V 20-2009 (R2021)
+  sha256: fcd7c0747465e18884efff4ff3a45d7d18ba2c853dd61b9ff4226274246a2cf4
 - path: docs/spec/PROVENANCE-SIGNING.md
   why: design for an optional OpenSSF Model Signing sidecar at contract 1.1; design only, nothing implemented
     and no dependency proposed
@@ -88,14 +92,17 @@ authored:
   sha256: 8ab7334522268b045555cd624ea8cb43b134fd8865eab7f69df896b81b5430ba
 - path: pyproject.toml
   why: packaging metadata
-  sha256: a9b63a582124165b4cff6b809ffea09a6d4b9f89ff3869c9ebda827daa85fdbf
+  sha256: 85036c9fcd63f98a4f0c93b41081da99f0b5151f01230b9127efaa26783b0606
 - path: src/opencontractml/__init__.py
   why: package root; lazily re-exports the checker
-  sha256: ad158ea04853ba089c621f98bf5d2444f56075c55f92098b69b7bd93110ad6e0
+  sha256: 160ddf5bb35d837d57f401bd3b9178aee98559e19637f0ce972d8900cd5201c0
 - path: src/opencontractml/schemas/contract-v1/conformance-record.schema.json
   why: the JSON Schema of the conformance record that open-contract-ml check --json writes, every rule id
     of the checker required
-  sha256: 61d4f016af147f6f123eceab4e98fdf200e50dec350a87f27bdb3ecbe4c2431e
+  sha256: 6116dddd86c8eddd8c4429e817ecf9780be96907e37b027e88e6778fd8977407
+- path: src/opencontractml/schemas/contract-v1/taxonomy-cells.json
+  why: the pinned copy of the cell vocabulary a manifest's taxonomy_cell is checked against, ids and counts only, written whole from the maintainer's registry
+  sha256: 212d67840675079746d3bc8f4f42f2441a365ac4f921e5c5d1ab1db5817ba4c1
 - path: tests/fixtures/producer_packages/README.md
   why: what the producer fixture packages are, how CI checks them, and how a copy differs from what its
     producer shipped
@@ -127,12 +134,12 @@ authored:
 - path: tests/test_conformance_record.py
   why: holds the conformance record to its schema and to its own findings, pins the rule states the checker
     reports where a rule cannot apply, and plants defects the schema must reject
-  sha256: a780123ec7f6ac2cfb62a38cd9f4dda5e96ce698040d53201b1f1a746987923f
+  sha256: 77c343b481f9d3cff1c5de69603ab6690e2e2e0f189ce91964d052ac326bebdd
 - path: tests/test_contract_schema.py
   why: holds the standard-library schema walker of the checker to the published contract-v1 manifest schema
     - every keyword applied, every constraint rejected where an independent validator rejects it, and an
     unappliable keyword refused
-  sha256: 0b7f8a71183482f1bc955d91640c8f7706b21e5db9c2d70d2ed04f50cc572d35
+  sha256: 777c65d3e566fcbb47294f4a385d4443817ad0d3704b7c439ab175b710722078
 - path: tests/test_gate.py
   why: tests of the V3 declarations of the gate engine
   sha256: 7f903ea54f0b8c99c034e040703a11775e5ccae5ba8e5cd710e6d055cd4f97ea
@@ -154,19 +161,22 @@ authored:
   why: the stdio_json frame held over two real entrypoints, in single and batch mode, for answers and
     refusals, and planted defects in real frames
   sha256: de615f5efeb5796f0f9207124b70b24927d804815e36a5e2c67c3163ad6fd628
+- path: tests/test_taxonomy_cells.py
+  why: tests that the pinned cell vocabulary carries ids and counts only and holds together, and that a broken copy is refused
+  sha256: fada4df5d1f44acd909022b584bc479065271f33363e99910853c57d537433ea
 extracted:
 - path: docs/model-onboarding.md
   transformed: true
   why: how to package a trained model and validate it before publishing
-  sha256: 429cbd10bbb2a82fb129a3424e890e7f2f15e3540d9a29e0918a0e5858a6e513
+  sha256: 335b417d07ba7b2cd5320aac6a8403cd7a2c83cf29cd78ffed66c3c6d97bb87e
 - path: docs/model-packages.md
   transformed: true
   why: what a model registry directory holds and how a consumer validates it
-  sha256: 9ac9abb0f3eb39f4e4e762ea14bf02d4a39e02c1ca2cebe19acc37fc69388f3a
+  sha256: 3de24a7f5bd338464b23ccb1be42bbf10c31e7e75e03bafc1742472000aca859
 - path: docs/spec/CONTRACT-v1.md
   transformed: true
-  why: the normative specification of the Contract, version 1.1
-  sha256: ccc70130235ab872ab275e01d0e4eac33be762153bc6737c9c0ceb0602c7b7d4
+  why: the normative specification of the Contract, version 1.2
+  sha256: 9bcf8c5125f08a300d63cd9c10b9a032bd5d1624cfb2f22a394e4536beb5fe3a
 - path: examples/brake_disc_tmf_v1/fake_model.py
   transformed: true
   why: a deterministic stdio_json stub model for the package-v1 worked example
@@ -434,15 +444,15 @@ extracted:
 - path: src/opencontractml/schemas/contract-v1/contract-vocabulary.json
   transformed: true
   why: the machine-readable contract vocabulary, generated by verify.py
-  sha256: 92845620fd3a6e9eb9f58c8009d58f7d0b2499f170a5d0e58ede56f4ae4c5fdd
+  sha256: 60267729a659d5207969625d68fa11e817467e2f2c00c72564eb18cf73527eb8
 - path: src/opencontractml/schemas/contract-v1/manifest.schema.json
   transformed: true
   why: the JSON Schema of the Contract v1 manifest
-  sha256: a07f35690577f7f6abf182ffea21ebdaed098f511654db2426204b6e6bc4399e
+  sha256: a63dadbdb0c6ae42f5f6b44bbab0b27d79a88d6cce3f2e95e2c140b4c95a1727
 - path: src/opencontractml/schemas/package-v1/manifest.schema.json
   transformed: true
   why: the JSON Schema of the package-v1 manifest
-  sha256: 0292bdcc76a5fa530c987b7e3b9341ce58151ac1a88eb5336f2d742a1c91b0f8
+  sha256: f948ecc969f13709fc1c800dbbbc94792f76283d3f3d08d134943cb3a374910e
 - path: src/opencontractml/synth_corpus.py
   transformed: true
   why: a synthetic heat-shield corpus generator with defect modes for the G1 fail demonstrations
@@ -450,7 +460,7 @@ extracted:
 - path: src/opencontractml/templates/model_card.template.md
   transformed: true
   why: the model-card template with the eleven required sections
-  sha256: 691a1786fe2cca4de4b732856069ef6fbba78ac6d501408fbf494a17966f82e1
+  sha256: 1fdd9982b12b211652ce4add2e432888343d8519b46ff0886f77c0020ad98e13
 - path: src/opencontractml/train_b1.py
   transformed: true
   why: the M1 corpus-native trainer whose artifacts the model gate validates
@@ -458,7 +468,7 @@ extracted:
 - path: src/opencontractml/verify.py
   transformed: true
   why: the conformance checker and the machine-readable contract vocabulary
-  sha256: a1efd270dbaa3695b21af19a50fe30c7ffa20c031fd0f9da16746c85be9455ba
+  sha256: a579b36926102f2d6abceafbcd750d9e8f8d9a9c2ee688a284bec71166a7d3a2
 - path: tests/fixtures/model_packages/conformant/manifest.yaml
   transformed: true
   why: 'a conformant package-v1 fixture: its manifest'
@@ -494,7 +504,7 @@ extracted:
 - path: tests/test_verify.py
   transformed: true
   why: tests of the conformance checker, one planted defect per ERROR rule
-  sha256: b3562c503314c236d89143da6391f5b4d6b9e97e26b4f1d482d012ec07645ce0
+  sha256: d2dbabea49b11a2c19d0650fa9953a5992095a7f28da78a27c88a6f9b1ae8d41
 modified_copies:
 - path: tests/fixtures/producer_packages/brake_disc_link1_thermal_fno/manifest.yaml
   copy_of: brake_disc_link1_thermal_fno

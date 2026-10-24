@@ -47,6 +47,16 @@ it; `opencontractml.verify.reference_problems` is that check, and
 `open-contract-ml check --smoke` applies it to every reference an entrypoint
 returns.
 
+## The taxonomy cell a model serves
+
+A manifest may name the cell of the maintainer's analysis taxonomy that its
+model serves, `taxonomy_cell`, part of the Contract's 1.2 amendment, which 0.3.0
+is the first release to implement; a model
+that serves no declared cell omits the key. The package-v1 schema states the key
+in the same definition as the Contract's manifest schema, with the cell id's
+grammar as its pattern, and `open-contract-ml check` also rejects an id its
+pinned copy of the cell vocabulary does not list as live.
+
 ## Adding a model
 
 Drop a folder into the directory matching the structure above. The

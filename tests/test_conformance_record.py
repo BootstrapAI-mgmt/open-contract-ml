@@ -112,9 +112,12 @@ def test_a_record_agrees_with_its_own_findings(tmp_path: Path):
         assert record["conformant"] == (record["n_error"] == 0), name
 
 
-#: Rules the scalar reference package gives nothing to read: it has no field output and no signature.
+#: Rules the scalar reference package gives nothing to read: it has no field output, no signature and
+#: no taxonomy cell.
 NOTHING_TO_READ = {"M017": "provenance declares no signature",
-                   "M019": "no output is of type field or declares a field block"}
+                   "M019": "no output is of type field or declares a field block",
+                   **{rule: "the package declares no taxonomy_cell or taxonomy_registry"
+                      for rule in ("E004", "M022", "M023", "M024")}}
 
 
 def test_the_reference_package_evaluates_every_rule_but_the_smoke_ones():
@@ -211,9 +214,24 @@ def test_check_json_writes_every_package_when_several_are_checked(tmp_path: Path
     assert [r["conformant"] for r in records] == [True, True, False]
 
 
-def test_the_ok_line_names_the_version_a_package_declares_when_it_is_not_the_checkers(capsys):
-    """A 1.0 package checked by a 1.1 checker must not read as a 1.1 package."""
-    assert vs.main(["check", str(REFERENCE_PACKAGE)]) == 0
+def _declaring_the_checkers_version(root: Path) -> Path:
+    """A copy of the reference package that declares the contract version this checker implements."""
+    pkg = root / "declaring-the-checkers-version"
+    shutil.copytree(REFERENCE_PACKAGE, pkg)
+    for name, old in (("manifest.yaml", 'spec_version: "1.1"'), ("model_card.md", 'spec_version: "1.1"'),
+                      ("validation_report.json", '"spec_version": "1.1"')):
+        text = (pkg / name).read_text(encoding="utf-8")
+        assert text.count(old) == 1, name
+        (pkg / name).write_text(text.replace(old, old.replace("1.1", vs.CONTRACT_VERSION)), encoding="utf-8",
+                                newline="\n")
+    return pkg
+
+
+def test_the_ok_line_names_the_version_a_package_declares_when_it_is_not_the_checkers(capsys, tmp_path: Path):
+    """A package declaring an earlier contract version must not read as one declaring the checker's."""
+    assert vs.main(["check", str(_declaring_the_checkers_version(tmp_path))]) == 0
     assert "(contract %s, 0 warning(s))" % vs.CONTRACT_VERSION in capsys.readouterr().out
+    assert vs.main(["check", str(REFERENCE_PACKAGE)]) == 0
+    assert "(contract %s, package declares 1.1, 0 warning(s))" % vs.CONTRACT_VERSION in capsys.readouterr().out
     assert vs.main(["check", str(PRODUCER_PACKAGES / "plate_heat_fno")]) == 0
     assert "(contract %s, package declares 1.0, 0 warning(s))" % vs.CONTRACT_VERSION in capsys.readouterr().out

@@ -14,7 +14,12 @@ disagreement.
 
 Every source is listed with its verification status in [Sources](#sources) at
 the end. Two claims commonly repeated about these standards turned out to be
-wrong and are corrected in place.
+wrong and are corrected in place. For the clause-by-clause, rule-by-rule
+(`E001`–`E004`, `M001`–`M024`, `C001`–`C006`, `V001`–`V013`, `S001`–`S003`),
+field-by-field, and ladder-key (`A1`–`A5`, `B1`–`B6`, `C1`–`C4`) crosswalk tables
+against NASA-STD-7009B / NASA-HDBK-7009B, DNV-RP-0513 / DNV-RP-0510,
+ASME V&V 40-2018, and ASME V&V 20-2009 (R2021), see
+[docs/standards/crosswalk-7009B-RP0513.md](standards/crosswalk-7009B-RP0513.md).
 
 ---
 
@@ -242,6 +247,10 @@ standard does arrive.
 - **Under which licences the model, its weights and its training data are
   offered** — from the 1.1 amendment, the
   `licence` block (`M020`; `M021` warns when it is absent).
+- **Which cell of the maintainer's analysis taxonomy it serves**, where it names
+  one — from the 1.2 amendment, `taxonomy_cell`, an id the checker's
+  pinned copy of the cell vocabulary lists as live (`M022`), with the vocabulary
+  version it was read from (`taxonomy_registry`; `M023`, `M024`).
 
 ### Not answerable, and known to be
 

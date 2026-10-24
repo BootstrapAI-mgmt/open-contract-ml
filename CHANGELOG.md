@@ -7,6 +7,49 @@ implements are separate numbers: `opencontractml.__version__` is the first,
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-23
+
+The first release to implement contract 1.2; 0.2.0 implements contract 1.1,
+and 0.1.0 and 0.1.1 implement contract 1.0.
+
+### Added
+
+- Contract 1.2, an amendment the maintainer ratified on 2026-10-23
+  (`docs/spec/CONTRACT-v1.md`, sections 3 and 13): a manifest may name the
+  taxonomy cell its model serves, `taxonomy_cell`, a cell id of the
+  maintainer's analysis taxonomy, and `open-contract-ml check` rejects an
+  id that is not a cell the checker's pinned copy of the cell vocabulary
+  lists as live -- one outside the vocabulary's grammar, one it does not
+  list, or one it has retired (new rule `M022`). Beside it, an optional
+  `taxonomy_registry` pins the vocabulary version the id was read from:
+  `registry`, `version`, `sha256`, `document_sha256`, `bytes` and
+  `cells`, with any other keys allowed and not checked. A pin without a
+  cell, a malformed pin and a pin naming another vocabulary are errors
+  (new rule `M023`); a pin to another version of the vocabulary is a
+  warning, never an error, because the vocabulary's ids are stable (new
+  rule `M024`). A model that serves no declared cell omits the key, and a
+  cell needs no pin. A checker that cannot read its copy of the
+  vocabulary reports an error, never a skip (new rule `E004`). The keys
+  are checked wherever a package of any version declares them, and a
+  package that declares neither gets the findings it had before.
+  `opencontractml.verify.CONTRACT_VERSION` is now `"1.2"`.
+- The pinned copy of the cell vocabulary ships with the checker as
+  `schemas/contract-v1/taxonomy-cells.json`: the vocabulary's name and
+  version, the sha256 of its file's bytes and of its parsed document, its
+  size in bytes and its number of cells (178), the grammar of a cell id,
+  the live ids, sorted, and the retired ids (none) -- ids and counts only.
+  `opencontractml.verify.load_taxonomy_cells()` reads it. The contract-v1
+  manifest schema states both keys, and the package-v1 manifest schema
+  states `taxonomy_cell` in the same definition.
+- `docs/standards/crosswalk-7009B-RP0513.md`, a clause-by-clause crosswalk
+  mapping the 50 rules (`E001`–`E004`, `M001`–`M024`, `C001`–`C006`,
+  `V001`–`V013`, `S001`–`S003`), the `manifest.yaml` fields, the
+  `model_card.md` sections, and the fifteen `validation_report.json` ladder
+  keys (`A1`–`A5`, `B1`–`B6`, `C1`–`C4`) to NASA-STD-7009B / NASA-HDBK-7009B,
+  DNV-RP-0513 / DNV-RP-0510, ASME V&V 40-2018, and ASME V&V 20-2009 (R2021),
+  stating what the checker verifies mechanically and what remains a human
+  engineering judgement.
+
 ## [0.2.0] - 2026-10-07
 
 The first release to implement contract 1.1; 0.1.0 and 0.1.1 implement

@@ -14,7 +14,7 @@ is, what data it came from, and what was measured to justify shipping it — and
 ```console
 $ pip install open-contract-ml
 $ open-contract-ml check examples/reference-package
-OK   examples/reference-package  (contract 1.1, 0 warning(s))
+OK   examples/reference-package  (contract 1.2, package declares 1.1, 0 warning(s))
 ```
 
 Exit code 0 means conformant. 1 means it told you exactly which rule failed and why.
@@ -82,8 +82,17 @@ data (`M020`; `M021` warns when there is none). A conservation check that applie
 but was not run may say so, and still blocks. A point predictor may declare
 `uncertainty.form: none`. A package may record a detached signature, whose
 declaration is checked (`M017`) and which nothing verifies. Section 11 of
-`docs/spec/CONTRACT-v1.md` lists every change since 1.0 and what each means for a
+`docs/spec/CONTRACT-v1.md` lists every change 1.1 made and what each means for a
 package that conformed to 1.0.
+
+Contract 1.2, which 0.3.0 is the first release to implement, lets a
+manifest name the taxonomy cell its model serves, `taxonomy_cell`, and the checker
+rejects an id its pinned copy of the cell vocabulary does not list as live
+(`M022`). An optional `taxonomy_registry` pins the vocabulary version the id was
+read from; a pin without a cell, or one naming another vocabulary, is an error
+(`M023`), and a pin to another version of the vocabulary is a warning (`M024`). The
+copy, `schemas/contract-v1/taxonomy-cells.json`, carries ids and counts only.
+Section 13 of the Contract lists the change.
 
 Two switches go further. `open-contract-ml check --smoke` runs the package's
 entrypoint the way a consumer dispatches it, in the `stdio_json` frame that
@@ -124,13 +133,15 @@ docs/spec/CONTRACT-v1.md            the normative text
 docs/spec/PROVENANCE-SIGNING.md     design for an optional signature; 1.1 defines the field, nothing verifies one
 docs/EXTRACTION.md                  where the files came from, and the known gaps
 docs/STANDARDS-ALIGNMENT.md         where this sits against ASME VVUQ, and where it does not reach
+docs/standards/crosswalk-7009B-RP0513.md  clause-by-clause crosswalk of all 50 rules and 15 ladder keys to NASA-STD-7009B, DNV-RP-0513, and ASME V&V 40 / V&V 20
 docs/REFERENCES.md                  the bibliography every [Key] citation resolves to
 src/opencontractml/
   verify.py                         the conformance checker
   manifest.py, model_card.py        the validation library
   gate.py, corpus_gate.py           the gate engine
   safe_artifact.py, safeload.py     safe deserialization
-  schemas/contract-v1/              manifest schema, conformance-record schema, machine-readable vocabulary
+  schemas/contract-v1/              manifest schema, conformance-record schema, machine-readable vocabulary,
+                                    the pinned copy of the cell vocabulary
 examples/reference-package/         a worked conformant instance
 examples/reference-field-package/   a worked conformant instance whose output is a field
 examples/build_reference_field_package.py  writes that package from a seeded corpus; --check rebuilds it
@@ -143,6 +154,20 @@ CONTRIBUTING.md                     running the checks, and how the Contract is 
 SECURITY.md                         reporting a vulnerability; the safe-loading policy
 CLAUDE.md                           notes for coding agents working on this repository
 ```
+
+## Standards alignment
+
+[docs/STANDARDS-ALIGNMENT.md](docs/STANDARDS-ALIGNMENT.md) places the Contract
+beside the ASME VVUQ standards (VVUQ 1, V&V 10, V&V 20, V&V 40, and the VVUQ 70
+committee), MLTE, OpenSSF Model Signing, the Linux Foundation Model Openness
+Framework, and PhysicsNeMo-CFD, and states what a conformant package answers and
+what remains an engineering or programmatic judgement outside the checker's
+scope. [docs/standards/crosswalk-7009B-RP0513.md](docs/standards/crosswalk-7009B-RP0513.md)
+maps all 50 checker rules (`E001`–`E004`, `M001`–`M024`, `C001`–`C006`,
+`V001`–`V013`, `S001`–`S003`), every `manifest.yaml` field, every `model_card.md`
+section, and all fifteen `validation_report.json` ladder keys (`A1`–`A5`,
+`B1`–`B6`, `C1`–`C4`) clause by clause to NASA-STD-7009B / NASA-HDBK-7009B,
+DNV-RP-0513 / DNV-RP-0510, ASME V&V 40-2018, and ASME V&V 20-2009 (R2021).
 
 ## Provenance
 

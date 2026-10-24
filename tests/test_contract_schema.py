@@ -263,6 +263,19 @@ def _whole_manifests():
                                     "field": {"kind": "tensor", "support": "edge", "media_type": "VTK PolyData",
                                               "shape": [0, 64], "coordinate_ref": ""}})
     out.append(("a field block breaking every constraint", broken_field))
+    vocabulary, problem = vs.load_taxonomy_cells()
+    assert vocabulary is not None, problem
+    with_cell = _reference_manifest()
+    with_cell["taxonomy_cell"] = sorted(vocabulary["ids"])[0]
+    with_cell["taxonomy_registry"] = dict({key: vocabulary[key] for key in vs.TAXONOMY_PIN_REQUIRED},
+                                          repository="example-org/example-vocabulary", path="cells.json",
+                                          commit="0" * 40)
+    out.append(("a taxonomy cell and its pin", with_cell))
+    broken_cell = _reference_manifest()
+    broken_cell["taxonomy_cell"] = "not a cell id"
+    broken_cell["taxonomy_registry"] = {"registry": "", "version": 2, "sha256": "CAFE", "document_sha256": 5,
+                                        "bytes": 0, "cells": -1}
+    out.append(("a taxonomy cell and a pin breaking every constraint", broken_cell))
     return out
 
 
@@ -292,6 +305,24 @@ def test_the_field_block_is_one_definition_in_both_manifest_schemas():
     assert contract["properties"]["media_type"]["pattern"] == vs.MEDIA_TYPE_PATTERN
     assert re.match(vs.MEDIA_TYPE_PATTERN, vs.VTK_POLYDATA_MEDIA_TYPE)
     assert "required" not in contract, "presence is M019's, from 1.1; the schema accepts an incomplete block"
+
+
+def test_the_taxonomy_cell_is_one_definition_in_both_manifest_schemas():
+    """taxonomy_cell is defined once, in the pinned vocabulary's own grammar; the pin is the Contract's alone.
+
+    package-v1 states the cell a consumer reads, as it states a field block, and not the pin,
+    as it states no provenance; the pin's other keys ride along unchecked.
+    """
+    contract = _shipped_schema_as_written()["properties"]
+    package_v1 = _package_v1_schema()["properties"]
+    assert contract["taxonomy_cell"] == package_v1["taxonomy_cell"]
+    vocabulary, problem = vs.load_taxonomy_cells()
+    assert problem is None, problem
+    assert contract["taxonomy_cell"]["pattern"] == vocabulary["id_pattern"]
+    assert "taxonomy_registry" not in package_v1
+    pin = contract["taxonomy_registry"]
+    assert pin["required"] == list(vs.TAXONOMY_PIN_REQUIRED) == sorted(pin["properties"], key=pin["required"].index)
+    assert "additionalProperties" not in pin
 
 
 def test_the_package_v1_schema_is_valid_and_accepts_a_field_block():

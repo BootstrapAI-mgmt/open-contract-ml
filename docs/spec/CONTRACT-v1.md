@@ -1,11 +1,11 @@
-# The Contract, version 1.1
+# The Contract, version 1.2
 
 **Status:** normative. **Spec authority:** this repository; the text below is
 self-contained. **Checker:** `opencontractml.verify` in this repository
 (`open-contract-ml check`). **Roles:** a *producer* emits contract packages; a
 *consumer* (a dispatching GUI, a registry, a checker) reads and enforces them.
-**Version:** 1.1, a MINOR amendment of 1.0. Section 11 lists every change and
-what it means for a package that conformed to 1.0.
+**Version:** 1.2, a MINOR amendment of 1.1. Section 13 lists its changes and what they mean for a package that
+conformed to 1.1, as section 11 lists 1.1's for a package that conformed to 1.0.
 
 ---
 
@@ -143,6 +143,35 @@ declares `spec_version` 1.1 or later (`M007`). It is an honest declaration and n
 pass: whether to dock a model without bars is a consumer's policy, and a consumer that
 holds every prediction to its bars refuses such a package. The package-v1 manifest
 schema does not define the value, so a package-v1 validator rejects it.
+
+**The taxonomy cell (1.2).** A manifest may name the cell of the
+maintainer's analysis taxonomy that its model serves, by the cell's id:
+`taxonomy_cell`, a string of the form `<analysis>/<bucket>/<n>` in the grammar of
+the cell vocabulary the checker pins. A model that serves no declared cell omits the
+key, and `null` is not a cell id. The checker carries a pinned copy of the vocabulary,
+`schemas/contract-v1/taxonomy-cells.json`: its name and version, the digests and
+counts that pin that version, the grammar of a cell id, the ids of the live cells
+and the ids the vocabulary has retired. It carries ids and counts only: what a cell
+names belongs to the taxonomy, which is not published here. A declared cell is an
+id the copy lists as live; a value outside the grammar, an id the copy does not
+list and an id the vocabulary has retired are each an error (`M022`). Beside the
+cell, an optional `taxonomy_registry` pins the version of the vocabulary the id was
+read from: `registry` and `version` say which vocabulary, and `sha256` (of the
+vocabulary file's bytes), `document_sha256` (of `json.dumps(document,
+sort_keys=True, ensure_ascii=True)` over the parsed file), `bytes` and `cells` say
+which version of it. The six keys are required; other keys, such as the repository,
+path and commit a producer read the vocabulary at, are allowed and not checked. A
+pin without a cell, a malformed pin and a pin naming another vocabulary are errors
+(`M023`), and a cell without a pin is allowed. A pin to another version of the same
+vocabulary is a warning (`M024`), never an error: the vocabulary's ids are stable --
+an id names one cell for good and keeps its number, and a cell whose identity
+changes is retired and issued a new id -- so an id the copy lists means what it meant
+at the version pinned, and the cell is checked against the copy whatever the pin says. A cell the
+vocabulary gained after the copy was taken is unknown to this checker until a
+release carries a newer copy. A checker that cannot read its copy reports an error,
+never a skip (`E004`). The two keys are held to these rules in a package of any
+version that declares them. The package-v1 manifest schema states `taxonomy_cell`
+in the same definition, and no pin, as it states no provenance.
 
 ## 4. The model card
 
@@ -495,18 +524,23 @@ deliberately the package-v1 manifest's existing one, not a third name.
   unknown additive key to it. A 1.1 checker accepts a 1.0 package that declares no
   comparators, no field block and no licence block. What 1.1 requires newly binds only a
   package that declares `spec_version` 1.1 or later.
+- Contract 1.2 is a MINOR amendment of 1.1
+  (section 13). It adds two optional manifest keys, `taxonomy_cell` and
+  `taxonomy_registry`, which a 1.1 or package-v1 consumer ignores as unknown additive
+  keys. It requires nothing new of a package that declares neither: a 1.2 checker gives
+  every such 1.0 and 1.1 package the findings a 1.1 checker gives it.
 - **A MINOR adds; it does not oblige an older package.** A checker of a later MINOR holds
   a package to the rules of the version it declares, and holds a key that a later MINOR
-  defined -- comparators, a field block, a licence block, a signature -- to that
-  definition wherever a package declares it. A key no version defines is ignored,
-  whatever version the package declares. A package whose `spec_version` major is greater
+  defined -- comparators, a field block, a licence block, a signature, a taxonomy cell
+  and its pin -- to that definition wherever a package declares it. A key no version
+  defines is ignored, whatever version the package declares. A package whose `spec_version` major is greater
   than the checker's is rejected (`M002`).
 - **Deprecation.** A MINOR version may deprecate a key or a value; only a MAJOR version
   removes one. The amendment that deprecates says so in section 11's table, names the
   replacement where there is one, and assigns the warning rule a checker reports when a
   package uses what was deprecated; the package stays conformant. A deprecated key or
   value is removed no earlier than the next MAJOR version, and not before two releases of
-  this package have carried the deprecation. Nothing is deprecated at 1.1.
+  this package have carried the deprecation. Nothing is deprecated at 1.1 or at 1.2.
 - The validation report declares the `spec_version` its manifest declares (`V002`), as the
   card does (`C002`): one package, one contract version.
 - A contract-v1 **card** was *not* a valid card for a nine-section package-v1 validator at
@@ -525,16 +559,17 @@ are separate numbers:
 | 0.1.0 | 1.0 | released 2026-09-17; its files are no longer on the Python Package Index, so this row is read from the first public snapshot of this repository, which declares version 0.1.0 and contract 1.0 |
 | 0.1.1 | 1.0 | released 2026-09-27 |
 | 0.2.0 | 1.1 | released 2026-10-07; a conformance record's `contract_version` (section 8) tells a 0.2.0 checker from a 0.1.1 checker, whose `--json` report reads 1.0 |
+| 0.3.0 | 1.2 | released 2026-10-23; a conformance record's `contract_version` (section 8) tells a 0.3.0 checker from a 0.2.0 checker, whose `--json` report reads 1.1 |
 
 Each release adds its row here, and its `CHANGELOG.md` entry names the contract version it
 implements (`CONTRIBUTING.md`).
 
 ## 8. Conformance
 
-`python -m opencontractml.verify check <package>` -- exit 0 clean, 1 on findings. 46 rules
-(41 `ERROR`, 5 `WARN`); `python -m opencontractml.verify rules` prints the table. `M017`
+`python -m opencontractml.verify check <package>` -- exit 0 clean, 1 on findings. 50 rules
+(44 `ERROR`, 6 `WARN`); `python -m opencontractml.verify rules` prints the table. `M017`
 is the signature warning (section 6) that [PROVENANCE-SIGNING.md](PROVENANCE-SIGNING.md)
-designs.
+designs, and `M022` to `M024` and `E004` hold a taxonomy cell and its pin (section 3).
 
 **Running the entrypoint (`check --smoke`).** The default check reads files and executes
 nothing. `check --smoke` also runs the entrypoint the way a consumer dispatches it, in the
@@ -759,3 +794,23 @@ states a `media_type` or units other than the declared ones, and a declared fiel
 `*_artifact` key answered without a reference, is `S003`.
 `opencontractml.verify.read_frames`, `frame_problems` and `reference_problems` are the
 same checks, callable on a frame and a working directory a consumer holds.
+
+## 13. Changes in 1.2
+
+Contract 1.2 is a MINOR amendment of 1.1 (section 7), which the maintainer
+ratified on 2026-10-23; 0.3.0 is the first release to implement it. It adds what any package may declare and requires nothing of a package
+that declares neither of its two keys:
+
+| Change | Rule | Binds | A 1.0 or 1.1 package |
+|---|---|---|---|
+| A manifest may name the taxonomy cell its model serves, `taxonomy_cell`, an id the checker's pinned copy of the cell vocabulary lists as live; a model that serves no declared cell omits the key (section 3) | `M022` | a cell wherever it is declared | may declare one, held to the same rule |
+| An optional `taxonomy_registry` pins the vocabulary version the id was read from -- `registry`, `version`, `sha256`, `document_sha256`, `bytes` and `cells` -- beside a cell, and names the vocabulary the checker carries (section 3) | `M023` | a pin wherever it is declared | may declare one, held to the same rule |
+| A pin to another version of the vocabulary is warned, never failed (section 3) | `M024` (a warning) | a pin wherever it is declared | the same |
+| A checker that cannot read its copy of the vocabulary reports an error, never a skip (section 3) | `E004` | a package that declares either key | the same |
+| The checker ships the pinned copy, `schemas/contract-v1/taxonomy-cells.json`: ids and counts only (section 3) | -- | checker data | unaffected |
+| The contract-v1 manifest schema states both keys, and the package-v1 schema states `taxonomy_cell` in the same definition (section 3) | `M018` | wherever the keys are declared | the same |
+
+No package in this repository declares either key, so none stops conforming and none
+starts: the reference package, the reference field package and the producer fixture
+copies get exactly the findings they had under 1.1. A package that declares
+`spec_version` 1.2 is held to the rules a 1.1 package is.
