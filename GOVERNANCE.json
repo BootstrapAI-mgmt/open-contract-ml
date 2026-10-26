@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "repo_prefix": "TC-OCM",
+  "require_todo_master": false,
+  "protected_paths": [
+    "GOVERNANCE.json",
+    "tools/governed/",
+    ".github/workflows/"
+  ],
+  "act_pin_exempt": [
+    ".github/workflows/ci.yml"
+  ],
+  "spec_paths": [
+    "ROADMAP.md",
+    "ARCHITECTURE.md"
+  ],
+  "coverage": {
+    "prod_roots": [
+      "src/opencontractml"
+    ],
+    "test_roots": [
+      "tests"
+    ],
+    "exempt": [
+      "src/opencontractml/__init__.py",
+      "src/opencontractml/cc_common.py",
+      "src/opencontractml/corpus_gate.py",
+      "src/opencontractml/safeload.py",
+      "src/opencontractml/synth_corpus.py",
+      "src/opencontractml/train_b1.py",
+      "src/opencontractml/schemas/contract-v1/conformance-record.schema.json",
+      "src/opencontractml/schemas/contract-v1/contract-vocabulary.json",
+      "src/opencontractml/schemas/contract-v1/manifest.schema.json",
+      "src/opencontractml/schemas/contract-v1/taxonomy-cells.json",
+      "src/opencontractml/schemas/package-v1/manifest.schema.json",
+      "src/opencontractml/templates/model_card.template.md"
+    ],
+    "min_test_count": 50
+  },
+  "banned_subjective_terms": [
+    "fast enough",
+    "looks good",
+    "works well",
+    "seamless",
+    "intuitive",
+    "polished",
+    "clean code"
+  ],
+  "cost_guardrails": {
+    "max_retries_per_task": 2,
+    "subscription_only_default": true,
+    "metered_env_vars": [
+      "ANTHROPIC_API_KEY",
+      "GEMINI_API_KEY",
+      "GOOGLE_API_KEY",
+      "OPENAI_API_KEY"
+    ]
+  },
+  "ab_switchover_thresholds": {
+    "min_tasks_per_pipeline": 10,
+    "max_escaped_defects": 0,
+    "max_stub_pr_rate": 0.0,
+    "min_first_pass_merge_rate": 0.8,
+    "min_shepherd_minutes_reduction_ratio": 2.0
+  }
+}

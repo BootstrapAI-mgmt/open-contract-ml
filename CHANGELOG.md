@@ -7,6 +7,16 @@ implements are separate numbers: `opencontractml.__version__` is the first,
 
 ## [Unreleased]
 
+### Added
+
+- Repository governance and CI verification gates (`GOVERNANCE.json`,
+  `ARCHITECTURE.md`, `ROADMAP.md`, `docs/tasks/phase-1-governed-contract.md`,
+  `tools/governed/`, `tests/governed_smoke.test.mjs`, and
+  `.github/workflows/governed-ci.yml`) enforcing two-mode spec/implementation
+  firewall checks, production-to-test module mapping, SHA-pinned workflow
+  actions, commit-range secret scanning, and executable task-card acceptance
+  criteria alongside the existing Python conformance and wheel CI suite.
+
 ## [0.3.1] - 2026-10-25
 
 Implements contract 1.2 (no schema, vocabulary, or checker rule changes from

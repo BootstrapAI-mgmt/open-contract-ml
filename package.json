@@ -1,0 +1,18 @@
+{
+  "name": "open-contract-ml-governed",
+  "version": "0.3.1",
+  "private": true,
+  "type": "module",
+  "description": "Zero-dependency 4-pillar governed-lightweight verification and CI apparatus for open-contract-ml",
+  "scripts": {
+    "test": "node --test tests/governed_smoke.test.mjs",
+    "check:governed": "node tools/governed/check-governed.mjs",
+    "check:criteria": "node tools/governed/run-criteria.mjs --all --dry-run",
+    "run:criteria": "node tools/governed/run-criteria.mjs",
+    "guard:spawn": "node tools/governed/spawn-guard.mjs",
+    "ab:compare": "node tools/governed/ab-telemetry.mjs compare"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
