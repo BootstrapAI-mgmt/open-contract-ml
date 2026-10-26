@@ -560,6 +560,7 @@ are separate numbers:
 | 0.1.1 | 1.0 | released 2026-09-27 |
 | 0.2.0 | 1.1 | released 2026-10-07; a conformance record's `contract_version` (section 8) tells a 0.2.0 checker from a 0.1.1 checker, whose `--json` report reads 1.0 |
 | 0.3.0 | 1.2 | released 2026-10-23; a conformance record's `contract_version` (section 8) tells a 0.3.0 checker from a 0.2.0 checker, whose `--json` report reads 1.1 |
+| 0.3.1 | 1.2 | released 2026-10-25; primary-standard clause errata and expanded alignment notes in `docs/standards/crosswalk-7009B-RP0513.md` and `docs/STANDARDS-ALIGNMENT.md` (no schema or checker changes) |
 
 Each release adds its row here, and its `CHANGELOG.md` entry names the contract version it
 implements (`CONTRIBUTING.md`).

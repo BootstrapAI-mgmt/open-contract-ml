@@ -17,8 +17,9 @@ the end. Two claims commonly repeated about these standards turned out to be
 wrong and are corrected in place. For the clause-by-clause, rule-by-rule
 (`E001`–`E004`, `M001`–`M024`, `C001`–`C006`, `V001`–`V013`, `S001`–`S003`),
 field-by-field, and ladder-key (`A1`–`A5`, `B1`–`B6`, `C1`–`C4`) crosswalk tables
-against NASA-STD-7009B / NASA-HDBK-7009B, DNV-RP-0513 / DNV-RP-0510,
-ASME V&V 40-2018, and ASME V&V 20-2009 (R2021), see
+against NASA-STD-7009B / NASA-HDBK-7009B, DNV-RP-0513 / DNV-RP-0671 (with
+DNV-RP-0510), Bureau Veritas NI 692 R00, MIL-STD-3022 w/ Change 1, and the
+ASME V&V 40-2018 / V&V 20-2009 (R2021) frameworks, see
 [docs/standards/crosswalk-7009B-RP0513.md](standards/crosswalk-7009B-RP0513.md).
 
 ---
@@ -281,7 +282,7 @@ standard does arrive.
 ## 6. Related work
 
 Each entry states what the Contract **adds** relative to it and what it
-**lacks**. All four were read before being characterised.
+**lacks**. Every source below was read directly before being characterised.
 
 ### 6.1 MLTE — Machine Learning Test and Evaluation
 
@@ -403,6 +404,82 @@ been run against a hard problem has not been shown to be a useful gate, only a
 consistent one. Building an adapter that emits a Contract package from a
 PhysicsNeMo-CFD evaluation is the obvious way to find out.
 
+### 6.5 NASA-STD-7009B (2024) and NASA-HDBK-7009B (2026)
+
+NASA's agency-wide modeling and simulation standard (**NASA-STD-7009B**,
+approved 2024-03-05, superseding 7009A w/ Change 1) and its companion
+implementation handbook (**NASA-HDBK-7009B**, approved 2026-02-03) organize
+forty-three `shall` requirements (`[M&S xx]`, Appendix A Table 1) across
+programmatics (`§4.1`), development (`§4.2`, including mandatory units and
+vector coordinate frames in `§4.2.1.3 [M&S 46]`), and operations/use (`§4.3`),
+and split credibility grading in **Appendix E** (Tables 5–20) into a five-factor
+**M&S Capability Assessment** (`§E.3`, `[M&S 48]`) at model release and a
+six-factor **M&S Results Assessment** (`§E.4`, `[M&S 31]`) at model use on a
+`0`–`4` ordinal scale. NASA-HDBK-7009B `§4.5.2` (*Models of Models*) and
+`§4.5.3` (*NASA's Use of Artificial Intelligence (AI) Models*) explicitly place
+computational and ML surrogates under the same credibility and risk rules as
+physics-based M&S.
+
+**What the Contract adds:** a concrete directory layout and a deterministic
+fifty-rule checker that mechanically enforces unit declarations (`[M&S 46]`),
+artifact/dataset digest integrity (`[M&S 10, 45]`), explicit acceptance-criteria
+comparators (`[M&S 43]`), per-output uncertainty declarations (`[M&S 29, 33]`),
+and non-masking rollup verdicts (`[M&S 32a]`).
+
+**What the Contract lacks:** structured `5×5` criticality matrices (Appendix D),
+assigned `0`–`4` scores across the eleven Appendix E factors, coupled
+model-chain interface manifests (`HDBK §4.5.2`), and organizational technical
+review / qualification records (`[M&S 9, 36, 37]`). See
+[docs/standards/crosswalk-7009B-RP0513.md](standards/crosswalk-7009B-RP0513.md) §3.
+
+### 6.6 DNV-RP-0513 (2021) and DNV-RP-0671 (2023)
+
+**DNV-RP-0513** (*Assurance of simulation models*, June 2021) pairs supplier
+maturity levels (`ML0`–`ML4`, `§2.6.5`) with risk-derived model confidence
+levels (`CL0`–`CL4`, `§2.6.4`) and specifies a machine-readable **Design
+contract** (`§2.3.4`, `§4.4 Table 4-3` items `1.1`–`3.6`) for black-box
+component models. **DNV-RP-0671** (*Assurance of AI-enabled systems*, September
+2023) extends this assurance architecture to machine-learning components via
+the `CESM` systems metamodel (`§4.2`), evidence-based argumentation and
+*Strength of knowledge* (`§4.3.6`, Appendix D), modular **Assurance contracts**
+connecting subsystem claims and assumptions (`§4.4.2`, Appendix E), and
+post-deployment data/concept drift monitoring (`§4.6.2.4`, Appendix G.3.1).
+
+**What the Contract adds:** `manifest.yaml`, `model_card.md`,
+`validation_report.json`, and `open-contract-ml check --smoke` directly
+operationalize DNV-RP-0513 Table 4-3's component *Design contract* items
+(`1.1`–`2.5`) and Table 3-7's conserved-quantity check (`B4_conservation`,
+`V009`) in standard-library Python.
+
+**What the Contract lacks:** supplier process maturity auditing (`ML0`–`ML4`),
+system-level multi-component topology wiring (`Table 4-3` items `3.1`–`3.4` and
+`RP-0671` Appendix E assurance-contract alignment), and live post-deployment
+drift telemetry (`RP-0671 §4.6.2.4`). See
+[docs/standards/crosswalk-7009B-RP0513.md](standards/crosswalk-7009B-RP0513.md) §4.
+
+### 6.7 Bureau Veritas NI 692 R00 (2025) and MIL-STD-3022 w/ Change 1 (2012)
+
+**Bureau Veritas Guidance Note NI 692 R00** (*Guidelines for Machine Learning
+Systems*, October 2025) defines an eighteen-document assessment submission
+(`Section 2, Article 1, Table 1`) spanning `ConOps`/`OE`/`ODD`, risk and bias
+management, dataset metadata and quality (`Tables 10–11`), model characteristics
+and thresholded evaluation reports (`Tables 12–13`), runtime safeguards
+(`Article 6.3`), and operational monitoring/maintenance logs (`Tables 16–18`).
+**MIL-STD-3022 w/ Change 1** (*Documentation of VV&A for Models and Simulations*,
+2012-04-05) defines four DoD VV&A Data Item Descriptions (`DI-MSSM-81750`–`81753`,
+Appendices A–D) sharing a common eight-part structure (`§5.2 Table I`) and
+explicitly calls for automating and digitally archiving VV&A records (`§5.4`).
+
+**What the Contract adds:** mechanical enforcement of `BV NI 692` Table 12–13's
+model characteristics and thresholded evaluation criteria (eliminating
+`Section 1, Article 6.3.18` silent evaluation passes) and an offline JSON
+conformance record fulfilling `MIL-STD-3022 §5.4` for reusable component models.
+
+**What the Contract lacks:** vessel/system-level human-autonomy matrices
+(`BV NI 692 Tables 6–8`), live operational incident logs (`Tables 16–17`), and
+formal DoD Accreditation Authority separation (`MIL-STD-3022 §3.1.3`). See
+[docs/standards/crosswalk-7009B-RP0513.md](standards/crosswalk-7009B-RP0513.md) §5.
+
 ---
 
 ## 7. Summary
@@ -449,13 +526,20 @@ so they are listed here.
 | OpenSSF Model Signing — https://github.com/ossf/model-signing-spec | **Verified.** Format, sidecar placement, hash algorithms and the explicit non-goals are the specification's own. |
 | Model Openness Framework — https://arxiv.org/abs/2403.13784 | **Verified.** Authors and the three-tier structure from the abstract and listing. The full paper was **not** read end to end; the per-tier component lists are described from the abstract and summary only. |
 | NVIDIA PhysicsNeMo-CFD — https://nvidia.github.io/physicsnemo/blog/2026/05/29/physicsnemo-cfd/ | **Verified.** The metric list in §6.4 is quoted from the post. The absence of UQ, a model card, a conservation check and a pass/fail gate is an absence in *that post*; the wider PhysicsNeMo project was not audited for them. |
+| NASA-STD-7009B, *Standard for Models and Simulations* (approved 2024-03-05, 88 pp.) — https://standards.nasa.gov/standard/nasa/nasa-std-7009 | **Verified against the primary PDF.** Section 4 (`§4.1`–`§4.3`, 43 `[M&S xx]` requirements), Appendix A Table 1, Appendix B Table 2, Appendix D (`Figure 1`, `Tables 3`–`4`), and Appendix E (`Tables 5`–`20`, 5 Capability + 6 Results factors on `0`–`4`). |
+| NASA-HDBK-7009B, *NASA Handbook for Models and Simulations: An Implementation Guide for NASA-STD-7009B* (approved 2026-02-03, 175 pp.) — https://standards.nasa.gov/standard/nasa/nasa-hdbk-7009 | **Verified against the primary PDF.** Sections `§4.5.1`–`§4.5.3` (pedigree/provenance, models of models / surrogates, AI models), `§5` (`Pre-A`–`Phase F`), Appendix C, Appendix D (`§D.3`–`§D.13`), and Appendix F. |
+| DNV-RP-0513, *Assurance of simulation models* (Edition June 2021, 97 pp.) and DNV-RP-0671, *Assurance of AI-enabled systems* (Edition September 2023, 73 pp.) — https://www.dnv.com/ | **Verified against the primary editions.** `DNV-RP-0513` Sections `1`–`4` (`CL0`–`CL4`, `ML0`–`ML4`, `§4.4 Table 4-3` *Design contract*) and Appendices `A`–`D`; `DNV-RP-0671` Sections `1`–`6` and Appendices `A`–`I` (`§4.4.2` & `App. E` modular *Assurance contracts*, `§4.6.2.4` & `App. G.3.1` drift monitoring). |
+| Bureau Veritas Marine & Offshore Guidance Note NI 692 R00, *Guidelines for Machine Learning Systems* (Edition October 2025, 40 pp.) — https://marine-offshore.bureauveritas.com/ | **Verified against the primary edition.** Section 1 (`Articles 1`–`6`) and Section 2 (`Articles 1`–`7`, `Tables 1`–`18`). |
+| MIL-STD-3022 w/ Change 1, *Department of Defense Standard Practice: Documentation of Verification, Validation, and Accreditation (VV&A) for Models and Simulations* (2012-04-05, 55 pp.) | **Verified against the primary PDF.** Sections `1`–`6` (`Table I`, `DI-MSSM-81750`–`81753`) and Appendices `A`–`D`. |
 
 ### Unverified
 
 - Whether ASME VVUQ 1-2022 is in fact downloadable at no cost. ASME's own page
   says it is; no free download was reached.
-- The clause-level content of VVUQ 1-2022, V&V 20-2009 and V&V 10-2019. All
-  three are paywalled and none was read in full. Mappings above are against
-  published scopes, official summaries and, for V&V 20, two public technical
-  presentations of its methodology.
+- The clause-level content of ASME VVUQ 1-2022, V&V 20-2009 (R2021),
+  V&V 10-2019 (R2025), and V&V 40-2018. All four are paywalled and none was
+  read in full. Mappings in this document and in
+  [docs/standards/crosswalk-7009B-RP0513.md](standards/crosswalk-7009B-RP0513.md)
+  §6 are against published scopes, official summaries and, for V&V 20, two
+  public technical presentations of its methodology.
 - Anything about the eventual content of VVUQ 70. The standard does not exist.

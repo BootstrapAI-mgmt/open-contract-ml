@@ -7,6 +7,39 @@ implements are separate numbers: `opencontractml.__version__` is the first,
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-25
+
+Implements contract 1.2 (no schema, vocabulary, or checker rule changes from
+0.3.0).
+
+### Added
+
+- Primary-edition alignment summaries and clause mappings in
+  `docs/standards/crosswalk-7009B-RP0513.md` and `docs/STANDARDS-ALIGNMENT.md`
+  for `DNV-RP-0671` (September 2023, *Assurance of AI-enabled systems*:
+  `CESM` boundaries, modular *Assurance contracts* in `§4.4.2` / Appendix E,
+  and post-deployment drift monitoring in `§4.6.2.4` / Appendix G.3.1),
+  `Bureau Veritas NI 692 R00` (October 2025, *Guidelines for Machine Learning
+  Systems*: `Section 1` failure modes and `Section 2, Tables 1`–`18`
+  assessment dossier), and `MIL-STD-3022 w/ Change 1` (2012-04-05: `§5.2
+  Table I`, `§5.4` automated VV&A archiving, and `DI-MSSM-81750`–`81753`).
+
+### Fixed
+
+- Corrected clause, table, and edition citations in
+  `docs/standards/crosswalk-7009B-RP0513.md` against the primary published
+  PDFs of `NASA-STD-7009B` (2024-03-05), `NASA-HDBK-7009B` (2026-02-03), and
+  `DNV-RP-0513` (June 2021): `NASA-STD-7009B` Section 4 (`§4.1`–`§4.3` across
+  the 43 `[M&S xx]` requirements, including `[M&S 46]` units and vector
+  coordinate frames), Appendix D (`5×5` criticality matrix), and Appendix E
+  (`Tables 5`–`20`, splitting credibility assessment into 5 Capability factors
+  in `§E.3 [M&S 48]` and 6 Results factors in `§E.4 [M&S 31]` on a `0`–`4`
+  ordinal scale, replacing 7009A's 8-factor `1`–`4` Appendix B table);
+  `NASA-HDBK-7009B` `§4.5.1`–`§4.5.3`; and `DNV-RP-0513` (*Assurance of
+  simulation models*, Sections `1`–`4`, `CL0`–`CL4` in `§2.6.4`, `ML0`–`ML4` in
+  `§2.6.5`, and the component `Design contract` in `§4.4 Table 4-3`), plus an
+  explicit verification-boundary note on the paywalled ASME standards in §6.
+
 ## [0.3.0] - 2026-10-23
 
 The first release to implement contract 1.2; 0.2.0 implements contract 1.1,

@@ -24,7 +24,7 @@ authored:
   sha256: 38c5a9d7013ee239145bf21a49ac5006eb48f7f5b2f1057a5e6aef6a44fbd44a
 - path: CHANGELOG.md
   why: what changed in each release, newest first; the sdist carries it
-  sha256: 6d2aeba68a7eeb31643843e68a4778f0a1b3162ce6341e1a9e17cf4dfcaab5ad
+  sha256: 4d0dd9836ab272694ef7fc4fdc70ca870fe5d16efc04feb32d1644a4c2f8e88e
 - path: CLAUDE.md
   why: notes for coding agents - the commands, what the tests enforce and what never to do here
   sha256: 2ae60bc7728350f10e7b75f751578ca9ace514d10909f4b49a56c2bb0f8701a9
@@ -46,7 +46,7 @@ authored:
   sha256: null
 - path: README.md
   why: what the Contract is and how to verify a package
-  sha256: 10a408766467f510367bf113e14a95393798b39356e69d1f6467c9b3fbe46f3c
+  sha256: e8dc24cc8f8ee47931f9c0b402a572a1f8b692b06d1815ff3c9606191599de6a
 - path: SECURITY.md
   why: how to report a vulnerability, and the safe-loading policy
   sha256: 2cd546fd9e9a56421e9a298c916a712e19c01e736dece9007029b50b8dd1e893
@@ -59,11 +59,11 @@ authored:
 - path: docs/STANDARDS-ALIGNMENT.md
   why: where the Contract sits relative to the ASME VVUQ standards and the nearest related work, and where
     it does not reach
-  sha256: 1be3267fc3874c1edfab874ed28050df0972d5281c1076fd99c764e81eb45451
+  sha256: 50fc4350c09f47e4f7c49ce11b87c8f026e2a820a7b119d1e9af1e5950b6d6ca
 - path: docs/standards/crosswalk-7009B-RP0513.md
   why: clause-by-clause crosswalk of the 50 rules, manifest fields, card sections, and 15 ladder keys to
-    NASA-STD-7009B, DNV-RP-0513, ASME V&V 40-2018, and ASME V&V 20-2009 (R2021)
-  sha256: fcd7c0747465e18884efff4ff3a45d7d18ba2c853dd61b9ff4226274246a2cf4
+    NASA-STD-7009B, DNV-RP-0513 / RP-0671, BV NI 692 R00, MIL-STD-3022, and ASME V&V 40 / V&V 20
+  sha256: e2a6518cdb317dcb5da21ad7f440264e4fc234ea89e703a5ce94e8781b283b1c
 - path: docs/spec/PROVENANCE-SIGNING.md
   why: design for an optional OpenSSF Model Signing sidecar at contract 1.1; design only, nothing implemented
     and no dependency proposed
@@ -92,10 +92,10 @@ authored:
   sha256: 8ab7334522268b045555cd624ea8cb43b134fd8865eab7f69df896b81b5430ba
 - path: pyproject.toml
   why: packaging metadata
-  sha256: 85036c9fcd63f98a4f0c93b41081da99f0b5151f01230b9127efaa26783b0606
+  sha256: 517b70a2b330eeaabe29db175200ace11209c0ed8af8206857fb211f3c035a44
 - path: src/opencontractml/__init__.py
   why: package root; lazily re-exports the checker
-  sha256: 160ddf5bb35d837d57f401bd3b9178aee98559e19637f0ce972d8900cd5201c0
+  sha256: 3b0c8af0023c0bf8582728e047a81e6dd38b57fe3f470abd2457e300de696983
 - path: src/opencontractml/schemas/contract-v1/conformance-record.schema.json
   why: the JSON Schema of the conformance record that open-contract-ml check --json writes, every rule id
     of the checker required
@@ -176,7 +176,7 @@ extracted:
 - path: docs/spec/CONTRACT-v1.md
   transformed: true
   why: the normative specification of the Contract, version 1.2
-  sha256: 9bcf8c5125f08a300d63cd9c10b9a032bd5d1624cfb2f22a394e4536beb5fe3a
+  sha256: cdcaa9e81ab16678848622bc6eedde71e6e2686180cf7adf082925ba274376cf
 - path: examples/brake_disc_tmf_v1/fake_model.py
   transformed: true
   why: a deterministic stdio_json stub model for the package-v1 worked example

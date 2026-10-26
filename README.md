@@ -133,7 +133,7 @@ docs/spec/CONTRACT-v1.md            the normative text
 docs/spec/PROVENANCE-SIGNING.md     design for an optional signature; 1.1 defines the field, nothing verifies one
 docs/EXTRACTION.md                  where the files came from, and the known gaps
 docs/STANDARDS-ALIGNMENT.md         where this sits against ASME VVUQ, and where it does not reach
-docs/standards/crosswalk-7009B-RP0513.md  clause-by-clause crosswalk of all 50 rules and 15 ladder keys to NASA-STD-7009B, DNV-RP-0513, and ASME V&V 40 / V&V 20
+docs/standards/crosswalk-7009B-RP0513.md  clause-by-clause crosswalk of all 50 rules and 15 ladder keys to NASA-STD-7009B, DNV-RP-0513 / RP-0671, BV NI 692, MIL-STD-3022, and ASME V&V 40 / V&V 20
 docs/REFERENCES.md                  the bibliography every [Key] citation resolves to
 src/opencontractml/
   verify.py                         the conformance checker
@@ -166,8 +166,10 @@ scope. [docs/standards/crosswalk-7009B-RP0513.md](docs/standards/crosswalk-7009B
 maps all 50 checker rules (`E001`–`E004`, `M001`–`M024`, `C001`–`C006`,
 `V001`–`V013`, `S001`–`S003`), every `manifest.yaml` field, every `model_card.md`
 section, and all fifteen `validation_report.json` ladder keys (`A1`–`A5`,
-`B1`–`B6`, `C1`–`C4`) clause by clause to NASA-STD-7009B / NASA-HDBK-7009B,
-DNV-RP-0513 / DNV-RP-0510, ASME V&V 40-2018, and ASME V&V 20-2009 (R2021).
+`B1`–`B6`, `C1`–`C4`) clause by clause to NASA-STD-7009B (2024) /
+NASA-HDBK-7009B (2026), DNV-RP-0513 (2021) / DNV-RP-0671 (2023) (with
+DNV-RP-0510), Bureau Veritas NI 692 R00 (2025), MIL-STD-3022 w/ Change 1
+(2012), and the ASME V&V 40-2018 / V&V 20-2009 (R2021) frameworks.
 
 ## Provenance
 
