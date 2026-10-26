@@ -22,16 +22,16 @@ authored:
 - path: .github/workflows/governed-ci.yml
   why: 4-pillar governed-lightweight CI workflow with 40-hex SHA-pinned actions and commit-range gitleaks
     scan
-  sha256: 20d00bae35df771c3fe5aed8843ca6ff9501b34f93cdde48c96819251c4bc1bc
+  sha256: 5d9c3aae6c8280f940f35436deb12e6d5b1db49c7b148094e7efac8ff8de5d35
 - path: .gitignore
   why: build/venv/cache exclusions
   sha256: eb0adda9737a50e05380c64e26bb7ed884c4e016c70fea1d278efd0bc5602640
 - path: ARCHITECTURE.md
   why: current-state repository architecture and verified project structure inventory
-  sha256: fcda3b0ec3062bdf5b981580f4ba8534cd77799d65028811cbba2a88cf21390f
+  sha256: c643384204c26fd2fa98a7d7022f192049b4206d85c913c1d748e359c31915bb
 - path: CHANGELOG.md
   why: what changed in each release, newest first; the sdist carries it
-  sha256: a0f5605d0819c81b1246cf309e77d2e29f88fe73677a12a99a46bbe1dc476c1c
+  sha256: daeb24a30504fe6e7b21d959a75396e9f4b01daf6e8e94f012b5c1e413902d65
 - path: CLAUDE.md
   why: notes for coding agents - the commands, what the tests enforce and what never to do here
   sha256: 2ae60bc7728350f10e7b75f751578ca9ace514d10909f4b49a56c2bb0f8701a9
@@ -40,7 +40,7 @@ authored:
   sha256: 3f972a81a6f99e92d84c8b505e8df19c03e6b921f8f7eff6bdfe6a3118b9c5bd
 - path: GOVERNANCE.json
   why: declarative 4-pillar governance, firewall, action-pinning, and module-coverage configuration
-  sha256: 1052044562fa4c52d109e1f3b835deb3308a8d0973fb4ae047816bcb6bd739cc
+  sha256: 549b4311582045c246ca726581374cf597832b4b70572ddf24302ee314fef3e8
 - path: LICENSE
   why: Apache-2.0, verbatim from apache.org (sha256 cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30)
   sha256: cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30
@@ -59,7 +59,7 @@ authored:
   sha256: e8dc24cc8f8ee47931f9c0b402a572a1f8b692b06d1815ff3c9606191599de6a
 - path: ROADMAP.md
   why: phase milestones, commit evidence, and runnable verification commands
-  sha256: b786009848e08ff920ed384e8679636c4a34e43c6698ee2e7363eaae6fb7af64
+  sha256: c9c62c3acd45283bbdee61aeba6f46897b0ce62a209607e26b566546abe5df1c
 - path: SECURITY.md
   why: how to report a vulnerability, and the safe-loading policy
   sha256: 2cd546fd9e9a56421e9a298c916a712e19c01e736dece9007029b50b8dd1e893
@@ -83,7 +83,7 @@ authored:
   sha256: e2a6518cdb317dcb5da21ad7f440264e4fc234ea89e703a5ce94e8781b283b1c
 - path: docs/tasks/phase-1-governed-contract.md
   why: phase 1 task-card specification and runnable acceptance criteria for TC-OCM01
-  sha256: 5c7622425f7bd20acc21fe25ca70958795deb8356e9015e568751496cabd9840
+  sha256: 6067837067899944db07d8a075931bc19a581732828dbda35b588fc4096009ad
 - path: examples/build_reference_field_package.py
   why: builds the reference field package from its seeded synthetic corpus, and checks that every file
     it generates reproduces byte for byte
@@ -152,7 +152,7 @@ authored:
   sha256: b0a11118c36c92ada1042894c19a1475067b6505691677a6b4392a2560f0ae81
 - path: tests/governed_smoke.test.mjs
   why: Node test suite verifying 4-pillar repo validation and adversarial firewall rules GOV-FIREWALL-01..04
-  sha256: 11447720de27b3028b4e414ea3ec8efdf91a77d58cad1298f2c830e99da2eaac
+  sha256: b627f946da156fdc9efdf89d0801cbbcda569a2bc406f0f9c8282fcf123c7987
 - path: tests/test_conformance_record.py
   why: holds the conformance record to its schema and to its own findings, pins the rule states the checker
     reports where a rule cannot apply, and plants defects the schema must reject
@@ -189,19 +189,19 @@ authored:
   sha256: fada4df5d1f44acd909022b584bc479065271f33363e99910853c57d537433ea
 - path: tools/governed/ab-telemetry.mjs
   why: dual-pipeline A/B run telemetry logger and switchover comparator
-  sha256: 7bec3516ffc0b7246735ae621b5012cd5d975c3d92c37e18f44064f176d3e930
+  sha256: 3714da29d00c16edcf931a2427dbb07e6a83913be05c2e542b665803652a5758
 - path: tools/governed/apply-branch-ruleset.sh
   why: GitHub repository ruleset installer enforcing PR-only merges and required status checks on main
-  sha256: 5c69e8a0cfd23bbf7350fb3c3afd2186427794f08599cd7df2f40b9a938e8285
+  sha256: 299c33f8cc0afa6daaa7660ab9bdfc4a65afa6304374ae00a10d8c4675211388
 - path: tools/governed/check-governed.mjs
   why: zero-dependency Pillar 1-3 governance, coverage, and two-mode PR firewall validator
-  sha256: 69230b662c941ad596eaa662f7e8c5f4fab9044b9926ecaca63f8af1cf1e45bd
+  sha256: b695f46b7e9da8ccfe000a74301ea90fe49195f92a7be32f3900ee57fd528d5c
 - path: tools/governed/run-criteria.mjs
   why: executable task-card acceptance-criteria runner and sha256 receipt emitter
-  sha256: 69f6ffc42bc3cfa52795304c54a7c19e480c25b5b72b3e98079ae3e305d5d156
+  sha256: 0fb3ab03e724916f7f8ee1dbbd899b9c3909d6fa87c7ce2a22f1a83341a4663e
 - path: tools/governed/spawn-guard.mjs
   why: pre-launch wave file-collision detector, risk scorer, and metered-API environment scrubber
-  sha256: 6f3a1e4cc98a0838c3a99660c127e0664b5700b90731a9fb4ab06c47517fd1da
+  sha256: d6a33d3369be1dba104c848f2da17e95dc3d0fd98e9f14073b74012ac07f9a15
 extracted:
 - path: docs/model-onboarding.md
   transformed: true

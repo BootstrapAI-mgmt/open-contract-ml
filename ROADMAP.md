@@ -19,9 +19,10 @@
 
 **Status:** in-progress
 
-**Milestone:** Bootstrap the zero-dependency 4-pillar `governed-lightweight` verification apparatus (`TC-OCM01`) in `tools/governed/` with declarative `GOVERNANCE.json` policy, single-source task cards in `docs/tasks/`, adversarial two-mode PR firewall (`spec` vs `impl` vs `governance`), production-to-test module coverage mapping, SHA-256 acceptance-criteria receipts, and 40-char SHA-pinned `Governed CI` + commit-range `gitleaks` secret scanning alongside `.github/workflows/ci.yml`.
+**Milestone:** Bootstrap the zero-dependency 4-pillar `governed-lightweight` verification apparatus (`TC-OCM01`) in `tools/governed/` with declarative `GOVERNANCE.json` policy (`exempt: []` and explicit `legacy_untested_debt` tracked by `TC-OCM02`), single-source task cards in `docs/tasks/`, two-mode PR firewall and deterministic anti-gaming substance checks (`GOV-FIREWALL-01..04`, `SUBSTANCE-01..05`, `MANUAL-GATE-01`, `DELIV-01`, `COV-01..03`), SHA-256 acceptance-criteria receipts, and 40-char SHA-pinned `Governed CI` + commit-range `gitleaks` secret scanning alongside `.github/workflows/ci.yml`.
 
 **Verification:**
 1. `node tools/governed/check-governed.mjs` exits 0
 2. `npm test` exits 0
 3. `npm run check:criteria` exits 0
+4. Operator activates `Governed Checks` and `Secrets (gitleaks)` required status checks on `main` via `bash tools/governed/apply-branch-ruleset.sh BootstrapAI-mgmt/open-contract-ml main` once PR #10 merges (manual: true)

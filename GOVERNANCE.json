@@ -2,6 +2,10 @@
   "schema_version": 1,
   "repo_prefix": "TC-OCM",
   "require_todo_master": false,
+  "required_status_checks": [
+    "Governed Checks",
+    "Secrets (gitleaks)"
+  ],
   "protected_paths": [
     "GOVERNANCE.json",
     "tools/governed/",
@@ -21,19 +25,13 @@
     "test_roots": [
       "tests"
     ],
-    "exempt": [
-      "src/opencontractml/__init__.py",
+    "allow_import_coverage": true,
+    "exempt": [],
+    "legacy_untested_debt": [
       "src/opencontractml/cc_common.py",
       "src/opencontractml/corpus_gate.py",
       "src/opencontractml/safeload.py",
-      "src/opencontractml/synth_corpus.py",
-      "src/opencontractml/train_b1.py",
-      "src/opencontractml/schemas/contract-v1/conformance-record.schema.json",
-      "src/opencontractml/schemas/contract-v1/contract-vocabulary.json",
-      "src/opencontractml/schemas/contract-v1/manifest.schema.json",
-      "src/opencontractml/schemas/contract-v1/taxonomy-cells.json",
-      "src/opencontractml/schemas/package-v1/manifest.schema.json",
-      "src/opencontractml/templates/model_card.template.md"
+      "src/opencontractml/synth_corpus.py"
     ],
     "min_test_count": 50
   },
@@ -53,7 +51,9 @@
       "ANTHROPIC_API_KEY",
       "GEMINI_API_KEY",
       "GOOGLE_API_KEY",
-      "OPENAI_API_KEY"
+      "GOOGLE_GENAI_API_KEY",
+      "OPENAI_API_KEY",
+      "VERTEX_API_KEY"
     ]
   },
   "ab_switchover_thresholds": {

@@ -13,9 +13,11 @@ implements are separate numbers: `opencontractml.__version__` is the first,
   `ARCHITECTURE.md`, `ROADMAP.md`, `docs/tasks/phase-1-governed-contract.md`,
   `tools/governed/`, `tests/governed_smoke.test.mjs`, and
   `.github/workflows/governed-ci.yml`) enforcing two-mode spec/implementation
-  firewall checks, production-to-test module mapping, SHA-pinned workflow
-  actions, commit-range secret scanning, and executable task-card acceptance
-  criteria alongside the existing Python conformance and wheel CI suite.
+  firewall checks, deterministic PR diff substance and manual-gate checks,
+  production-to-test module mapping (`exempt: []` with explicit
+  `legacy_untested_debt` tracked under `TC-OCM02`), SHA-pinned workflow actions,
+  commit-range secret scanning, and executable task-card acceptance criteria
+  alongside the existing Python conformance and wheel CI suite.
 
 ## [0.3.1] - 2026-10-25
 

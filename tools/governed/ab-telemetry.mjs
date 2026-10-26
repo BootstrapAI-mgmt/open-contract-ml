@@ -28,7 +28,7 @@ export function validateRunRecord(rec) {
   for (const field of ['repo', 'task_id', 'outcome']) {
     if (!rec[field] || typeof rec[field] !== 'string') throw new Error(`Missing string field: ${field}`);
   }
-  if (!['merged', 'stub_aborted', 'failed_gate', 'abandoned'].includes(rec.outcome)) {
+  if (!['merged', 'pr_ready', 'stub_aborted', 'failed_gate', 'abandoned'].includes(rec.outcome)) {
     throw new Error(`Invalid outcome "${rec.outcome}"`);
   }
   return {
@@ -58,28 +58,34 @@ export function appendRunRecord(jsonlPath, rec) {
 }
 
 function summarizeCohort(rows) {
-  const totalAttempts = rows.length;
-  const merged = rows.filter((r) => r.outcome === 'merged' && r.changed_files > 0);
-  const stubs = rows.filter((r) => r.outcome === 'stub_aborted' || (r.outcome === 'merged' && r.changed_files === 0));
+  const prReady = rows.filter((r) => r.outcome === 'pr_ready' && r.changed_files > 0);
+  const finalized = rows.filter((r) => r.outcome !== 'pr_ready');
+  const totalAttempts = finalized.length;
+  const merged = finalized.filter((r) => r.outcome === 'merged' && r.changed_files > 0);
+  const stubs = rows.filter((r) => r.outcome === 'stub_aborted' || ((r.outcome === 'merged' || r.outcome === 'pr_ready') && r.changed_files === 0));
   const firstPassMerged = merged.filter((r) => r.retries === 0);
   const escapedDefects = rows.filter((r) => r.escaped_defect).length;
   const governedMerged = merged.filter((r) => r.firewall_verified && Boolean(r.criteria_receipt_sha256));
 
   const sum = (arr, fn) => arr.reduce((acc, x) => acc + fn(x), 0);
-  const totalHumanMin = sum(rows, (r) => r.human_shepherd_minutes);
-  const totalApiEquiv = sum(rows, (r) => r.api_equiv_cost_usd);
+  const totalHumanMin = sum(finalized, (r) => r.human_shepherd_minutes);
+  const totalApiEquiv = sum(finalized, (r) => r.api_equiv_cost_usd);
   const totalMetered = sum(rows, (r) => r.actual_metered_usd);
-  const medianLead = (() => {
-    if (merged.length === 0) return null;
-    const sorted = merged.map((r) => r.lead_time_minutes).sort((a, b) => a - b);
+  const medianOf = (arr) => {
+    if (arr.length === 0) return null;
+    const sorted = arr.map((r) => r.lead_time_minutes).sort((a, b) => a - b);
     const mid = Math.floor(sorted.length / 2);
     return sorted.length % 2 === 1 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
-  })();
+  };
+  const medianLead = medianOf(merged);
 
   const shippedCount = merged.length;
   return {
     total_attempts: totalAttempts,
     shipped_non_stub_tasks: shippedCount,
+    pr_ready_non_stub_tasks: prReady.length,
+    projected_shipped_once_pr_ready_merged: shippedCount + prReady.length,
+    projected_median_lead_time_minutes: medianOf([...merged, ...prReady]),
     first_pass_merge_rate: totalAttempts > 0 ? Number((firstPassMerged.length / totalAttempts).toFixed(3)) : 0,
     stub_pr_rate: totalAttempts > 0 ? Number((stubs.length / totalAttempts).toFixed(3)) : 0,
     governed_receipt_rate: shippedCount > 0 ? Number((governedMerged.length / shippedCount).toFixed(3)) : 0,
@@ -163,7 +169,7 @@ function main() {
 
   if (sub === 'log') {
     if (!recordJson) {
-      process.stderr.write('Usage: node tools/governed/ab-telemetry.mjs log --record \'{"pipeline":"governed-lightweight",...}\'\n');
+      process.stderr.write('Usage: node scripts/ab-telemetry.mjs log --record \'{"pipeline":"governed-lightweight",...}\'\n');
       process.exit(2);
     }
     const saved = appendRunRecord(jsonlPath, JSON.parse(recordJson));

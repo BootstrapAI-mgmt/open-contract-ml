@@ -1,19 +1,22 @@
 #!/usr/bin/env node
 /**
- * Pre-Launch Collision, Billing Firewall, Risk Scorer, ROI Gate & Worktree Hygiene (`spawn-guard.mjs`)
+ * Pre-Launch Collision, Billing Firewall, Risk Scorer, ROI Gate, Clean-Abort Contract & Worktree Hygiene (`spawn-guard.mjs`)
  *
  * Distills high-leverage primitives from `BO` + `CC` + `market-lab`:
- *   1. `scrubMeteredEnvironment`: `$0.00` metered API firewall (`ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, etc.)
+ *   1. `scrubMeteredEnvironment`: `$0.00` metered API firewall (`TC-BO81` / `TC-BO85`)
  *   2. `detectWaveFileCollisions`: static file-fan-in lock (`FIND-053`, `FIND-334`)
  *   3. `scoreDiffRisk`: 3-axis blast-radius scorer (`risk_tier.py`) — classifies `{low, medium, high}`, never grants permission
  *   4. `evaluateRoiGate`: `market-lab` reservation-wage (`r* = $125/hr`) + `GovernanceTax` gate
  *   5. `ensureWorktreeScratchExcludes`: writes `.git/info/exclude` for `.agent-context/` & `.agent-output/` (`FIND-315`, `FIND-399`, `FIND-469`)
  *   6. `scanTranscriptForFallbackTrap`: aborts on silent `model_refusal_fallback` (`FIND-393`)
+ *   7. `renderAgentBriefContract` & `classifySessionOutcome`: `TC-BO86` / `RC-1A` anti-gaming substance framing + `AGENT_ABORT:` / `.agent-stop` clean-abort handoff
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+const TOK_POOL_SIMULATED = 'POOL_' + 'SIMULATED';
 
 function loadGovernanceConfig(root) {
   const cfgPath = path.join(root, 'GOVERNANCE.json');
@@ -37,7 +40,7 @@ function parseTaskCards(root) {
           if (item) declaredFiles.push(item[1].trim());
         }
       }
-      cards.set(m[1], { id: m[1], declaredFiles });
+      cards.set(m[1], { id: m[1], title: m[2].trim(), declaredFiles });
     }
   }
   return cards;
@@ -51,13 +54,16 @@ export function scrubMeteredEnvironment(env, cfg = {}, { allowMetered = false } 
     'ANTHROPIC_API_KEY',
     'GEMINI_API_KEY',
     'GOOGLE_API_KEY',
+    'GOOGLE_GENAI_API_KEY',
     'OPENAI_API_KEY',
+    'VERTEX_API_KEY',
   ];
 
   const humanOverride = allowMetered || copy.LW_ALLOW_METERED_API === '1';
   if (guard.subscription_only_default !== false && !humanOverride) {
-    for (const key of vars) {
-      if (key in copy) {
+    const upperTarget = new Set(vars.map((v) => v.toUpperCase()));
+    for (const key of Object.keys(copy)) {
+      if (upperTarget.has(key.toUpperCase())) {
         delete copy[key];
         stripped.push(key);
       }
@@ -166,13 +172,123 @@ export function scanTranscriptForFallbackTrap(transcriptText, expectedModel = nu
   return { ok: true, reason: null };
 }
 
+/**
+ * RC-1A / TC-BO86 Anti-Gaming & Clean-Abort Context-Pack Framing (`Gap LW-2`)
+ */
+export function renderAgentBriefContract({ cardId = 'TC-UNKNOWN', targetRepo = 'repo' } = {}) {
+  return [
+    `### Substance, falsifiability & scratch hygiene (${cardId} / TC-BO86)`,
+    '',
+    `- **No synthetic evidence or threshold weakening:** NEVER commit placeholder replay tokens (e.g. \`${TOK_POOL_SIMULATED}\`), fabricated solver/benchmark logs lacking genuine runtime telemetry, skipped-test inflation (\`it.skip\` / \`test.skip\` / \`pytest.mark.skip\`), or weakened evaluation \`minPassRate\` / dual-threshold conjunction bypasses (deterministic \`SUBSTANCE-01..05\` checks refuse these at CI/merge).`,
+    '- **Falsifiable tests only:** Every newly added test file MUST import the real target module under test and assert concrete outcomes — zero-import `assert True` / `expect(true).toBe(true)` stubs are refused (`SUBSTANCE-05`).',
+    `- **Scratch & transcript hygiene:** NEVER stage or commit \`.agent-context/\` or \`.agent-output/\` scratch files unless explicitly listed in \`${cardId}\`'s \`**Files to create/modify:**\`; stage explicit file paths only (never \`git add -A\` or \`git add -f\`).`,
+    '- **Human-gated completion rule:** NEVER flip a task card to `Status: complete` or `[x]` while `(manual: true)` criteria or open operator gates (`GA-*` / `GD-*` / `*-ACT-*`) remain unattested (`MANUAL-GATE-01`).',
+    `- **Blocked-session clean-abort rule:** If genuinely blocked by a missing host binary/solver, missing credential, external rate limit, or unresolvable contract conflict in \`${targetRepo}\`, emit \`AGENT_ABORT: <clear blocker reason>\` (or write \`fail: <reason>\` to \`.agent-stop\`) and exit cleanly rather than pushing empty \`0\`-file commits or placeholder stubs.`,
+  ].join('\n');
+}
+
+/**
+ * Post-session outcome verifier enforcing `TC-BO86` / `RC-1A` / `RC-2A` / `RC-3A` (`Gap LW-2`)
+ */
+export function classifySessionOutcome({
+  exitCode = 0,
+  stdout = '',
+  stderr = '',
+  stopFileText = '',
+  changedFiles = [],
+  declaredFiles = [],
+} = {}) {
+  const combined = `${stdout || ''}\n${stderr || ''}`;
+  const abortMatch = combined.match(/^\s*AGENT_ABORT:\s*(.+)$/m);
+  if (abortMatch) {
+    return {
+      status: 'aborted_cleanly',
+      ok: false,
+      retryable: false,
+      escalateHitl: true,
+      reapDraftPr: changedFiles.length === 0,
+      reason: `agent-abort:${abortMatch[1].trim()}`,
+    };
+  }
+  const stopMatch = (stopFileText || '').match(/^\s*fail:\s*(.+)$/im);
+  if (stopMatch) {
+    return {
+      status: 'aborted_cleanly',
+      ok: false,
+      retryable: false,
+      escalateHitl: true,
+      reapDraftPr: changedFiles.length === 0,
+      reason: `agent-stop:${stopMatch[1].trim()}`,
+    };
+  }
+
+  const normDeclared = new Set(declaredFiles.map((p) => p.replace(/\\/g, '/').replace(/^\.\//, '')));
+  for (const raw of changedFiles) {
+    const norm = raw.replace(/\\/g, '/').replace(/^\.\//, '');
+    const declaredAllowed =
+      normDeclared.has(norm) ||
+      [...normDeclared].some((d) => d.endsWith('/') && norm.startsWith(d));
+    if (norm.startsWith('.agent-context/') && !declaredAllowed) {
+      return {
+        status: 'failed_scratch_pollution',
+        ok: false,
+        retryable: false,
+        escalateHitl: true,
+        reapDraftPr: false,
+        reason: `scratch-pollution:${norm}`,
+      };
+    }
+  }
+
+  if (exitCode === 0 && changedFiles.length === 0) {
+    return {
+      status: 'failed_empty_diff',
+      ok: false,
+      retryable: false,
+      escalateHitl: true,
+      reapDraftPr: true,
+      reason: 'empty-pr-diff:0-changed-files',
+    };
+  }
+
+  if (exitCode !== 0) {
+    return {
+      status: 'failed_nonzero_exit',
+      ok: false,
+      retryable: true,
+      escalateHitl: false,
+      reapDraftPr: changedFiles.length === 0,
+      reason: `exit-code:${exitCode}`,
+    };
+  }
+
+  return {
+    status: 'succeeded',
+    ok: true,
+    retryable: false,
+    escalateHitl: false,
+    reapDraftPr: false,
+    reason: null,
+  };
+}
+
 function main() {
   const argv = process.argv.slice(2);
   let root = process.cwd();
+  let printBriefFor = null;
+  let targetRepo = null;
   const cards = [];
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--root') root = path.resolve(argv[++i]);
     else if (argv[i] === '--cards') cards.push(...argv[++i].split(',').map((s) => s.trim()).filter(Boolean));
+    else if (argv[i] === '--brief') printBriefFor = argv[++i];
+    else if (argv[i] === '--repo') targetRepo = argv[++i];
+  }
+  if (printBriefFor) {
+    process.stdout.write(
+      renderAgentBriefContract({ cardId: printBriefFor, targetRepo: targetRepo || path.basename(root) }) + '\n'
+    );
+    process.exit(0);
   }
   const cfg = loadGovernanceConfig(root);
   const billing = scrubMeteredEnvironment(process.env, cfg);
